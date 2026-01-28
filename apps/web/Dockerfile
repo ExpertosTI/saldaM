@@ -19,6 +19,8 @@ RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
 # Don't run as root
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
+RUN apk add --no-cache libc6-compat curl
+
 USER nextjs
 
 COPY --from=builder /app/apps/web/public ./apps/web/public
@@ -30,6 +32,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/
 
 ENV NODE_ENV=production
 ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
 
 EXPOSE 3000
 
