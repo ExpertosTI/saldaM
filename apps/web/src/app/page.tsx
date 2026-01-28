@@ -6,14 +6,16 @@ export default function Home() {
             <div className="absolute inset-0 bg-background/90 z-0"></div>
 
             <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-                <div className="fixed left-0 top-0 flex w-full justify-center border-b border-primary/20 bg-background/80 backdrop-blur-md pb-6 pt-8 dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-                    <span className="text-3xl font-extrabold text-primary tracking-widest drop-shadow-md">
-                        SALDAÑA <span className="text-white">MUSIC</span>
+                <div className="fixed left-0 top-0 flex w-full justify-center border-b border-primary/10 bg-background/60 backdrop-blur-xl pb-6 pt-8 dark:border-neutral-800 dark:bg-zinc-800/20 dark:from-inherit lg:static lg:w-auto lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/20 lg:backdrop-blur-2xl transition-all duration-500 hover:border-primary/50">
+                    <span className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary via-yellow-200 to-primary tracking-[0.2em] drop-shadow-[0_0_10px_rgba(212,175,55,0.5)] animate-pulse">
+                        SALDAÑA <span className="text-white font-light">MUSIC</span>
                     </span>
                 </div>
-                <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-black via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-                    <Link href="/login" className="px-8 py-3 rounded-full bg-primary text-black font-bold hover:scale-105 transition-transform shadow-[0_0_15px_rgba(212,175,55,0.5)]">
-                        Portal de Clientes
+                <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-black via-black/80 lg:static lg:h-auto lg:w-auto lg:bg-none">
+                    <Link href="/login" className="relative group px-8 py-3 rounded-full overflow-hidden transition-all duration-300 hover:scale-110 hover:shadow-[0_0_30px_rgba(212,175,55,0.6)]">
+                        <div className="absolute inset-0 bg-primary opacity-90 group-hover:opacity-100 transition-opacity"></div>
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+                        <span className="relative text-black font-black tracking-wider uppercase">Portal de Clientes</span>
                     </Link>
                 </div>
             </div>
