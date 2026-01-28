@@ -1,14 +1,17 @@
 FROM node:18-alpine AS builder
+# Enable pnpm
+RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
+RUN apk add --no-cache libc6-compat
 
 WORKDIR /app
 COPY . .
-# Using npm strictly
-RUN npm install
-# ENV NEXT_TELEMETRY_DISABLED 1
-RUN npx turbo run build --filter=web
+
+# Install dependencies with pnpm
+RUN pnpm install --frozen-lockfile
+RUN pnpm turbo run build --filter=web
 
 FROM node:18-alpine AS runner
 WORKDIR /app
 COPY --from=builder /app .
 EXPOSE 3000
-CMD ["npm", "start", "--prefix", "apps/web"]
+CMD ["pnpm", "--filter", "web", "start"]

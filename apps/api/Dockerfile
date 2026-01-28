@@ -1,11 +1,14 @@
 FROM node:18-alpine AS builder
+# Enable pnpm
+RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
+RUN apk add --no-cache libc6-compat
 
 WORKDIR /app
 COPY . .
-# Using npm strictly as per project setup
-RUN npm install
-# Explicitly use turbo via npx to ensure arguments work
-RUN npx turbo run build --filter=api
+
+# Install dependencies with pnpm
+RUN pnpm install --frozen-lockfile
+RUN pnpm turbo run build --filter=api
 
 FROM node:18-alpine AS runner
 WORKDIR /app
