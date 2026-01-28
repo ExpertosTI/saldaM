@@ -9,9 +9,16 @@ export default function Home() {
 
             {/* Navbar */}
             <nav className="z-50 w-full max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center font-bold text-black">S</div>
-                    <span className="text-xl font-bold tracking-tight">SALDAÑA<span className="font-light opacity-70">MUSIC</span></span>
+                <div className="flex items-center gap-3">
+                    <img src="/logo.svg" alt="Saldaña Music Logo" className="h-12 w-auto drop-shadow-[0_0_15px_rgba(212,175,55,0.6)]" />
+                    <div className="hidden sm:flex flex-col">
+                        <span className="text-xl font-bold tracking-[0.2em] text-white">
+                            SALDAÑA
+                        </span>
+                        <span className="text-[0.6rem] tracking-[0.6em] text-primary uppercase font-light text-center -mt-1">
+                            MUSIC
+                        </span>
+                    </div>
                 </div>
                 <Link href="/login" className="px-6 py-2.5 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 hover:border-primary/50 transition-all duration-300 text-sm font-medium backdrop-blur-md">
                     Portal de Clientes
