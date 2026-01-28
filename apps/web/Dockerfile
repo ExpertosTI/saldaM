@@ -14,4 +14,5 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 COPY --from=builder /app .
 EXPOSE 3000
-CMD ["pnpm", "--filter", "web", "start"]
+# Run Next.js directly to avoid pnpm path issues
+CMD ["npx", "next", "start", "-p", "3000"]
