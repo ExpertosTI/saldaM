@@ -7,7 +7,7 @@ WORKDIR /app
 COPY . .
 
 # Install dependencies with pnpm
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --no-frozen-lockfile
 RUN pnpm turbo run build --filter=api
 
 FROM node:18-alpine AS runner
