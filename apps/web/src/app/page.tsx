@@ -2,69 +2,73 @@ import Link from "next/link";
 
 export default function Home() {
     return (
-        <main className="flex min-h-screen flex-col items-center justify-between p-24 bg-[url('https://images.unsplash.com/photo-1511379938547-c1f69419868d')] bg-cover bg-center relative">
-            <div className="absolute inset-0 bg-background/90 z-0"></div>
+        <main className="flex min-h-screen flex-col items-center justify-between relative overflow-hidden bg-[#0a0a0a] text-white">
+            {/* Background Gradients */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-primary/20 rounded-full blur-[120px] opacity-20 pointer-events-none" />
+            <div className="absolute bottom-0 right-0 w-[800px] h-[600px] bg-blue-900/20 rounded-full blur-[120px] opacity-20 pointer-events-none" />
 
-            <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-                <div className="fixed left-0 top-0 flex w-full justify-center border-b border-primary/10 bg-background/60 backdrop-blur-xl pb-6 pt-8 dark:border-neutral-800 dark:bg-zinc-800/20 dark:from-inherit lg:static lg:w-auto lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/20 lg:backdrop-blur-2xl transition-all duration-500 hover:border-primary/50">
-                    <span className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary via-yellow-200 to-primary tracking-[0.2em] drop-shadow-[0_0_10px_rgba(212,175,55,0.5)] animate-pulse">
-                        SALDAÑA <span className="text-white font-light">MUSIC</span>
-                    </span>
+            {/* Navbar */}
+            <nav className="z-50 w-full max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center font-bold text-black">S</div>
+                    <span className="text-xl font-bold tracking-tight">SALDAÑA<span className="font-light opacity-70">MUSIC</span></span>
                 </div>
-                <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-black via-black/80 lg:static lg:h-auto lg:w-auto lg:bg-none">
-                    <Link href="/login" className="relative group px-8 py-3 rounded-full overflow-hidden transition-all duration-300 hover:scale-110 hover:shadow-[0_0_30px_rgba(212,175,55,0.6)]">
-                        <div className="absolute inset-0 bg-primary opacity-90 group-hover:opacity-100 transition-opacity"></div>
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
-                        <span className="relative text-black font-black tracking-wider uppercase">Portal de Clientes</span>
+                <Link href="/login" className="px-6 py-2.5 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 hover:border-primary/50 transition-all duration-300 text-sm font-medium backdrop-blur-md">
+                    Portal de Clientes
+                </Link>
+            </nav>
+
+            {/* Hero Section */}
+            <div className="relative z-10 flex flex-col items-center text-center mt-20 px-4">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-primary mb-8 backdrop-blur-sm">
+                    <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                    Sistema Operativo para Derechos Musicales
+                </div>
+
+                <h1 className="text-5xl md:text-7xl font-bold tracking-tighter mb-6 bg-clip-text text-transparent bg-gradient-to-b from-white to-white/60 max-w-4xl">
+                    Gestiona tu legado musical <br /> sin fricción legal.
+                </h1>
+
+                <p className="text-lg md:text-xl text-gray-400 max-w-2xl mb-12 leading-relaxed">
+                    La plataforma definitiva para Split Sheets, gestión de catálogo y auditoría de regalías. Diseñada para managers, sellos y compositores de élite.
+                </p>
+
+                <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
+                    <Link href="/login" className="px-8 py-4 rounded-full bg-primary text-black font-bold text-lg hover:scale-105 transition-transform shadow-[0_0_40px_rgba(212,175,55,0.3)]">
+                        Comenzar Ahora
                     </Link>
+                    <button className="px-8 py-4 rounded-full bg-white/5 border border-white/10 text-white font-medium text-lg hover:bg-white/10 transition-colors backdrop-blur-md">
+                        Ver Demo
+                    </button>
                 </div>
             </div>
 
-            <div className="relative z-10 flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-primary/20 before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-primary/10 after:via-primary/40 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-primary/20 before:dark:opacity-10 after:dark:from-amber-900 after:dark:via-[#D4AF37] after:dark:opacity-40 before:lg:h-[360px]">
-                <div className="text-center">
-                    <h1 className="text-6xl font-bold text-white mb-6 drop-shadow-lg">
-                        Asegura Tu <span className="text-primary italic">Legado</span>
-                    </h1>
-                    <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-                        Gestión Profesional de Split Sheets y Archivo Legal para la Industria Musical.
-                    </p>
-                </div>
-            </div>
-
-            <div className="z-10 mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-3 lg:text-left gap-8">
-                <div className="group rounded-lg border border-primary/20 bg-surface px-5 py-6 transition-all hover:border-primary/50 hover:bg-neutral-900/80 hover:shadow-[0_0_20px_rgba(212,175,55,0.1)]">
-                    <h2 className="mb-3 text-2xl font-semibold text-primary">
-                        Colabora{" "}
-                        <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-                            -&gt;
-                        </span>
-                    </h2>
-                    <p className="m-0 max-w-[30ch] text-sm opacity-50 text-gray-300">
-                        Invita a compositores y productores a tus split sheets con un solo clic.
+            {/* Feature Grid (Bento Style) */}
+            <div className="z-10 mt-32 mb-20 w-full max-w-7xl px-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Feature 1 */}
+                <div className="group relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 p-8 hover:border-primary/30 transition-all duration-500">
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <h3 className="text-2xl font-semibold mb-3 relative z-10">Colaboración Real</h3>
+                    <p className="text-gray-400 leading-relaxed relative z-10">
+                        Invita colaboradores y asigna porcentajes en tiempo real. Sin emails perdidos, sin PDFs corruptos.
                     </p>
                 </div>
 
-                <div className="group rounded-lg border border-primary/20 bg-surface px-5 py-6 transition-all hover:border-primary/50 hover:bg-neutral-900/80 hover:shadow-[0_0_20px_rgba(212,175,55,0.1)]">
-                    <h2 className="mb-3 text-2xl font-semibold text-primary">
-                        Firma y Sella{" "}
-                        <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-                            -&gt;
-                        </span>
-                    </h2>
-                    <p className="m-0 max-w-[30ch] text-sm opacity-50 text-gray-300">
-                        Firmas digitales legalmente vinculantes con auditoría SHA-256.
+                {/* Feature 2 */}
+                <div className="group relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 p-8 hover:border-primary/30 transition-all duration-500">
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <h3 className="text-2xl font-semibold mb-3 relative z-10">Firma Biométrica</h3>
+                    <p className="text-gray-400 leading-relaxed relative z-10">
+                        Validez legal internacional con auditoría SHA-256. Tus acuerdos son inmutables.
                     </p>
                 </div>
 
-                <div className="group rounded-lg border border-primary/20 bg-surface px-5 py-6 transition-all hover:border-primary/50 hover:bg-neutral-900/80 hover:shadow-[0_0_20px_rgba(212,175,55,0.1)]">
-                    <h2 className="mb-3 text-2xl font-semibold text-primary">
-                        Archiva{" "}
-                        <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-                            -&gt;
-                        </span>
-                    </h2>
-                    <p className="m-0 max-w-[30ch] text-sm opacity-50 text-gray-300">
-                        Almacenamiento seguro en la nube para toda la documentación de tus derechos.
+                {/* Feature 3 */}
+                <div className="group relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 p-8 hover:border-primary/30 transition-all duration-500">
+                    <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <h3 className="text-2xl font-semibold mb-3 relative z-10">Catálogo Zen</h3>
+                    <p className="text-gray-400 leading-relaxed relative z-10">
+                        Organiza álbumes, ISRC y metadatos en un solo lugar. Tu patrimonio, ordenado.
                     </p>
                 </div>
             </div>

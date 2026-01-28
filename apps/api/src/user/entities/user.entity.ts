@@ -46,6 +46,9 @@ export class User {
   @Column({ nullable: true })
   encryptionKeyId: string;
 
+  @Column({ default: true })
+  isActive: boolean;
+
   @CreateDateColumn()
   createdAt: Date;
 
