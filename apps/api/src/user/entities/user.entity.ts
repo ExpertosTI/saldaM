@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from 'typeorm';
-import { SplitSheet } from '../split-sheet/entities/split-sheet.entity';
+import { SplitSheet } from '../../split-sheet/entities/split-sheet.entity';
 
 @Entity()
 export class User {
