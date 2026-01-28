@@ -11,8 +11,7 @@ RUN pnpm install --no-frozen-lockfile
 RUN pnpm turbo run build --filter=web
 
 FROM node:20-alpine AS runner
-WORKDIR /app
-COPY --from=builder /app .
+WORKDIR /app/apps/web
+COPY --from=builder /app /app
 EXPOSE 3000
-# Run Next.js directly to avoid pnpm path issues
-CMD ["npx", "next", "start", "-p", "3000"]
+CMD ["../../node_modules/.bin/next", "start", "-p", "3000"]
