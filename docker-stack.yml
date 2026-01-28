@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  # -------------------------------------------------------------------------
+  # POSTGRESQL DATABASE
+  # -------------------------------------------------------------------------
+  db:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: JustDtBase2027@
+      POSTGRES_DB: saldanamusic
+    volumes:
+      - saldanamusic_db_vol:/var/lib/postgresql/data
+    networks:
+      - saldana_internal
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+  # -------------------------------------------------------------------------
+  # BACKEND API (NestJS)
+  # -------------------------------------------------------------------------
+  api:
+    image: ghcr.io/expertosti/saldanamusic-api:latest
+    environment:
+      - DB_Type=postgres
+      # Password encoded properly
+      - DATABASE_URL=postgresql://postgres:JustDtBase2027%40@db:5432/saldanamusic?schema=public
+      - NODE_ENV=production
+      - PORT=3000
+      # Mail Service (Hostinger)
+      - SMTP_HOST=smtp.hostinger.com
+      - SMTP_PORT=465
+      - SMTP_USER=info@renace.space
+      - SMTP_PASS=JustWork2027@
+    networks:
+      - saldana_internal
+      - RenaceNet
+    depends_on:
+      - db
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.saldana-api.rule=Host(`api.saldanamusic.com`)"
+        - "traefik.http.routers.saldana-api.entrypoints=websecure"
+        - "traefik.http.routers.saldana-api.tls=true"
+        - "traefik.http.routers.saldana-api.tls.certresolver=letsencryptresolver"
+        - "traefik.http.services.saldana-api.loadbalancer.server.port=3000"
+        - "traefik.docker.network=RenaceNet"
+
+  # -------------------------------------------------------------------------
+  # FRONTEND WEB (Next.js)
+  # -------------------------------------------------------------------------
+  web:
+    image: ghcr.io/expertosti/saldanamusic-web:latest
+    environment:
+      - NEXT_PUBLIC_API_URL=https://api.saldanamusic.com
+    networks:
+      - saldana_internal
+      - RenaceNet
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.saldana-web.rule=Host(`app.saldanamusic.com`)"
+        - "traefik.http.routers.saldana-web.entrypoints=websecure"
+        - "traefik.http.routers.saldana-web.tls=true"
+        - "traefik.http.routers.saldana-web.tls.certresolver=letsencryptresolver"
+        - "traefik.http.services.saldana-web.loadbalancer.server.port=3000"
+        - "traefik.docker.network=RenaceNet"
+
+networks:
+  saldana_internal:
+    driver: overlay
+  RenaceNet:
+    external: true
+
+volumes:
+  saldanamusic_db_vol:
