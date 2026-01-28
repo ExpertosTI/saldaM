@@ -5,7 +5,7 @@ COPY . .
 # Using npm strictly
 RUN npm install
 # ENV NEXT_TELEMETRY_DISABLED 1
-RUN npm run build --filter=web
+RUN npx turbo run build --filter=web
 
 FROM node:18-alpine AS runner
 WORKDIR /app
