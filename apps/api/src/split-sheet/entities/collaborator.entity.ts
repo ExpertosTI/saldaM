@@ -26,6 +26,18 @@ export class Collaborator {
     percentage: number;
 
     @Column({ nullable: true })
+    legalName: string;
+
+    @Column({ nullable: true })
+    phone: string;
+
+    @Column({ nullable: true })
+    address: string;
+
+    @Column({ nullable: true })
+    ipi: string; // CAE/IPI Number
+
+    @Column({ nullable: true })
     proAffiliation: string;
 
     @Column({ nullable: true })

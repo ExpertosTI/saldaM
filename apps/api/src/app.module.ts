@@ -7,7 +7,8 @@ import { DataSource } from 'typeorm';
 import { MailModule } from './mail/mail.module';
 import { SignatureModule } from './signature/signature.module';
 import { UserModule } from './user/user.module';
-import { User } from './user/entities/user.entity';
+import { User, UserRole } from './user/entities/user.entity';
+import { SplitSheetModule } from './split-sheet/split-sheet.module';
 import { SplitSheet } from './split-sheet/entities/split-sheet.entity';
 import { Collaborator } from './split-sheet/entities/collaborator.entity';
 
@@ -47,6 +48,7 @@ import { Contact } from './contacts/entities/contact.entity';
     AuditLogModule,
     ContactsModule,
     UserModule,
+    SplitSheetModule,
   ],
   providers: [
     {

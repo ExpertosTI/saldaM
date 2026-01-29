@@ -16,6 +16,15 @@ export class SplitSheet {
     @Column()
     title: string;
 
+    @Column({ nullable: true })
+    label: string; // Sello Disquero
+
+    @Column({ nullable: true })
+    studio: string; // Nombre del estudio
+
+    @Column({ nullable: true })
+    producerName: string; // Nombre del productor (if different from collaborators)
+
     @Column({
         type: 'enum',
         enum: SplitSheetStatus,
