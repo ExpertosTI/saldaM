@@ -6,7 +6,7 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # 1. Copy only package definitions first to cache dependencies
-COPY package.json pnpm-lock.yaml turbo.json ./
+COPY package.json pnpm-lock.yaml turbo.json pnpm-workspace.yaml ./
 # We need to copy the workspace package.jsons too if they are referenced, 
 # but for a simple turborepo, often copying the root files + app specific might be needed or just copy all package.jsons.
 # To be safe and simple for Turbo in Docker:

@@ -6,7 +6,7 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # 1. Copy only package definitions first
-COPY package.json pnpm-lock.yaml turbo.json ./
+COPY package.json pnpm-lock.yaml turbo.json pnpm-workspace.yaml ./
 COPY apps/api/package.json ./apps/api/package.json
 COPY apps/web/package.json ./apps/web/package.json
 COPY packages ./packages
