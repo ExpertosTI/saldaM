@@ -1,12 +1,17 @@
 FROM node:20-alpine AS builder
-# Enable pnpm
-RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
+
+# Standardize pnpm installation
+RUN npm install -g pnpm@9.0.0
 RUN apk add --no-cache libc6-compat
 
 WORKDIR /app
 
 # Copy entire project
 COPY . .
+
+# Bypass peer dependency strictness
+RUN pnpm config set strict-peer-dependencies false
+RUN pnpm config set auto-install-peers true
 
 # Install dependencies
 RUN pnpm install --no-frozen-lockfile

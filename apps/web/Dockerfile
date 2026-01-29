@@ -1,12 +1,17 @@
 FROM node:20-alpine AS builder
-# Enable pnpm
-RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
+
+# Standardize pnpm installation (sometimes corepack is buggy in Alpine)
+RUN npm install -g pnpm@9.0.0
 RUN apk add --no-cache libc6-compat
 
 WORKDIR /app
 
-# Copy entire project for robustness in monorepo
+# Copy everything (protected by .dockerignore)
 COPY . .
+
+# Bypass peer dependency strictness which can crash CI
+RUN pnpm config set strict-peer-dependencies false
+RUN pnpm config set auto-install-peers true
 
 # Install dependencies
 RUN pnpm install --no-frozen-lockfile
@@ -18,7 +23,7 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 
 # Enable pnpm
-RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
+RUN npm install -g pnpm@9.0.0
 
 # Don't run as root
 RUN addgroup --system --gid 1001 nodejs
