@@ -82,3 +82,4 @@ export class AppModule implements OnModuleInit {
       console.log('Master User created successfully.');
     }
   }
+}
