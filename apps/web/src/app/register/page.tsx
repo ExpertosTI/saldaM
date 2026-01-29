@@ -40,9 +40,13 @@ export default function RegisterPage() {
     return (
         <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-background">
             <div className="w-full max-w-lg p-8 glass-panel rounded-2xl shadow-2xl relative overflow-hidden">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-1 bg-primary shadow-[0_0_30px_5px_rgba(212,175,55,0.6)]"></div>
+                {/* Logo & Decorative Gold Glow */}
+                <div className="flex flex-col items-center mb-6">
+                    <img src="/logo.svg" alt="Saldaña Music Logo" className="h-16 w-auto drop-shadow-[0_0_10px_rgba(212,175,55,0.4)] mb-4" />
+                    <div className="w-24 h-1 bg-primary shadow-[0_0_30px_2px_rgba(212,175,55,0.6)]"></div>
+                </div>
 
-                <h2 className="text-3xl font-bold text-center text-primary mb-2 tracking-wider">JOIN THE ROSTER</h2>
+                <h2 className="text-3xl font-bold text-center text-primary mb-2 tracking-wider uppercase">JOIN THE ROSTER</h2>
                 <p className="text-center text-gray-400 mb-8 text-sm">Professional Access for Music Creators</p>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -76,8 +80,8 @@ export default function RegisterPage() {
                                     type="button"
                                     onClick={() => setFormData({ ...formData, userType: type })}
                                     className={`py-2 px-1 rounded border text-xs font-bold transition-all ${formData.userType === type
-                                            ? 'bg-primary text-black border-primary'
-                                            : 'bg-transparent text-gray-400 border-neutral-700 hover:border-gray-500'
+                                        ? 'bg-primary text-black border-primary'
+                                        : 'bg-transparent text-gray-400 border-neutral-700 hover:border-gray-500'
                                         }`}
                                 >
                                     {type}

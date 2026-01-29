@@ -7,6 +7,10 @@ const montserrat = Montserrat({ subsets: ["latin"], variable: "--font-montserrat
 export const metadata: Metadata = {
     title: "Saldaña Music | Split Sheets Profesionales",
     description: "Gestión segura y colaborativa de derechos musicales.",
+    icons: {
+        icon: "/logo.svg",
+        apple: "/logo.svg",
+    },
 };
 
 export default function RootLayout({
