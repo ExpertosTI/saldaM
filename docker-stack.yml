@@ -17,6 +17,10 @@ services:
       - saldana_internal
     deploy:
       replicas: 1
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
       restart_policy:
         condition: on-failure
 
@@ -54,6 +58,10 @@ services:
       - db
     deploy:
       replicas: 1
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
       restart_policy:
         condition: on-failure
       labels:
