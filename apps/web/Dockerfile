@@ -5,21 +5,13 @@ RUN apk add --no-cache libc6-compat
 
 WORKDIR /app
 
-# 1. Copy only package definitions first
-COPY package.json pnpm-lock.yaml turbo.json pnpm-workspace.yaml ./
-COPY apps/api/package.json ./apps/api/package.json
-COPY apps/web/package.json ./apps/web/package.json
-COPY packages/ui/package.json ./packages/ui/package.json
-COPY packages/eslint-config/package.json ./packages/eslint-config/package.json
-COPY packages/typescript-config/package.json ./packages/typescript-config/package.json
-
-# 2. Install dependencies
-RUN pnpm install --no-frozen-lockfile
-
-# 3. Copy source code
+# Copy entire project for robustness in monorepo
 COPY . .
 
-# 4. Build
+# Install dependencies
+RUN pnpm install --no-frozen-lockfile
+
+# Build
 RUN pnpm turbo run build --filter=web
 
 FROM node:20-alpine AS runner
@@ -35,7 +27,7 @@ RUN apk add --no-cache libc6-compat curl
 
 USER nextjs
 
-# Optimize copy: Only copy what's needed for standalone
+# Copy only what's needed for standalone
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
