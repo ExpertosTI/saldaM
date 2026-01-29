@@ -1,0 +1,15 @@
+node_modules
+.git
+.github
+.next
+.turbo
+dist
+build
+*.log
+.env
+.env.*
+apps/**/node_modules
+packages/**/node_modules
+apps/**/.next
+apps/**/dist
+pnpm-lock.yaml.tmp
