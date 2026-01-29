@@ -12,7 +12,6 @@ COPY package.json pnpm-lock.yaml turbo.json pnpm-workspace.yaml ./
 # To be safe and simple for Turbo in Docker:
 COPY apps/api/package.json ./apps/api/package.json
 COPY apps/web/package.json ./apps/web/package.json
-COPY apps/mobile/package.json ./apps/mobile/package.json
 COPY packages/ui/package.json ./packages/ui/package.json
 COPY packages/eslint-config/package.json ./packages/eslint-config/package.json
 COPY packages/typescript-config/package.json ./packages/typescript-config/package.json
