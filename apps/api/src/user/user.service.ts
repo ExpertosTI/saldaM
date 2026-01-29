@@ -26,7 +26,7 @@ export class UserService {
             ...createUserDto,
             role: UserRole.USER, // Default role
         });
-        const savedUser = await this.userRepository.save(user);
+        const savedUser = (await this.userRepository.save(user)) as unknown as User;
 
         // 3. Send Welcome Email (Notifications Requirement)
         try {

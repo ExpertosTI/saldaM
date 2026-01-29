@@ -10,7 +10,7 @@ export default function Home() {
             {/* Navbar */}
             <nav className="z-50 w-full max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <img src="/logo.svg" alt="Saldaña Music Logo" className="h-12 w-auto drop-shadow-[0_0_15px_rgba(212,175,55,0.6)]" />
+                    <img src="/logo.png" alt="Saldaña Music Logo" className="h-12 w-auto drop-shadow-[0_0_15px_rgba(212,175,55,0.6)]" />
                     <div className="hidden sm:flex flex-col">
                         <span className="text-xl font-bold tracking-[0.2em] text-white">
                             SALDAÑA
