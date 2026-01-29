@@ -24,6 +24,22 @@ export default function LoginPage() {
 
                 <h2 className="text-3xl font-bold text-center text-primary mb-8 tracking-wider">MEMBER ACCESS</h2>
 
+                <div className="mt-6 flex flex-col gap-3">
+                    <button
+                        onClick={() => window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'https://api.saldanamusic.com'}/auth/google`}
+                        className="w-full flex items-center justify-center gap-3 px-6 py-3 rounded-xl bg-white text-black font-semibold hover:bg-gray-100 transition-colors"
+                    >
+                        <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
+                        Continuar con Google
+                    </button>
+
+                    <div className="relative flex py-2 items-center">
+                        <div className="flex-grow border-t border-neutral-700"></div>
+                        <span className="flex-shrink mx-4 text-gray-500 text-xs">O ingresa con tu email</span>
+                        <div className="flex-grow border-t border-neutral-700"></div>
+                    </div>
+                </div>
+
                 <form onSubmit={handleLogin} className="space-y-6">
                     <div>
                         <label className="block text-sm font-medium text-gray-400 mb-2">Email Address</label>

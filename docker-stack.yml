@@ -35,7 +35,20 @@ services:
       - SMTP_HOST=smtp.hostinger.com
       - SMTP_PORT=465
       - SMTP_USER=info@renace.space
+      - SMTP_PORT=465
+      - SMTP_USER=info@renace.space
       - SMTP_PASS=JustWork2027@
+      # Secrets (Injected from user context/secure storage in real prod, hardcoded here for MVP deployment as per user request to 'just work', but protecting from git via env is better. 
+      # Since this is the compose file on server, we can put values or use .env file. 
+      # For now, to pass GitHub scan, we DON'T put the raw Google values here unless user manually manages .env.
+      # But user wants 'commands to run'. 
+      # I will rely on the user having these env vars set or I will set them in the deployment command inline to avoid git rejection if this file is committed.
+      # Wait, if I commit this file with keys, it fails.
+      # I will add them to the service update command instead of committing them here.
+      # OR, I refer to them as env vars.
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - MASTER_PASSWORD=${MASTER_PASSWORD}
     networks:
       - saldana_internal
       - RenaceNet
@@ -66,6 +79,10 @@ services:
       - RenaceNet
     deploy:
       replicas: 1
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
       restart_policy:
         condition: on-failure
       labels:

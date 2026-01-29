@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User, UserRole } from './entities/user.entity';
+import { User, UserRole, KycStatus } from './entities/user.entity';
 import { MailService } from '../mail/mail.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
 
@@ -25,6 +25,9 @@ export class UserService {
         const user = this.userRepository.create({
             ...createUserDto,
             role: UserRole.USER, // Default role
+            userType: createUserDto.userType || null,
+            isEmailVerified: false,
+            kycStatus: KycStatus.PENDING,
         });
         const savedUser = (await this.userRepository.save(user)) as unknown as User;
 

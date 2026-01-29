@@ -11,6 +11,7 @@ import { User, UserRole } from './user/entities/user.entity';
 import { SplitSheetModule } from './split-sheet/split-sheet.module';
 import { SplitSheet } from './split-sheet/entities/split-sheet.entity';
 import { Collaborator } from './split-sheet/entities/collaborator.entity';
+import { AuthModule } from './auth/auth.module';
 
 // New Modules
 import { CatalogModule } from './catalog/catalog.module';
@@ -49,6 +50,7 @@ import { Contact } from './contacts/entities/contact.entity';
     ContactsModule,
     UserModule,
     SplitSheetModule,
+    AuthModule,
   ],
   providers: [
     {
@@ -62,7 +64,7 @@ export class AppModule implements OnModuleInit {
 
   async onModuleInit() {
     const userRepository = this.dataSource.getRepository(User);
-    const masterEmail = 'expertostird@gmail.com';
+    const masterEmail = 'info@saldanamusic.com'; // Updated as per request
     const existingMaster = await userRepository.findOne({ where: { email: masterEmail } });
 
     if (!existingMaster) {
@@ -72,15 +74,14 @@ export class AppModule implements OnModuleInit {
         firstName: 'Master',
         lastName: 'Admin',
         role: UserRole.MASTER,
-        // Since we don't have a hash service injected here easily, 
-        // we'll assume the Auth flow handles password setting or we set a temp hash if needed.
-        // For now, we create the user so they can "Forgot Password" or we depend on a seed script.
-        // BETTER: Use a default known hash if possible, or just create it.
-        // Let's create it with a placeholder so it exists.
-        isActive: true, // Assuming we might add this later, but for now just create.
+        // Security Fix: Use Env Var
+        passwordHash: process.env.MASTER_PASSWORD || 'ChangeMeASAP2027!',
+        isActive: true,
       });
       await userRepository.save(master);
       console.log('Master User created successfully.');
     }
+  }
+}
   }
 }

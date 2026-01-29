@@ -7,6 +7,18 @@ export enum UserRole {
   MASTER = 'MASTER',
 }
 
+export enum UserType {
+  ARTIST = 'ARTIST',
+  PRODUCER = 'PRODUCER',
+  PUBLISHER = 'PUBLISHER',
+}
+
+export enum KycStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+}
+
 @Entity()
 export class User {
   @PrimaryGeneratedColumn('uuid')
@@ -18,6 +30,29 @@ export class User {
     default: UserRole.USER,
   })
   role: UserRole;
+
+  @Column({
+    type: 'enum',
+    enum: UserType,
+    nullable: true,
+  })
+  userType: UserType;
+
+  @Column({ default: false })
+  isEmailVerified: boolean;
+
+  @Column({
+    type: 'enum',
+    enum: KycStatus,
+    default: KycStatus.PENDING,
+  })
+  kycStatus: KycStatus;
+
+  @Column({ nullable: true })
+  kycDocumentPath: string;
+
+  @Column({ nullable: true })
+  kycVideoPath: string;
 
   @Column({ unique: true })
   email: string;

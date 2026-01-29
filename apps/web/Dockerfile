@@ -4,10 +4,20 @@ RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
 RUN apk add --no-cache libc6-compat
 
 WORKDIR /app
+
+# 1. Copy only package definitions first
+COPY package.json pnpm-lock.yaml turbo.json ./
+COPY apps/api/package.json ./apps/api/package.json
+COPY apps/web/package.json ./apps/web/package.json
+COPY packages ./packages
+
+# 2. Install dependencies
+RUN pnpm install --no-frozen-lockfile
+
+# 3. Copy source code
 COPY . .
 
-# Install dependencies with pnpm
-RUN pnpm install --no-frozen-lockfile
+# 4. Build
 RUN pnpm turbo run build --filter=web
 
 FROM node:20-alpine AS runner
@@ -23,10 +33,8 @@ RUN apk add --no-cache libc6-compat curl
 
 USER nextjs
 
-COPY --from=builder /app/apps/web/public ./apps/web/public
-
-# Automatically leverage output traces to reduce image size
-# https://nextjs.org/docs/advanced-features/output-file-tracing
+# Optimize copy: Only copy what's needed for standalone
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
 
@@ -36,5 +44,4 @@ ENV HOSTNAME="0.0.0.0"
 
 EXPOSE 3000
 
-# server.js is created by next build from the standalone output
 CMD ["node", "apps/web/server.js"]

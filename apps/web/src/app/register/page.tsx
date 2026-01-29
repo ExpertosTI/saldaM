@@ -1,0 +1,126 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+export default function RegisterPage() {
+    const [formData, setFormData] = useState({
+        firstName: "",
+        lastName: "",
+        email: "",
+        password: "",
+        userType: "ARTIST", // Default
+    });
+    const router = useRouter();
+    const [loading, setLoading] = useState(false);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.saldanamusic.com'}/users/register`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(formData),
+            });
+            if (res.ok) {
+                // Redirect to login or kyc
+                router.push("/login?registered=true");
+            } else {
+                alert("Registration failed");
+            }
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-background">
+            <div className="w-full max-w-lg p-8 glass-panel rounded-2xl shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-1 bg-primary shadow-[0_0_30px_5px_rgba(212,175,55,0.6)]"></div>
+
+                <h2 className="text-3xl font-bold text-center text-primary mb-2 tracking-wider">JOIN THE ROSTER</h2>
+                <p className="text-center text-gray-400 mb-8 text-sm">Professional Access for Music Creators</p>
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">First Name</label>
+                            <input
+                                required
+                                className="w-full px-4 py-3 bg-neutral-900 border border-neutral-700 rounded-lg focus:border-primary outline-none text-white"
+                                value={formData.firstName}
+                                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Last Name</label>
+                            <input
+                                required
+                                className="w-full px-4 py-3 bg-neutral-900 border border-neutral-700 rounded-lg focus:border-primary outline-none text-white"
+                                value={formData.lastName}
+                                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">I am a...</label>
+                        <div className="grid grid-cols-3 gap-2">
+                            {['ARTIST', 'PRODUCER', 'PUBLISHER'].map((type) => (
+                                <button
+                                    key={type}
+                                    type="button"
+                                    onClick={() => setFormData({ ...formData, userType: type })}
+                                    className={`py-2 px-1 rounded border text-xs font-bold transition-all ${formData.userType === type
+                                            ? 'bg-primary text-black border-primary'
+                                            : 'bg-transparent text-gray-400 border-neutral-700 hover:border-gray-500'
+                                        }`}
+                                >
+                                    {type}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Email Address</label>
+                        <input
+                            type="email"
+                            required
+                            className="w-full px-4 py-3 bg-neutral-900 border border-neutral-700 rounded-lg focus:border-primary outline-none text-white"
+                            value={formData.email}
+                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Password</label>
+                        <input
+                            type="password"
+                            required
+                            className="w-full px-4 py-3 bg-neutral-900 border border-neutral-700 rounded-lg focus:border-primary outline-none text-white"
+                            value={formData.password}
+                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        />
+                    </div>
+
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full py-4 mt-4 bg-primary text-black font-bold uppercase tracking-widest rounded-lg hover:bg-yellow-500 transition-all"
+                    >
+                        {loading ? 'Creating Profile...' : 'Create Account'}
+                    </button>
+                </form>
+
+                <p className="mt-8 text-center text-gray-500 text-sm">
+                    Already have an account? <Link href="/login" className="text-primary hover:underline">Sign In</Link>
+                </p>
+            </div>
+        </main>
+    );
+}
