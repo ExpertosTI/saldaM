@@ -51,7 +51,7 @@ export default function NewSplitSheetPage() {
 
     const updateCollaborator = (index: number, field: string, value: any) => {
         const newCollabs = [...formData.collaborators];
-        newCollabs[index] = { ...newCollabs[index], [field]: value };
+        newCollabs[index] = { ...newCollabs[index], [field]: value } as any;
         setFormData({ ...formData, collaborators: newCollabs });
     };
 
@@ -255,8 +255,8 @@ export default function NewSplitSheetPage() {
                             type="submit"
                             disabled={loading || totalPercentage !== 100}
                             className={`flex items-center gap-3 px-8 py-4 rounded-xl font-bold text-lg transition-all ${loading || totalPercentage !== 100
-                                    ? 'bg-neutral-800 text-gray-500 cursor-not-allowed'
-                                    : 'bg-primary text-black hover:scale-105 shadow-[0_0_30px_rgba(212,175,55,0.4)]'
+                                ? 'bg-neutral-800 text-gray-500 cursor-not-allowed'
+                                : 'bg-primary text-black hover:scale-105 shadow-[0_0_30px_rgba(212,175,55,0.4)]'
                                 }`}
                         >
                             <Save className="w-5 h-5" />
