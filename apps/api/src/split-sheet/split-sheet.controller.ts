@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Body, Param, Res } from '@nestjs/common';
-import { Response } from 'express';
+import type { Response } from 'express';
 import { SplitSheetService } from './split-sheet.service';
 
 @Controller('split-sheets')
