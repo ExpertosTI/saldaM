@@ -4,12 +4,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SplitSheet } from './entities/split-sheet.entity';
 import { User } from '../user/entities/user.entity';
+import { SignatureService } from '../signature/signature.service';
 
 @Injectable()
 export class SplitSheetService {
     constructor(
         @InjectRepository(SplitSheet)
         private splitSheetRepository: Repository<SplitSheet>,
+        private signatureService: SignatureService,
     ) { }
 
     async create(createSplitSheetDto: any) {
@@ -27,5 +29,13 @@ export class SplitSheetService {
 
     findOne(id: string) {
         return this.splitSheetRepository.findOne({ where: { id }, relations: ['collaborators'] });
+    }
+
+    async downloadPdf(id: string): Promise<Buffer> {
+        const splitSheet = await this.findOne(id);
+        if (!splitSheet) {
+            throw new Error('Split Sheet not found');
+        }
+        return this.signatureService.generateSplitSheetPdf(splitSheet);
     }
 }
