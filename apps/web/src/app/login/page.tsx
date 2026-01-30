@@ -29,7 +29,7 @@ export default function LoginPage() {
 
                 <div className="mt-6 flex flex-col gap-3">
                     <button
-                        onClick={() => window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'https://api.saldanamusic.com'}/auth/google`}
+                        onClick={() => window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'https://app.saldanamusic.com/api'}/auth/google`}
                         className="w-full flex items-center justify-center gap-3 px-6 py-3 rounded-xl bg-white text-black font-semibold hover:bg-gray-100 transition-colors"
                     >
                         <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />

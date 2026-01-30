@@ -65,7 +65,7 @@ export default function NewSplitSheetPage() {
         try {
             // Note: This logic assumes an API endpoint exists.
             // For MVP, we might mock or ensure the backend is ready.
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.saldanamusic.com'}/split-sheets`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://app.saldanamusic.com/api'}/split-sheets`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
