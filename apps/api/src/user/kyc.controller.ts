@@ -22,7 +22,7 @@ export class KycController {
     }))
     uploadFile(@UploadedFiles() files: Array<Express.Multer.File>, @Body() body: any) {
         // In a real app, we associate this with the logged-in user and update their User entity keys.
-        const response = [];
+        const response: any[] = [];
         files.forEach(file => {
             response.push({
                 originalName: file.originalname,
