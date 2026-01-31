@@ -4,11 +4,12 @@ import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 export default async function DashboardLayout({
     children,
-    params: { locale }
+    params
 }: {
     children: React.ReactNode;
-    params: { locale: string };
+    params: Promise<{ locale: string }>;
 }) {
+    const { locale } = await params;
     const t = await getTranslations('Dashboard.nav');
 
     return (
