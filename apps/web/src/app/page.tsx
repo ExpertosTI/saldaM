@@ -33,7 +33,7 @@ export default function Home() {
                 </div>
 
                 <h1 className="text-5xl md:text-7xl font-bold tracking-tighter mb-6 bg-clip-text text-transparent bg-gradient-to-b from-white to-white/60 max-w-4xl">
-                    Gestiona tu legado musical <br /> sin fricción legal.
+                    Impulsa tu carrera musical <br /> con tecnología de vanguardia.
                 </h1>
 
                 <p className="text-lg md:text-xl text-gray-400 max-w-2xl mb-12 leading-relaxed">

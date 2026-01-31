@@ -93,7 +93,7 @@ services:
         condition: on-failure
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.saldana-web.rule=Host(`app.saldanamusic.com`)"
+        - "traefik.http.routers.saldana-web.rule=Host(`app.saldanamusic.com`) || Host(`saldanamusic.com`)"
         - "traefik.http.routers.saldana-web.entrypoints=websecure"
         - "traefik.http.routers.saldana-web.tls=true"
         - "traefik.http.routers.saldana-web.tls.certresolver=letsencryptresolver"
