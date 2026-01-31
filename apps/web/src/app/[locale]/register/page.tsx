@@ -41,13 +41,49 @@ export default function RegisterPage() {
         <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-background">
             <div className="w-full max-w-lg p-8 glass-panel rounded-2xl shadow-2xl relative overflow-hidden">
                 {/* Logo & Decorative Gold Glow */}
-                <div className="flex flex-col items-center mb-6">
+                <Link href="/" className="flex flex-col items-center mb-6 hover:scale-105 transition-transform cursor-pointer">
                     <img src="/logo.svg" alt="Saldaña Music Logo" className="h-16 w-auto drop-shadow-[0_0_10px_rgba(212,175,55,0.4)] mb-4" />
                     <div className="w-24 h-1 bg-primary shadow-[0_0_30px_2px_rgba(212,175,55,0.6)]"></div>
-                </div>
+                </Link>
 
                 <h2 className="text-3xl font-bold text-center text-primary mb-2 tracking-wider uppercase">JOIN THE ROSTER</h2>
                 <p className="text-center text-gray-400 mb-8 text-sm">Professional Access for Music Creators</p>
+
+                <div className="mb-6 flex flex-col gap-3">
+                    <button
+                        onClick={() => {
+                            const width = 500;
+                            const height = 600;
+                            const left = window.screen.width / 2 - width / 2;
+                            const top = window.screen.height / 2 - height / 2;
+
+                            const popup = window.open(
+                                `${process.env.NEXT_PUBLIC_API_URL || 'https://app.saldanamusic.com/api'}/auth/google`,
+                                'Google_Auth',
+                                `width=${width},height=${height},top=${top},left=${left},toolbar=no,menubar=no`
+                            );
+
+                            const handleMessage = (event: MessageEvent) => {
+                                if (event.data?.token) {
+                                    popup?.close();
+                                    router.push('/dashboard');
+                                    window.removeEventListener('message', handleMessage);
+                                }
+                            };
+                            window.addEventListener('message', handleMessage);
+                        }}
+                        className="w-full flex items-center justify-center gap-3 px-6 py-3 rounded-xl bg-white text-black font-semibold hover:bg-gray-100 transition-colors"
+                    >
+                        <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
+                        Sign up with Google
+                    </button>
+
+                    <div className="relative flex py-2 items-center">
+                        <div className="flex-grow border-t border-neutral-700"></div>
+                        <span className="flex-shrink mx-4 text-gray-500 text-xs">OR REGISTER WITH EMAIL</span>
+                        <div className="flex-grow border-t border-neutral-700"></div>
+                    </div>
+                </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">

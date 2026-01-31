@@ -20,10 +20,10 @@ export default function LoginPage() {
         <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-background">
             <div className="w-full max-w-md p-8 glass-panel rounded-2xl shadow-2xl relative overflow-hidden">
                 {/* Logo & Decorative Gold Glow */}
-                <div className="flex flex-col items-center mb-8">
+                <Link href="/" className="flex flex-col items-center mb-8 hover:scale-105 transition-transform cursor-pointer">
                     <img src="/logo.svg" alt="Saldaña Music Logo" className="h-16 w-auto drop-shadow-[0_0_10px_rgba(212,175,55,0.4)] mb-4" />
                     <div className="w-24 h-1 bg-primary shadow-[0_0_30px_2px_rgba(212,175,55,0.6)]"></div>
-                </div>
+                </Link>
 
                 <h2 className="text-3xl font-bold text-center text-primary mb-8 tracking-wider uppercase">MEMBER ACCESS</h2>
 
