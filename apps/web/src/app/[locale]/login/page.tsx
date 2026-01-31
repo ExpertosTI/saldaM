@@ -29,7 +29,31 @@ export default function LoginPage() {
 
                 <div className="mt-6 flex flex-col gap-3">
                     <button
-                        onClick={() => window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'https://app.saldanamusic.com/api'}/auth/google`}
+                        onClick={() => {
+                            const width = 500;
+                            const height = 600;
+                            const left = window.screen.width / 2 - width / 2;
+                            const top = window.screen.height / 2 - height / 2;
+
+                            const popup = window.open(
+                                `${process.env.NEXT_PUBLIC_API_URL || 'https://app.saldanamusic.com/api'}/auth/google`,
+                                'Google_Auth',
+                                `width=${width},height=${height},top=${top},left=${left},toolbar=no,menubar=no`
+                            );
+
+                            const handleMessage = (event: MessageEvent) => {
+                                // Add security check for origin if needed, e.g. event.origin === 'https://app.saldanamusic.com'
+                                if (event.data?.token) {
+                                    // Handle successful login
+                                    // localStorage.setItem('token', event.data.token); (if token is passed via message)
+                                    // For now, assume cookie is set and just redirect
+                                    popup?.close();
+                                    router.push('/dashboard');
+                                    window.removeEventListener('message', handleMessage);
+                                }
+                            };
+                            window.addEventListener('message', handleMessage);
+                        }}
                         className="w-full flex items-center justify-center gap-3 px-6 py-3 rounded-xl bg-white text-black font-semibold hover:bg-gray-100 transition-colors"
                     >
                         <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />

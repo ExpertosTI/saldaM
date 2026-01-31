@@ -1,0 +1,33 @@
+{
+    "Landing": {
+        "heroTitle": "Tu Legado Musical, Protegido Inmutablemente.",
+        "heroSubtitle": "La primera plataforma de gestión de derechos impulsada por Blockchain para la era moderna. Registra, Gestiona y Monetiza.",
+        "ctaStart": "Comenzar Ahora",
+        "ctaDemo": "Crear Cuenta Gratis",
+        "navHome": "Inicio",
+        "navFeatures": "Características",
+        "navPricing": "Precios",
+        "navLogin": "Ingresar"
+    },
+    "Dashboard": {
+        "nav": {
+            "dashboard": "Panel Principal",
+            "splitSheets": "Mis Split Sheets",
+            "collaborators": "Colaboradores",
+            "royalties": "Regalías",
+            "settings": "Configuración"
+        },
+        "header": {
+            "myCatalog": "Mi Catálogo",
+            "manageRights": "Gestiona tus derechos y acuerdos."
+        }
+    },
+    "Common": {
+        "loading": "Cargando...",
+        "error": "Ocurrió un error",
+        "copyright": "Saldaña Music © 2026",
+        "privacy": "Privacidad",
+        "terms": "Términos",
+        "support": "Soporte"
+    }
+}

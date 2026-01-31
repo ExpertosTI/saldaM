@@ -1,0 +1,33 @@
+{
+    "Landing": {
+        "heroTitle": "Your Musical Legacy, Immutably Protected.",
+        "heroSubtitle": "The first Blockchain-powered rights management platform for the modern era. Register, Manage, and Monetize.",
+        "ctaStart": "Start Now",
+        "ctaDemo": "Create Free Account",
+        "navHome": "Home",
+        "navFeatures": "Features",
+        "navPricing": "Pricing",
+        "navLogin": "Login"
+    },
+    "Dashboard": {
+        "nav": {
+            "dashboard": "Dashboard",
+            "splitSheets": "My Split Sheets",
+            "collaborators": "Collaborators",
+            "royalties": "Royalties",
+            "settings": "Settings"
+        },
+        "header": {
+            "myCatalog": "My Catalog",
+            "manageRights": "Manage your tracking rights and agreements."
+        }
+    },
+    "Common": {
+        "loading": "Loading...",
+        "error": "An error occurred",
+        "copyright": "Saldaña Music © 2026",
+        "privacy": "Privacy",
+        "terms": "Terms",
+        "support": "Support"
+    }
+}

@@ -72,6 +72,7 @@ services:
         - "traefik.http.routers.saldana-api.tls.certresolver=letsencryptresolver"
         - "traefik.http.services.saldana-api.loadbalancer.server.port=3000"
         - "traefik.docker.network=RenaceNet"
+        - "traefik.http.routers.saldana-api.priority=100"
 
   # -------------------------------------------------------------------------
   # FRONTEND WEB (Next.js)

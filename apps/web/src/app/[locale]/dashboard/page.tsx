@@ -1,14 +1,23 @@
-export default function DashboardHome() {
+import { getTranslations } from 'next-intl/server';
+import Link from 'next/link';
+
+export default async function DashboardHome({
+    params: { locale }
+}: {
+    params: { locale: string };
+}) {
+    const t = await getTranslations('Dashboard.header');
+
     return (
         <div>
             <header className="flex justify-between items-center mb-12">
                 <div>
-                    <h1 className="text-4xl font-bold text-white mb-2">My Catalog</h1>
-                    <p className="text-gray-400">Manage your tracking rights and agreements.</p>
+                    <h1 className="text-4xl font-bold text-white mb-2">{t('myCatalog')}</h1>
+                    <p className="text-gray-400">{t('manageRights')}</p>
                 </div>
-                <a href="/dashboard/create" className="px-6 py-3 bg-primary text-black font-bold rounded-lg hover:brightness-110 transition-all shadow-[0_0_20px_rgba(212,175,55,0.3)]">
+                <Link href={`/${locale}/dashboard/create`} className="px-6 py-3 bg-primary text-black font-bold rounded-lg hover:brightness-110 transition-all shadow-[0_0_20px_rgba(212,175,55,0.3)]">
                     + New Split Sheet
-                </a>
+                </Link>
             </header>
 
             {/* Stats Grid - Connected to Real Data */}
@@ -33,7 +42,7 @@ export default function DashboardHome() {
                 {/* Real data map would go here. Empty state for Production Build. */}
                 <div className="text-center py-12 glass-panel rounded-lg">
                     <p className="text-gray-500">No split sheets created yet.</p>
-                    <a href="/dashboard/create" className="text-primary hover:underline mt-2 inline-block">Start your first Agreement</a>
+                    <Link href={`/${locale}/dashboard/create`} className="text-primary hover:underline mt-2 inline-block">Start your first Agreement</Link>
                 </div>
             </div>
         </div>

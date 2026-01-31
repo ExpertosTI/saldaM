@@ -1,16 +1,16 @@
+import createNextIntlPlugin from 'next-intl/plugin';
+
+const withNextIntl = createNextIntlPlugin('./src/i18n.ts');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     transpilePackages: ["@repo/ui"],
     output: "standalone",
-    poweredByHeader: false, // Security: Remove X-Powered-By: Next.js
+    poweredByHeader: false,
     reactStrictMode: true,
-    // Optimize for low-resource server
     images: {
-        unoptimized: true, // Reduce server load for image optimization (let client handle it or CDN)
+        unoptimized: true,
     },
-    experimental: {
-        // optimizeCss: true, // Needs peer dep critical
-    }
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);
