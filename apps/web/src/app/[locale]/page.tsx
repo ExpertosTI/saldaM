@@ -1,6 +1,10 @@
 import Link from "next/link";
 
-export default function Home() {
+export default async function Home({
+    params: { locale }
+}: {
+    params: { locale: string };
+}) {
     return (
         <main className="flex min-h-screen flex-col items-center relative overflow-hidden bg-[#050505] text-white selection:bg-primary/30">
             {/* Ambient Background */}
@@ -26,10 +30,10 @@ export default function Home() {
                     </div>
 
                     <div className="flex items-center gap-6">
-                        <Link href="/login" className="hidden md:block text-sm text-gray-400 hover:text-white transition-colors">
+                        <Link href={`/${locale}/login`} className="hidden md:block text-sm text-gray-400 hover:text-white transition-colors">
                             Iniciar Sesión
                         </Link>
-                        <Link href="/register" className="group relative px-6 py-2.5 rounded-full bg-white/5 border border-white/10 overflow-hidden transition-all duration-300 hover:border-primary/50 hover:bg-white/10">
+                        <Link href={`/${locale}/register`} className="group relative px-6 py-2.5 rounded-full bg-white/5 border border-white/10 overflow-hidden transition-all duration-300 hover:border-primary/50 hover:bg-white/10">
                             <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/20 to-primary/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
                             <span className="relative text-sm font-medium text-white group-hover:text-primary transition-colors">
                                 Unirse al Roster
@@ -63,13 +67,10 @@ export default function Home() {
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-4 w-full justify-center animate-fade-in-up delay-300">
-                    <Link href="/register" className="group relative px-8 py-4 rounded-full bg-white text-black font-bold text-lg overflow-hidden hover:scale-105 transition-transform duration-300">
+                    <Link href={`/${locale}/register`} className="group relative px-8 py-4 rounded-full bg-white text-black font-bold text-lg overflow-hidden hover:scale-105 transition-transform duration-300">
                         <span className="relative z-10">Comenzar Ahora</span>
                         <div className="absolute inset-0 bg-gradient-to-r from-primary via-white to-primary opacity-0 group-hover:opacity-20 transition-opacity" />
                     </Link>
-                    <button className="px-8 py-4 rounded-full bg-white/5 border border-white/10 text-white font-medium text-lg hover:bg-white/10 hover:border-white/20 transition-all backdrop-blur-md">
-                        Ver Demo Interactivo
-                    </button>
                 </div>
 
                 {/* Dashboard Preview / Trusted By */}
@@ -169,9 +170,9 @@ export default function Home() {
                         <span className="text-xs tracking-widest uppercase">Saldaña Music © 2026</span>
                     </div>
                     <div className="flex gap-8 text-sm text-gray-500">
-                        <Link href="/privacy" className="hover:text-primary transition-colors">Privacidad</Link>
-                        <Link href="/terms" className="hover:text-primary transition-colors">Términos</Link>
-                        <Link href="/support" className="hover:text-primary transition-colors">Soporte</Link>
+                        <Link href={`/${locale}/privacy`} className="hover:text-primary transition-colors">Privacidad</Link>
+                        <Link href={`/${locale}/terms`} className="hover:text-primary transition-colors">Términos</Link>
+                        <Link href={`/${locale}/support`} className="hover:text-primary transition-colors">Soporte</Link>
                     </div>
                 </div>
             </footer>
