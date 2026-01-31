@@ -29,14 +29,21 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
         profile: any,
         done: VerifyCallback,
     ): Promise<any> {
-        const { name, emails, photos } = profile;
-        const user = await this.authService.validateGoogleUser({
-            email: emails[0].value,
-            firstName: name.givenName,
-            lastName: name.familyName,
-            picture: photos[0].value,
-            accessToken,
-        });
-        done(null, user);
+        try {
+            console.log('Google Profile Received:', JSON.stringify(profile)); // Debug Log
+            const { name, emails, photos } = profile;
+
+            const user = await this.authService.validateGoogleUser({
+                email: emails?.[0]?.value,
+                firstName: name?.givenName || 'User',
+                lastName: name?.familyName || '',
+                picture: photos?.[0]?.value || null,
+                accessToken,
+            });
+            done(null, user);
+        } catch (err) {
+            console.error('Google Strategy Error:', err);
+            done(err, null);
+        }
     }
 }
