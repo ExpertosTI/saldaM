@@ -1,10 +1,11 @@
 import Link from "next/link";
 
 export default async function Home({
-    params: { locale }
+    params
 }: {
-    params: { locale: string };
+    params: Promise<{ locale: string }>;
 }) {
+    const { locale } = await params;
     return (
         <main className="flex min-h-screen flex-col items-center relative overflow-hidden bg-[#050505] text-white selection:bg-primary/30">
             {/* Ambient Background */}

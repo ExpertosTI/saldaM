@@ -2,10 +2,11 @@ import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 
 export default async function DashboardHome({
-    params: { locale }
+    params
 }: {
-    params: { locale: string };
+    params: Promise<{ locale: string }>;
 }) {
+    const { locale } = await params;
     const t = await getTranslations('Dashboard.header');
 
     return (
