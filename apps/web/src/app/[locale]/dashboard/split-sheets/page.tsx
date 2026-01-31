@@ -1,4 +1,9 @@
-export default function SplitSheetsPage() {
+import Link from 'next/link';
+import { getLocale } from 'next-intl/server';
+
+export default async function SplitSheetsPage() {
+    const locale = await getLocale();
+
     return (
         <div>
             <header className="flex justify-between items-center mb-8">
@@ -6,9 +11,9 @@ export default function SplitSheetsPage() {
                     <h1 className="text-3xl font-bold text-white mb-2">My Split Sheets</h1>
                     <p className="text-gray-400">View and manage your registered agreements.</p>
                 </div>
-                <a href="/dashboard/create" className="px-5 py-2 bg-primary text-black font-bold rounded-lg hover:brightness-110 transition-all">
+                <Link href={`/${locale}/dashboard/create`} className="px-5 py-2 bg-primary text-black font-bold rounded-lg hover:brightness-110 transition-all">
                     + Create New
-                </a>
+                </Link>
             </header>
 
             <div className="glass-panel overflow-hidden rounded-xl">
@@ -31,7 +36,7 @@ export default function SplitSheetsPage() {
                                     </div>
                                     <p className="text-white font-medium">No split sheets found</p>
                                     <p className="text-sm text-gray-500 mb-4">Start by creating your first agreement.</p>
-                                    <a href="/dashboard/create" className="text-primary hover:underline text-xs">Create Split Sheet &rarr;</a>
+                                    <Link href={`/${locale}/dashboard/create`} className="text-primary hover:underline text-xs">Create Split Sheet &rarr;</Link>
                                 </div>
                             </td>
                         </tr>
