@@ -11,8 +11,9 @@ export const routing = defineRouting({
 
 export default createMiddleware(routing);
 
-// Match all pathnames except for
-// - … if they start with `/api`, `/_next` or `/_vercel`
-// - … the ones containing a dot (e.g. `favicon.ico`)
-matcher: ['/((?!api|_next|_vercel|.*\\..*).*)']
+export const config = {
+    // Match all pathnames except for
+    // - … if they start with `/api`, `/_next` or `/_vercel`
+    // - … the ones containing a dot (e.g. `favicon.ico`)
+    matcher: ['/((?!api|_next|_vercel|.*\\..*).*)']
 };
