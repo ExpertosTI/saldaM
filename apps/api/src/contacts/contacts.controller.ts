@@ -1,4 +1,5 @@
-import { Controller, Post, Body, Get, UseGuards, Request, Param } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards, Req } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { ContactsService } from './contacts.service';
 
 @Controller('contacts')
@@ -6,13 +7,14 @@ export class ContactsController {
     constructor(private readonly contactsService: ContactsService) { }
 
     @Post()
-    create(@Body() body: any) {
-        // Mock user for now
-        return this.contactsService.create(body, { id: body.userId } as any);
+    @UseGuards(AuthGuard('jwt'))
+    create(@Body() body: any, @Req() req: any) {
+        return this.contactsService.create(body, req.user);
     }
 
-    @Get('user/:userId')
-    findAll(@Param('userId') userId: string) {
-        return this.contactsService.findAll({ id: userId } as any);
+    @Get('mine')
+    @UseGuards(AuthGuard('jwt'))
+    findMine(@Req() req: any) {
+        return this.contactsService.findAll(req.user);
     }
 }

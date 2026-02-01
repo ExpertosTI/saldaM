@@ -1,27 +1,26 @@
-import { Controller, Post, Body, Get, UseGuards, Request, Param } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards, Req, Param } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { CatalogService } from './catalog.service';
-// Assuming AuthGuard is available or will be implemented. For now, placeholders.
-// In a real app, strict AuthGuards are required.
 
 @Controller('catalog')
 export class CatalogController {
     constructor(private readonly catalogService: CatalogService) { }
 
     @Post()
-    create(@Body() body: any) { // body: { title, type, upc, userId } - Simplified for demo
-        // Ideally use DTOs and decorators
-        // For now we assume the user is passed or we stub it
-        // In production, @Request() req with JWT payload is used
-        return this.catalogService.createCatalog(body.title, { id: body.userId } as any, body.type, body.upc);
+    @UseGuards(AuthGuard('jwt'))
+    create(@Body() body: any, @Req() req: any) {
+        return this.catalogService.createCatalog(body.title, req.user, body.type, body.upc);
     }
 
     @Post(':id/track')
+    @UseGuards(AuthGuard('jwt'))
     addTrack(@Param('id') id: string, @Body() body: any) {
         return this.catalogService.addTrackToCatalog(id, body.title, body.isrc);
     }
 
-    @Get('user/:userId')
-    findAll(@Param('userId') userId: string) {
-        return this.catalogService.findAllByUser(userId);
+    @Get('mine')
+    @UseGuards(AuthGuard('jwt'))
+    findMine(@Req() req: any) {
+        return this.catalogService.findAllByUser(req.user.id);
     }
 }

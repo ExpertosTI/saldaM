@@ -5,11 +5,16 @@ import { SplitSheetController } from './split-sheet.controller';
 import { SplitSheet } from './entities/split-sheet.entity';
 import { Collaborator } from './entities/collaborator.entity';
 import { SignatureModule } from '../signature/signature.module';
-
 import { AuditLogModule } from '../audit-log/audit-log.module';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([SplitSheet, Collaborator]), SignatureModule, AuditLogModule],
+    imports: [
+        TypeOrmModule.forFeature([SplitSheet, Collaborator]),
+        SignatureModule,
+        AuditLogModule,
+        MailModule,
+    ],
     controllers: [SplitSheetController],
     providers: [SplitSheetService],
 })

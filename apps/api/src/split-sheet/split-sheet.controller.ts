@@ -8,13 +8,15 @@ export class SplitSheetController {
     constructor(private readonly splitSheetService: SplitSheetService) { }
 
     @Post()
-    create(@Body() createSplitSheetDto: any) {
-        return this.splitSheetService.create(createSplitSheetDto);
+    @UseGuards(AuthGuard('jwt'))
+    create(@Body() createSplitSheetDto: any, @Req() req: any) {
+        return this.splitSheetService.create(createSplitSheetDto, req.user);
     }
 
     @Get()
-    findAll() {
-        return this.splitSheetService.findAll();
+    @UseGuards(AuthGuard('jwt'))
+    findAll(@Req() req: any) {
+        return this.splitSheetService.findAllByUser(req.user.id);
     }
 
     @Get('stats')
@@ -23,8 +25,9 @@ export class SplitSheetController {
     }
 
     @Get(':id')
-    findOne(@Param('id') id: string) {
-        return this.splitSheetService.findOne(id);
+    @UseGuards(AuthGuard('jwt'))
+    findOne(@Param('id') id: string, @Req() req: any) {
+        return this.splitSheetService.findOne(id, req.user);
     }
 
     @Get(':id/pdf')
