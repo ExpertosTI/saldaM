@@ -24,4 +24,42 @@ export class ContactsService {
             where: { owner: { id: user.id } },
         });
     }
+
+    async findOne(id: string, userId: string) {
+        const contact = await this.contactsRepository.findOne({
+            where: { id },
+            relations: ['owner'],
+        });
+        if (!contact) throw new Error('Contact not found');
+        if (contact.owner?.id !== userId) {
+            throw new Error('Unauthorized: You do not own this contact');
+        }
+        return contact;
+    }
+
+    async update(id: string, userId: string, data: any) {
+        const contact = await this.contactsRepository.findOne({
+            where: { id },
+            relations: ['owner'],
+        });
+        if (!contact) throw new Error('Contact not found');
+        if (contact.owner?.id !== userId) {
+            throw new Error('Unauthorized: You do not own this contact');
+        }
+        Object.assign(contact, data);
+        return this.contactsRepository.save(contact);
+    }
+
+    async delete(id: string, userId: string) {
+        const contact = await this.contactsRepository.findOne({
+            where: { id },
+            relations: ['owner'],
+        });
+        if (!contact) throw new Error('Contact not found');
+        if (contact.owner?.id !== userId) {
+            throw new Error('Unauthorized: You do not own this contact');
+        }
+        await this.contactsRepository.remove(contact);
+        return { message: 'Contact deleted successfully' };
+    }
 }

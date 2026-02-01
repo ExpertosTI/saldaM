@@ -209,13 +209,68 @@ export class SplitSheetService {
 
     async getStats() {
         const total = await this.splitSheetRepository.count();
-        // Assuming there will be a status 'PENDING_SIGNATURES' or similar
         const pending = await this.splitSheetRepository.count({ where: { status: SplitSheetStatus.PENDING_SIGNATURES } });
-        // Royalties calculation would go here if we had payment data, for now mock
         return {
             totalSongs: total,
             pendingSignatures: pending,
             estimatedRoyalties: 0,
         };
+    }
+
+    async deleteSplitSheet(id: string, user: any) {
+        const splitSheet = await this.findOne(id);
+        if (!splitSheet) throw new Error('Split Sheet not found');
+        if (splitSheet.owner?.id !== user.id) {
+            throw new Error('Only owner can delete this split sheet');
+        }
+        if (splitSheet.status === SplitSheetStatus.COMPLETED) {
+            throw new Error('Cannot delete a completed split sheet');
+        }
+        await this.auditLogService.log('SPLIT_SHEET_DELETED', `User ${user.email} deleted split sheet ${id}`, user);
+        await this.splitSheetRepository.remove(splitSheet);
+        return { message: 'Split sheet deleted successfully' };
+    }
+
+    async addCollaborator(id: string, user: any, collaboratorData: { email: string; legalName: string; role: CollaboratorRole; percentage: number }) {
+        const splitSheet = await this.findOne(id);
+        if (!splitSheet) throw new Error('Split Sheet not found');
+        if (splitSheet.owner?.id !== user.id) {
+            throw new Error('Only owner can add collaborators');
+        }
+        if (splitSheet.status !== SplitSheetStatus.DRAFT) {
+            throw new Error('Cannot modify collaborators after signatures started');
+        }
+        const exists = splitSheet.collaborators.some(c => c.email === collaboratorData.email);
+        if (exists) throw new Error('Collaborator already exists');
+
+        const newCollab = new Collaborator();
+        newCollab.email = collaboratorData.email;
+        newCollab.legalName = collaboratorData.legalName;
+        newCollab.role = collaboratorData.role;
+        newCollab.percentage = collaboratorData.percentage;
+        newCollab.splitSheet = splitSheet;
+
+        splitSheet.collaborators.push(newCollab);
+        await this.splitSheetRepository.save(splitSheet);
+        await this.auditLogService.log('COLLABORATOR_ADDED', `Collaborator ${collaboratorData.email} added to split sheet ${id}`, user);
+        return splitSheet;
+    }
+
+    async removeCollaborator(id: string, user: any, collaboratorEmail: string) {
+        const splitSheet = await this.findOne(id);
+        if (!splitSheet) throw new Error('Split Sheet not found');
+        if (splitSheet.owner?.id !== user.id) {
+            throw new Error('Only owner can remove collaborators');
+        }
+        if (splitSheet.status !== SplitSheetStatus.DRAFT) {
+            throw new Error('Cannot modify collaborators after signatures started');
+        }
+        const collabIndex = splitSheet.collaborators.findIndex(c => c.email === collaboratorEmail);
+        if (collabIndex === -1) throw new Error('Collaborator not found');
+
+        splitSheet.collaborators.splice(collabIndex, 1);
+        await this.splitSheetRepository.save(splitSheet);
+        await this.auditLogService.log('COLLABORATOR_REMOVED', `Collaborator ${collaboratorEmail} removed from split sheet ${id}`, user);
+        return { message: 'Collaborator removed successfully' };
     }
 }

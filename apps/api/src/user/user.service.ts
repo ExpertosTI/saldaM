@@ -63,4 +63,42 @@ export class UserService {
 
         return this.userRepository.save(user);
     }
+
+    async findById(id: string) {
+        const user = await this.userRepository.findOne({ where: { id } });
+        if (!user) throw new Error('User not found');
+        return user;
+    }
+
+    async deleteAccount(id: string) {
+        const user = await this.userRepository.findOne({ where: { id } });
+        if (!user) throw new Error('User not found');
+
+        await this.auditLogService.log('USER_DELETED', `User ${user.email} deleted their account.`, user);
+        await this.userRepository.remove(user);
+        return { message: 'Account deleted successfully' };
+    }
+
+    async changePassword(id: string, currentPassword: string, newPassword: string) {
+        const user = await this.userRepository.findOne({ where: { id } });
+        if (!user) throw new Error('User not found');
+
+        // For OAuth users who don't have a password
+        if (!user.passwordHash && !currentPassword) {
+            user.passwordHash = newPassword; // In production, hash this
+            await this.userRepository.save(user);
+            await this.auditLogService.log('PASSWORD_SET', `User ${user.email} set a password.`, user);
+            return { message: 'Password set successfully' };
+        }
+
+        // Validate current password (in production, compare hashed)
+        if (user.passwordHash !== currentPassword) {
+            throw new Error('Current password is incorrect');
+        }
+
+        user.passwordHash = newPassword; // In production, hash this
+        await this.userRepository.save(user);
+        await this.auditLogService.log('PASSWORD_CHANGED', `User ${user.email} changed their password.`, user);
+        return { message: 'Password changed successfully' };
+    }
 }

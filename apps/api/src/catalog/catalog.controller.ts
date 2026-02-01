@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, UseGuards, Req, Param } from '@nestjs/common';
+import { Controller, Post, Body, Get, Delete, Patch, UseGuards, Req, Param } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { CatalogService } from './catalog.service';
 
@@ -22,5 +22,23 @@ export class CatalogController {
     @UseGuards(AuthGuard('jwt'))
     findMine(@Req() req: any) {
         return this.catalogService.findAllByUser(req.user.id);
+    }
+
+    @Get(':id')
+    @UseGuards(AuthGuard('jwt'))
+    findOne(@Param('id') id: string, @Req() req: any) {
+        return this.catalogService.findOne(id, req.user.id);
+    }
+
+    @Delete(':id')
+    @UseGuards(AuthGuard('jwt'))
+    deleteCatalog(@Param('id') id: string, @Req() req: any) {
+        return this.catalogService.deleteCatalog(id, req.user.id);
+    }
+
+    @Patch('track/:trackId')
+    @UseGuards(AuthGuard('jwt'))
+    updateTrack(@Param('trackId') trackId: string, @Req() req: any, @Body() body: { title?: string; isrc?: string }) {
+        return this.catalogService.updateTrack(trackId, req.user.id, body);
     }
 }

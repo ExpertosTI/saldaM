@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Res, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, Param, Res, UseGuards, Req } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import type { Response } from 'express';
 import { SplitSheetService } from './split-sheet.service';
@@ -65,5 +65,23 @@ export class SplitSheetController {
     @UseGuards(AuthGuard('jwt'))
     async sign(@Param('id') id: string, @Req() req: any) {
         return this.splitSheetService.sign(id, req.user);
+    }
+
+    @Delete(':id')
+    @UseGuards(AuthGuard('jwt'))
+    async deleteSplitSheet(@Param('id') id: string, @Req() req: any) {
+        return this.splitSheetService.deleteSplitSheet(id, req.user);
+    }
+
+    @Post(':id/collaborator')
+    @UseGuards(AuthGuard('jwt'))
+    async addCollaborator(@Param('id') id: string, @Req() req: any, @Body() body: { email: string; legalName: string; role: string; percentage: number }) {
+        return this.splitSheetService.addCollaborator(id, req.user, body as any);
+    }
+
+    @Delete(':id/collaborator/:email')
+    @UseGuards(AuthGuard('jwt'))
+    async removeCollaborator(@Param('id') id: string, @Param('email') email: string, @Req() req: any) {
+        return this.splitSheetService.removeCollaborator(id, req.user, email);
     }
 }
