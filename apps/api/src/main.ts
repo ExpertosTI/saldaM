@@ -12,9 +12,14 @@ async function bootstrap() {
   app.use(helmet());
 
   // Enable Trust Proxy for Load Balancers (Traefik/Nginx)
-  // This is crucial for Google OAuth to detect HTTPS protocol correctly
-  const expressApp = app.getHttpAdapter().getInstance();
-  expressApp.set('trust proxy', 1);
+  try {
+    const expressApp = app.getHttpAdapter().getInstance();
+    if (expressApp && typeof expressApp.set === 'function') {
+      expressApp.set('trust proxy', 1);
+    }
+  } catch (error) {
+    console.warn('Failed to set trust proxy:', error);
+  }
 
   // 2. CORS (Allow Web/Mobile clients) // TODO: Restrict to specific domains in prod
   app.enableCors();
