@@ -20,7 +20,9 @@ export default async function DashboardLayout({
     if (token) {
         try {
             // Decode payload to get email
-            const payload = JSON.parse(atob(token.split('.')[1]));
+            const parts = token.split('.');
+            if (parts.length < 2) throw new Error('Invalid token');
+            const payload = JSON.parse(atob(parts[1]!));
             const email = payload.email;
 
             if (email) {

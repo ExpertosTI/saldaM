@@ -24,26 +24,28 @@
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
+    "@nestjs/jwt": "^11.0.0",
     "@nestjs/mapped-types": "^2.0.0",
     "@nestjs/passport": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",
+    "@nestjs/swagger": "^11.0.0",
     "@nestjs/throttler": "^6.3.0",
     "@nestjs/typeorm": "^11.0.0",
     "@types/nodemailer": "^6.4.17",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.3",
+    "compression": "^1.7.4",
+    "helmet": "^8.0.0",
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^6.9.16",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
+    "passport-jwt": "^4.0.1",
     "pdf-lib": "^1.17.1",
     "pg": "^8.13.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "typeorm": "^0.3.28",
-    "@nestjs/swagger": "^11.0.0",
-    "helmet": "^8.0.0",
-    "compression": "^1.7.4"
+    "typeorm": "^0.3.28"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
@@ -70,7 +72,8 @@
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.20.0",
-    "@types/compression": "^1.7.5"
+    "@types/compression": "^1.7.5",
+    "@types/passport-jwt": "^4.0.1"
   },
   "jest": {
     "moduleFileExtensions": [

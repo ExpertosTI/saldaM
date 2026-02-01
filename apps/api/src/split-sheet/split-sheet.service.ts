@@ -111,12 +111,12 @@ export class SplitSheetService {
         return { message: 'Signed successfully', status: splitSheet.status };
     }
 
-    async create(createSplitSheetDto: any, user: any) {
+    async create(createSplitSheetDto: any, user: any): Promise<SplitSheet> {
         const splitSheet = this.splitSheetRepository.create({
             ...createSplitSheetDto,
             owner: user,
         });
-        const saved = await this.splitSheetRepository.save(splitSheet);
+        const saved = await this.splitSheetRepository.save(splitSheet) as unknown as SplitSheet;
         await this.auditLogService.log('SPLIT_SHEET_CREATED', `User ${user.email} created split sheet ${saved.id}`);
         return saved;
     }

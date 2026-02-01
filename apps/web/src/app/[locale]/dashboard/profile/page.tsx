@@ -2,9 +2,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 
-export default function ProfilePage({ params }: { params: { locale: string } }) {
+export default function ProfilePage() {
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',

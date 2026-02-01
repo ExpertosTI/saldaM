@@ -12,7 +12,7 @@ export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://app.sald
 export function getToken(): string | null {
     if (typeof document === 'undefined') return null;
     const match = document.cookie.match(/token=([^;]+)/);
-    return match ? match[1] : null;
+    return match?.[1] ?? null;
 }
 
 /**
@@ -36,7 +36,9 @@ export function removeToken(): void {
  */
 export function decodeToken(token: string): { sub?: string; email?: string; exp?: number } | null {
     try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
+        const parts = token.split('.');
+        if (parts.length < 2) return null;
+        const payload = JSON.parse(atob(parts[1]!));
         return payload;
     } catch {
         return null;

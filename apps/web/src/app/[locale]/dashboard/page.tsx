@@ -20,7 +20,9 @@ export default async function DashboardHome({
     let currentUserId = null;
     if (token) {
         try {
-            const payload = JSON.parse(atob(token.split('.')[1]));
+            const parts = token.split('.');
+            if (parts.length < 2) throw new Error('Invalid token');
+            const payload = JSON.parse(atob(parts[1]!));
             currentUserId = payload.sub || payload.id;
         } catch (e) { }
     }

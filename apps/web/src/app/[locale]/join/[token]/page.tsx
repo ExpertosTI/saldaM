@@ -2,11 +2,11 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { useState } from 'react';
 
-export default function JoinPage({ params }: { params: { locale: string; token: string } }) {
-    const t = useTranslations('Dashboard'); // Using Dashboard keys for now or common
+export default function JoinPage() {
+    const params = useParams<{ locale: string; token: string }>();
     const router = useRouter();
     const [status, setStatus] = useState<'idle' | 'joining' | 'success' | 'error'>('idle');
     const [message, setMessage] = useState('');
