@@ -1,13 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const router = useRouter();
+
+    const searchParams = useSearchParams();
+
+    useEffect(() => {
+        const token = searchParams.get('token');
+        const isNewUser = searchParams.get('isNewUser') === 'true';
+
+        if (token) {
+            // If we have a token and a window opener (we are a popup)
+            if (window.opener) {
+                // Send to any origin since we might be on app. subdomain talking to root domain
+                window.opener.postMessage({ token, isNewUser }, "*");
+                window.close();
+            } else {
+                // If we are not a popup (e.g. direct link), set cookie and go to dashboard
+                document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
+                router.push(isNewUser ? '/onboarding' : '/dashboard/profile');
+            }
+        }
+    }, [searchParams, router]);
 
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
@@ -15,6 +35,18 @@ export default function LoginPage() {
         console.log("Login attempt", email, password);
         router.push("/dashboard");
     };
+
+    // If handling callbacks, show loader only
+    if (searchParams.get('token')) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-black text-primary">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                    <p className="tracking-widest uppercase text-sm">Authenticating...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-background">
@@ -42,13 +74,19 @@ export default function LoginPage() {
                             );
 
                             const handleMessage = (event: MessageEvent) => {
-                                // Add security check for origin if needed, e.g. event.origin === 'https://app.saldanamusic.com'
+                                // Add security check for origin if needed
                                 if (event.data?.token) {
-                                    // Handle successful login
-                                    // localStorage.setItem('token', event.data.token); (if token is passed via message)
-                                    // For now, assume cookie is set and just redirect
+                                    // SAVE TOKEN COOKIE
+                                    document.cookie = `token=${event.data.token}; path=/; max-age=86400; SameSite=Lax`;
+
                                     popup?.close();
-                                    router.push('/dashboard');
+
+                                    if (event.data.isNewUser) {
+                                        router.push('/onboarding');
+                                    } else {
+                                        router.push('/dashboard/profile');
+                                    }
+
                                     window.removeEventListener('message', handleMessage);
                                 }
                             };

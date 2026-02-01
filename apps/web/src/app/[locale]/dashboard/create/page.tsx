@@ -88,15 +88,51 @@ export default function CreateSplitSheet() {
                 </button>
             </div>
 
-            <div className="flex justify-end gap-4">
-                <button className="px-6 py-3 text-gray-400 hover:text-white">Save Draft</button>
-                <button
-                    disabled={!isValid || !title}
-                    className="px-8 py-3 bg-primary disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold rounded-lg hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] transition-all"
-                >
-                    Generate Agreement
-                </button>
+    const handleGenerate = async () => {
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://app.saldanamusic.com/api'}/split-sheets`, {
+                method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            // Get token from cookie manually for client component if needed, or rely on browser sending it if httpOnly (but here it's JS accessible)
+            'Authorization': `Bearer ${document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1]}`
+                },
+            body: JSON.stringify({
+                title,
+                collaborators,
+                status: 'DRAFT'
+                })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+            alert('Split Sheet Created Successfully!');
+                // Redirect or refresh
+            } else {
+                alert('Failed to create Split Sheet');
+            }
+        } catch (error) {
+                console.error(error);
+            alert('Error creating agreement');
+        }
+    };
+
+            return (
+            <div className="max-w-4xl mx-auto">
+                <h1 className="text-3xl font-bold text-white mb-8">Create New Split Sheet</h1>
+// ... (rest of render remains similar, just updating button)
+                <div className="flex justify-end gap-4">
+                    <button className="px-6 py-3 text-gray-400 hover:text-white">Save Draft</button>
+                    <button
+                        onClick={handleGenerate}
+                        disabled={!isValid || !title}
+                        className="px-8 py-3 bg-primary disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold rounded-lg hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] transition-all"
+                    >
+                        Generate Agreement
+                    </button>
+                </div>
             </div>
+            );
         </div>
     );
 }

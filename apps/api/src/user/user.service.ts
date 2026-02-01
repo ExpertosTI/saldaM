@@ -47,4 +47,20 @@ export class UserService {
     async findOne(email: string) {
         return this.userRepository.findOne({ where: { email } });
     }
+
+    async updateProfile(id: string, data: any) {
+        const user = await this.userRepository.findOne({ where: { id } });
+        if (!user) throw new Error("User not found");
+
+        if (data.firstName) user.firstName = data.firstName;
+        if (data.lastName) user.lastName = data.lastName;
+        if (data.phone) user.phone = data.phone;
+        if (data.bio) user.bio = data.bio;
+        if (data.avatarUrl) user.avatarUrl = data.avatarUrl;
+        if (data.proAffiliation) user.proAffiliation = data.proAffiliation;
+        if (data.ipiNumber) user.ipiNumber = data.ipiNumber;
+        if (data.userType) user.userType = data.userType; // Allow updating userType (e.g. from onboarding)
+
+        return this.userRepository.save(user);
+    }
 }

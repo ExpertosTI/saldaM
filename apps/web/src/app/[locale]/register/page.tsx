@@ -65,8 +65,17 @@ export default function RegisterPage() {
 
                             const handleMessage = (event: MessageEvent) => {
                                 if (event.data?.token) {
+                                    // SAVE TOKEN COOKIE
+                                    document.cookie = `token=${event.data.token}; path=/; max-age=86400; SameSite=Lax`;
+
                                     popup?.close();
-                                    router.push('/dashboard');
+
+                                    if (event.data.isNewUser) {
+                                        router.push('/onboarding');
+                                    } else {
+                                        router.push('/dashboard/profile');
+                                    }
+
                                     window.removeEventListener('message', handleMessage);
                                 }
                             };

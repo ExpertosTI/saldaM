@@ -41,6 +41,9 @@ export class SplitSheet {
     @Column({ nullable: true })
     finalDocHash: string;
 
+    @Column({ nullable: true })
+    inviteToken: string;
+
     @CreateDateColumn()
     createdAt: Date;
 

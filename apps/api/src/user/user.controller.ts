@@ -1,4 +1,5 @@
-import { Controller, Post, Body, Get, Param } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Patch, UseGuards, Req } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { UserService } from './user.service';
 
 @Controller('users')
@@ -13,5 +14,11 @@ export class UserController {
     @Get(':email')
     findOne(@Param('email') email: string) {
         return this.userService.findOne(email);
+    }
+
+    @Patch('profile')
+    @UseGuards(AuthGuard('jwt'))
+    updateProfile(@Req() req: any, @Body() body: any) {
+        return this.userService.updateProfile(req.user.id, body);
     }
 }

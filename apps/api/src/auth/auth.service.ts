@@ -1,10 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { User } from '../user/entities/user.entity';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
-    constructor(private userService: UserService) { }
+    constructor(
+        private userService: UserService,
+        private jwtService: JwtService
+    ) { }
 
     async validateGoogleUser(details: { email: string; firstName: string; lastName: string; picture: string; accessToken: string }) {
         // Check if user exists
@@ -19,9 +23,15 @@ export class AuthService {
             email: details.email,
             firstName: details.firstName,
             lastName: details.lastName,
-            // We might want to store the picture or token if needed, but User entity doesn't have it yet.
-            // For MVP, just creating the user is enough.
-            passwordHash: null, // No password for Google users
+            passwordHash: null,
         });
+    }
+
+    async login(user: any) {
+        const payload = { email: user.email, sub: user.id };
+        return {
+            access_token: this.jwtService.sign(payload),
+            isNewUser: !user.userType, // If userType is null, it's a new or incomplete user
+        };
     }
 }
