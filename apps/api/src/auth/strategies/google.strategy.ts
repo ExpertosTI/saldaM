@@ -14,8 +14,10 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
         super({
             clientID: process.env.GOOGLE_CLIENT_ID,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-            callbackURL: process.env.GOOGLE_CALLBACK_URL || 'https://app.saldanamusic.com/api/auth/google/callback',
+            // Use relative path to allow passport to construct URL based on host header (requires trust proxy)
+            callbackURL: '/api/auth/google/callback',
             scope: ['email', 'profile'],
+            proxy: true, // Crucial when behind Traefik/Reverse Proxy
         });
 
         if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {

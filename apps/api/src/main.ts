@@ -11,6 +11,11 @@ async function bootstrap() {
   // 1. Security Headers (Helmet)
   app.use(helmet());
 
+  // Enable Trust Proxy for Load Balancers (Traefik/Nginx)
+  // This is crucial for Google OAuth to detect HTTPS protocol correctly
+  const expressApp = app.getHttpAdapter().getInstance();
+  expressApp.set('trust proxy', 1);
+
   // 2. CORS (Allow Web/Mobile clients) // TODO: Restrict to specific domains in prod
   app.enableCors();
 
