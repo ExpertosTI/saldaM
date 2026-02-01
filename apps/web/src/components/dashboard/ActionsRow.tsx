@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
+import { getToken, API_BASE_URL } from '@/lib/auth';
 
 export default function ActionsRow({ sheet, currentUserId }: { sheet: any; currentUserId?: string | null }) {
     const [loading, setLoading] = useState(false);
@@ -11,16 +11,14 @@ export default function ActionsRow({ sheet, currentUserId }: { sheet: any; curre
     const handleShare = async () => {
         setLoading(true);
         try {
-            // Get token manually from cookie
-            const tokenMatch = document.cookie.match(/token=([^;]+)/);
-            const token = tokenMatch ? tokenMatch[1] : null;
+            const token = getToken();
 
             if (!token) {
                 alert('Please login first');
                 return;
             }
 
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://app.saldanamusic.com/api'}/split-sheets/${sheet.id}/invite`, {
+            const res = await fetch(`${API_BASE_URL}/split-sheets/${sheet.id}/invite`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -47,13 +45,12 @@ export default function ActionsRow({ sheet, currentUserId }: { sheet: any; curre
     const handleAction = async (action: 'start' | 'sign') => {
         setLoading(true);
         try {
-            const tokenMatch = document.cookie.match(/token=([^;]+)/);
-            const token = tokenMatch ? tokenMatch[1] : null;
+            const token = getToken();
 
             if (!token) return alert('Please login');
 
             const endpoint = action === 'start' ? 'start-signatures' : 'sign';
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://app.saldanamusic.com/api'}/split-sheets/${sheet.id}/${endpoint}`, { // Changed sheetId to sheet.id
+            const res = await fetch(`${API_BASE_URL}/split-sheets/${sheet.id}/${endpoint}`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -114,7 +111,7 @@ export default function ActionsRow({ sheet, currentUserId }: { sheet: any; curre
             )}
 
             <a
-                href={`https://app.saldanamusic.com/api/split-sheets/${sheet.id}/pdf`}
+                href={`${API_BASE_URL}/split-sheets/${sheet.id}/pdf`}
                 target="_blank"
                 className="p-2 bg-neutral-800 rounded-full hover:bg-primary/20 hover:text-primary transition-colors"
                 title="Download PDF"

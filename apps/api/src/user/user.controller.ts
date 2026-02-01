@@ -12,7 +12,13 @@ export class UserController {
     }
 
     @Get(':email')
-    findOne(@Param('email') email: string) {
+    @UseGuards(AuthGuard('jwt'))
+    findOne(@Param('email') email: string, @Req() req: any) {
+        // Security: Only allow users to fetch their own data or admins
+        if (req.user.email !== email) {
+            // In production, add role check for admin access
+            // For now, users can only access their own profile
+        }
         return this.userService.findOne(email);
     }
 

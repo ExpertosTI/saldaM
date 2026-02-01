@@ -19,7 +19,7 @@ export default function LoginPage() {
             // If we have a token and a window opener (we are a popup)
             if (window.opener) {
                 // Send to any origin since we might be on app. subdomain talking to root domain
-                window.opener.postMessage({ token, isNewUser }, "*");
+                window.opener.postMessage({ token, isNewUser }, process.env.NEXT_PUBLIC_APP_URL || 'https://app.saldanamusic.com');
                 window.close();
             } else {
                 // If we are not a popup (e.g. direct link), set cookie and go to dashboard

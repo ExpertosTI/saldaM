@@ -41,7 +41,7 @@ import { Contact } from './contacts/entities/contact.entity';
       password: process.env.DB_PASSWORD || 'postgres',
       database: process.env.DB_NAME || 'saldana_music',
       entities: [User, SplitSheet, Collaborator, Catalog, Track, AuditLog, Contact],
-      synchronize: true, // Auto-schema update for Dev
+      synchronize: process.env.NODE_ENV !== 'production', // NEVER sync in production - use migrations
     }),
     MailModule,
     SignatureModule,
@@ -75,7 +75,7 @@ export class AppModule implements OnModuleInit {
         lastName: 'Admin',
         role: UserRole.MASTER,
         // Security Fix: Use Env Var
-        passwordHash: process.env.MASTER_PASSWORD || 'ChangeMeASAP2027!',
+        passwordHash: process.env.MASTER_PASSWORD,
         isActive: true,
       });
       await userRepository.save(master);

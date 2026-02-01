@@ -38,8 +38,8 @@ services:
       # Mail Service (Hostinger)
       - SMTP_HOST=smtp.hostinger.com
       - SMTP_PORT=465
-      - SMTP_USER=info@renace.space
-      - SMTP_PASS=JustWork2027@
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
       # Secrets (Injected from user context/secure storage in real prod, hardcoded here for MVP deployment as per user request to 'just work', but protecting from git via env is better. 
       # Since this is the compose file on server, we can put values or use .env file. 
       # For now, to pass GitHub scan, we DON'T put the raw Google values here unless user manually manages .env.

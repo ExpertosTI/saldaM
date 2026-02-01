@@ -21,8 +21,15 @@ async function bootstrap() {
     console.warn('Failed to set trust proxy:', error);
   }
 
-  // 2. CORS (Allow Web/Mobile clients) // TODO: Restrict to specific domains in prod
-  app.enableCors();
+  // 2. CORS (Restricted to specific domains)
+  app.enableCors({
+    origin: process.env.NODE_ENV === 'production'
+      ? ['https://app.saldanamusic.com', 'https://saldanamusic.com', 'https://www.saldanamusic.com']
+      : true, // Allow all in development
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  });
 
   // 3. Compression (Gzip)
   app.use(compression());
