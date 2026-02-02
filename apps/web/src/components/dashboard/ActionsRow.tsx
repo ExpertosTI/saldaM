@@ -2,11 +2,19 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { getToken, API_BASE_URL } from '@/lib/auth';
 
 export default function ActionsRow({ sheet, currentUserId }: { sheet: any; currentUserId?: string | null }) {
     const [loading, setLoading] = useState(false);
+    const [notice, setNotice] = useState<string>('');
+    const t = useTranslations();
     // sheetId is in sheet.id
+
+    const notify = (msg: string) => {
+        setNotice(msg);
+        window.setTimeout(() => setNotice(''), 3500);
+    };
 
     const handleShare = async () => {
         setLoading(true);
@@ -14,7 +22,7 @@ export default function ActionsRow({ sheet, currentUserId }: { sheet: any; curre
             const token = getToken();
 
             if (!token) {
-                alert('Please login first');
+                notify(t('System.pleaseLogin'));
                 return;
             }
 
@@ -28,12 +36,12 @@ export default function ActionsRow({ sheet, currentUserId }: { sheet: any; curre
             const data = await res.json();
             if (res.ok && data.url) {
                 navigator.clipboard.writeText(data.url);
-                alert('Invite link copied to clipboard!');
+                notify(t('System.inviteCopied'));
             } else {
-                alert('Failed to generate invite');
+                notify(t('System.inviteFailed'));
             }
         } catch (e) {
-            alert('Error sharing');
+            notify(t('System.shareError'));
         } finally {
             setLoading(false);
         }
@@ -47,7 +55,10 @@ export default function ActionsRow({ sheet, currentUserId }: { sheet: any; curre
         try {
             const token = getToken();
 
-            if (!token) return alert('Please login');
+            if (!token) {
+                notify(t('System.pleaseLogin'));
+                return;
+            }
 
             const endpoint = action === 'start' ? 'start-signatures' : 'sign';
             const res = await fetch(`${API_BASE_URL}/split-sheets/${sheet.id}/${endpoint}`, {
@@ -57,14 +68,14 @@ export default function ActionsRow({ sheet, currentUserId }: { sheet: any; curre
             const data = await res.json();
 
             if (res.ok) {
-                alert(data.message || 'Success');
+                notify(data.message || 'Success');
                 if (data.status) setLocalStatus(data.status); // Update local status
                 if (action === 'start') setLocalStatus('PENDING_SIGNATURES');
             } else {
-                alert(data.message || 'Error');
+                notify(data.message || t('System.genericError'));
             }
         } catch (e) {
-            alert('Error');
+            notify(t('System.genericError'));
         } finally {
             setLoading(false);
         }
@@ -120,6 +131,12 @@ export default function ActionsRow({ sheet, currentUserId }: { sheet: any; curre
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
             </a>
+
+            {notice && (
+                <div className="ml-2 text-xs text-gray-400 max-w-[220px] truncate" title={notice}>
+                    {notice}
+                </div>
+            )}
         </div>
     );
 }

@@ -2,8 +2,11 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
+import { API_BASE_URL, getToken } from '@/lib/auth';
 
 export default function ProfilePage() {
+    const t = useTranslations();
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
@@ -14,6 +17,7 @@ export default function ProfilePage() {
     });
     const [loading, setLoading] = useState(false);
     const [fetched, setFetched] = useState(false);
+    const [message, setMessage] = useState<string>('');
 
     // Fetch user data on mount
     // For simplicity in this edit, we'll skip the useEffect fetch for now or rely on user filling it out.
@@ -28,11 +32,16 @@ export default function ProfilePage() {
         e.preventDefault();
         setLoading(true);
 
-        const tokenMatch = document.cookie.match(/token=([^;]+)/);
-        const token = tokenMatch ? tokenMatch[1] : null;
+        setMessage('');
+        const token = getToken();
 
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://app.saldanamusic.com/api'}/users/profile`, {
+            if (!token) {
+                setMessage(t('System.sessionExpired'));
+                return;
+            }
+
+            const res = await fetch(`${API_BASE_URL}/users/profile`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -42,12 +51,12 @@ export default function ProfilePage() {
             });
 
             if (res.ok) {
-                alert('Profile updated successfully!');
+                setMessage(t('System.profileUpdated'));
             } else {
-                alert('Failed to update profile');
+                setMessage(t('System.profileUpdateFailed'));
             }
         } catch (err) {
-            alert('Error updating profile');
+            setMessage(t('System.genericError'));
         } finally {
             setLoading(false);
         }
@@ -127,6 +136,10 @@ export default function ProfilePage() {
                     >
                         {loading ? 'Saving...' : 'Save Profile'}
                     </button>
+
+                    {message && (
+                        <div className="text-sm font-semibold text-gray-300">{message}</div>
+                    )}
                 </form>
             </div>
         </div>

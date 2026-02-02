@@ -57,7 +57,11 @@ export class SplitSheetService {
             }
         }
 
-        return splitSheet;
+        return {
+            ...splitSheet,
+            message: 'Signature process started. Signature requests were sent to collaborators.',
+            status: splitSheet.status,
+        };
     }
 
     async sign(id: string, user: any) {
@@ -83,7 +87,7 @@ export class SplitSheetService {
         }
 
         if (collaborator.hasSigned) {
-            return { message: 'Already signed' };
+            return { message: 'Already signed', status: splitSheet.status };
         }
 
         collaborator.hasSigned = true;
@@ -189,7 +193,7 @@ export class SplitSheetService {
 
         // Check if already a collaborator
         const exists = splitSheet.collaborators.some(c => c.email === user.email);
-        if (exists) return { message: 'Already a collaborator' };
+        if (exists) return { message: 'Already a collaborator', splitSheetId: splitSheet.id };
 
         // Add as new collaborator
         // We need to inject CollaboratorRepository or just use cascade if we modify the array?

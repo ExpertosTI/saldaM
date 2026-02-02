@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 
 export default function RegisterPage() {
     const [formData, setFormData] = useState({
@@ -17,10 +17,13 @@ export default function RegisterPage() {
     const locale = useLocale();
     const pathname = usePathname();
     const [loading, setLoading] = useState(false);
+    const [message, setMessage] = useState<string>('');
+    const t = useTranslations();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
+        setMessage('');
         try {
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://app.saldanamusic.com/api'}/users/register`, {
                 method: "POST",
@@ -31,10 +34,11 @@ export default function RegisterPage() {
                 // Redirect to login or kyc
                 router.push(`/${locale}/login?registered=true`);
             } else {
-                alert("Registration failed");
+                setMessage(t('System.registrationFailed'));
             }
         } catch (error) {
             console.error(error);
+            setMessage(t('System.genericError'));
         } finally {
             setLoading(false);
         }
@@ -220,6 +224,10 @@ export default function RegisterPage() {
                         {loading ? 'Creating Profile...' : 'Create Account'}
                     </button>
                 </form>
+
+                {message && (
+                    <div className="mt-4 text-sm font-semibold text-red-400">{message}</div>
+                )}
 
                 <p className="mt-8 text-center text-gray-500 text-sm">
                     Already have an account? <Link href={`/${locale}/login`} className="text-primary hover:underline">Sign In</Link>

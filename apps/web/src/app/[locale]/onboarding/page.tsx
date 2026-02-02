@@ -1,28 +1,33 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { useTranslations } from 'next-intl';
+import { API_BASE_URL, getToken } from '@/lib/auth';
 
 export default function OnboardingPage() {
+    const params = useParams<{ locale: string }>();
     const router = useRouter();
+    const t = useTranslations();
     const [loading, setLoading] = useState(false);
     const [userType, setUserType] = useState<string | null>(null);
+    const [message, setMessage] = useState<string>('');
 
     const handleSave = async () => {
         if (!userType) return;
         setLoading(true);
+        setMessage('');
         try {
             // Get token from cookie manually since we are in client component
-            const tokenMatch = document.cookie.match(/token=([^;]+)/);
-            const token = tokenMatch ? tokenMatch[1] : null;
+            const token = getToken();
 
             if (!token) {
-                alert("Session expired. Please login again.");
-                router.push('/login');
+                setMessage(t('System.sessionExpired'));
+                router.push(`/${params.locale}/login`);
                 return;
             }
 
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://app.saldanamusic.com/api'}/users/profile`, {
+            const res = await fetch(`${API_BASE_URL}/users/profile`, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
@@ -32,13 +37,13 @@ export default function OnboardingPage() {
             });
 
             if (res.ok) {
-                router.push("/dashboard");
+                router.push(`/${params.locale}/dashboard`);
             } else {
-                alert("Failed to update profile.");
+                setMessage(t('System.onboardingUpdateFailed'));
             }
         } catch (error) {
             console.error(error);
-            alert("An error occurred.");
+            setMessage(t('System.genericError'));
         } finally {
             setLoading(false);
         }
@@ -47,8 +52,8 @@ export default function OnboardingPage() {
     return (
         <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-background">
             <div className="w-full max-w-lg p-8 glass-panel rounded-2xl shadow-2xl relative overflow-hidden text-center">
-                <h2 className="text-3xl font-bold text-primary mb-4 tracking-wider uppercase">COMPLETE YOUR PROFILE</h2>
-                <p className="text-gray-400 mb-8">Select your primary role to continue.</p>
+                <h2 className="text-3xl font-bold text-primary mb-4 tracking-wider uppercase">{t('System.onboardingTitle')}</h2>
+                <p className="text-gray-400 mb-8">{t('System.onboardingSubtitle')}</p>
 
                 <div className="grid grid-cols-1 gap-4 mb-8">
                     {['ARTIST', 'PRODUCER', 'PUBLISHER'].map((type) => (
@@ -70,8 +75,12 @@ export default function OnboardingPage() {
                     disabled={!userType || loading}
                     className="w-full py-4 bg-primary text-black font-bold uppercase tracking-widest rounded-lg hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
-                    {loading ? 'SAVING...' : 'CONTINUE TO DASHBOARD'}
+                    {loading ? t('System.onboardingSaving') : t('System.onboardingContinue')}
                 </button>
+
+                {message && (
+                    <div className="mt-4 text-sm text-red-400 font-semibold">{message}</div>
+                )}
             </div>
         </main>
     );

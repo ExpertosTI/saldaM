@@ -22,10 +22,34 @@
             "manageRights": "Gestiona tus derechos y acuerdos."
         }
     },
+    "System": {
+        "pleaseLogin": "Por favor inicia sesión.",
+        "sessionExpired": "Sesión expirada. Inicia sesión nuevamente.",
+        "genericError": "Ocurrió un error. Intenta de nuevo.",
+        "splitSheetCreated": "Split sheet creado correctamente.",
+        "splitSheetCreateFailed": "No se pudo crear el split sheet.",
+        "inviteCopied": "Enlace de invitación copiado.",
+        "inviteFailed": "No se pudo generar el enlace de invitación.",
+        "shareError": "No se pudo compartir la invitación.",
+        "profileUpdated": "Perfil actualizado correctamente.",
+        "profileUpdateFailed": "No se pudo actualizar el perfil.",
+        "registrationFailed": "El registro falló.",
+        "joinTitle": "Unirse al Split Sheet",
+        "joinSubtitle": "Has sido invitado a colaborar en un Split Sheet.",
+        "joinAccept": "Aceptar Invitación",
+        "joinJoining": "Uniéndote...",
+        "joinSuccess": "Te uniste correctamente. Redirigiendo...",
+        "joinFailed": "No se pudo unir.",
+        "onboardingTitle": "Completa tu perfil",
+        "onboardingSubtitle": "Selecciona tu rol principal para continuar.",
+        "onboardingSaving": "Guardando...",
+        "onboardingContinue": "Continuar al panel",
+        "onboardingUpdateFailed": "No se pudo actualizar el perfil."
+    },
     "Common": {
         "loading": "Cargando...",
         "error": "Ocurrió un error",
-        "copyright": "Saldaña Music © 2026",
+        "copyright": "Saldaña Music \u00a9 2026",
         "privacy": "Privacidad",
         "terms": "Términos",
         "support": "Soporte"

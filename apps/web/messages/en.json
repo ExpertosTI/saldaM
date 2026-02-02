@@ -22,10 +22,34 @@
             "manageRights": "Manage your tracking rights and agreements."
         }
     },
+    "System": {
+        "pleaseLogin": "Please login first.",
+        "sessionExpired": "Session expired. Please login again.",
+        "genericError": "Something went wrong. Please try again.",
+        "splitSheetCreated": "Split sheet created successfully.",
+        "splitSheetCreateFailed": "Failed to create split sheet.",
+        "inviteCopied": "Invite link copied to clipboard.",
+        "inviteFailed": "Could not generate invite link.",
+        "shareError": "Could not share invite right now.",
+        "profileUpdated": "Profile updated successfully.",
+        "profileUpdateFailed": "Could not update profile.",
+        "registrationFailed": "Registration failed.",
+        "joinTitle": "Join Split Sheet",
+        "joinSubtitle": "You have been invited to collaborate on a Split Sheet.",
+        "joinAccept": "Accept Invitation",
+        "joinJoining": "Joining...",
+        "joinSuccess": "Successfully joined. Redirecting...",
+        "joinFailed": "Failed to join.",
+        "onboardingTitle": "Complete your profile",
+        "onboardingSubtitle": "Select your primary role to continue.",
+        "onboardingSaving": "Saving...",
+        "onboardingContinue": "Continue to dashboard",
+        "onboardingUpdateFailed": "Could not update profile."
+    },
     "Common": {
         "loading": "Loading...",
         "error": "An error occurred",
-        "copyright": "Saldaña Music © 2026",
+        "copyright": "Saldaña Music \u00a9 2026",
         "privacy": "Privacy",
         "terms": "Terms",
         "support": "Support"

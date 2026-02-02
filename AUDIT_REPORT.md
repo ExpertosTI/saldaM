@@ -1,7 +1,7 @@
 # 🔍 AUDITORÍA EXHAUSTIVA - Saldaña Music Platform
 
 **Fecha:** Febrero 2026  
-**Versión:** 1.0  
+**Versión:** 2.0  
 **Proyecto:** Monorepo pnpm + Turborepo (Next.js 15 + NestJS 11)
 
 ---
@@ -11,276 +11,264 @@
 | Categoría | Estado | Prioridad |
 |-----------|--------|-----------|
 | Seguridad | 🔴 CRÍTICO | Alta |
-| Código Muerto | 🟡 MODERADO | Media |
-| Código Repetido | 🟢 BAJO | Baja |
-| Estándares | 🟡 MODERADO | Media |
-| Dependencias | 🟢 ACTUALIZADO | Baja |
-| Arquitectura | 🟢 BUENA | - |
+| Funciones/Flujo | 🟡 MODERADO | Alta |
+| Botones/UI | 🟡 MODERADO | Media |
+| Branding | 🟢 BUENO | Baja |
+| Notificaciones | � CRÍTICO | Alta |
+| i18n Traducciones | � INCOMPLETO | Media |
+| Base de Datos | � SCHEMA DESYNC | Alta |
 
 ---
 
-## 🔴 PROBLEMAS CRÍTICOS DE SEGURIDAD
+## � PROBLEMAS CRÍTICOS EN PRODUCCIÓN (AHORA MISMO)
 
-### 1. **CREDENCIALES HARDCODEADAS EN CÓDIGO** ⚠️ CRÍTICO
-**Archivo:** `apps/api/src/mail/mail.service.ts:13-16`
-```typescript
-auth: {
-    user: 'info@renace.space',
-    pass: 'JustWork2027@',  // ❌ CONTRASEÑA EXPUESTA
-},
-```
-**Solución:** Mover a variables de entorno:
-```typescript
-auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-},
+### 1. **SCHEMA DB DESINCRONIZADO** 🔴
+**Error:** `column SplitSheet.inviteToken does not exist`
+```sql
+-- EJECUTAR EN PRODUCCIÓN:
+ALTER TABLE "split_sheet" ADD COLUMN IF NOT EXISTS "inviteToken" character varying;
 ```
 
-### 2. **SECRET JWT INSEGURO POR DEFECTO**
-**Archivo:** `apps/api/src/auth/auth.module.ts:17`
-```typescript
-secret: configService.get<string>('JWT_SECRET') || 'secretKey', // ❌ Fallback inseguro
-```
-**Solución:** Eliminar fallback, hacer obligatorio:
-```typescript
-secret: configService.getOrThrow<string>('JWT_SECRET'),
-```
+### 2. **SMTP NO CONFIGURADO** 🔴
+**Error:** `Missing credentials for "PLAIN"`
+- Variables `SMTP_USER` y `SMTP_PASS` no están en el contenedor API
+- Todos los emails fallan (bienvenida, firma, invitaciones)
 
-### 3. **CONTRASEÑA MASTER HARDCODEADA**
-**Archivo:** `apps/api/src/app.module.ts:78`
-```typescript
-passwordHash: process.env.MASTER_PASSWORD || 'ChangeMeASAP2027!', // ❌ Fallback expuesto
-```
-**Solución:** Usar bcrypt y eliminar fallback.
-
-### 4. **CORS ABIERTO EN PRODUCCIÓN**
-**Archivo:** `apps/api/src/main.ts:25`
-```typescript
-app.enableCors(); // ❌ Permite CUALQUIER origen
-```
-**Solución:**
-```typescript
-app.enableCors({
-    origin: ['https://app.saldanamusic.com', 'https://saldanamusic.com'],
-    credentials: true,
-});
-```
-
-### 5. **IP HARDCODEADA EN FIRMAS**
-**Archivo:** `apps/api/src/split-sheet/split-sheet.service.ts:71`
-```typescript
-collaborator.ipAddress = '127.0.0.1'; // TODO: Capture real IP
-```
-**Solución:** Capturar IP real del request.
-
-### 6. **ENDPOINT DE USUARIO SIN PROTECCIÓN**
-**Archivo:** `apps/api/src/user/user.controller.ts:14-17`
-```typescript
-@Get(':email')
-findOne(@Param('email') email: string) {  // ❌ Sin AuthGuard - expone datos de usuarios
-    return this.userService.findOne(email);
-}
-```
-**Solución:** Agregar `@UseGuards(AuthGuard('jwt'))`.
-
-### 7. **postMessage SIN VALIDACIÓN DE ORIGEN**
-**Archivo:** `apps/web/src/app/[locale]/login/page.tsx:22`
-```typescript
-window.opener.postMessage({ token, isNewUser }, "*"); // ❌ Cualquier origen
-```
-**Solución:** Especificar origen exacto.
+### 3. **Google OAuth Popup no cierra** 🟡
+- El popup se cierra pero la ventana padre no siempre detecta el token
+- Falta polling de cookie como fallback
 
 ---
 
-## 🟡 CÓDIGO MUERTO / INÚTIL
+## 🔄 AUDITORÍA DE FLUJOS Y FUNCIONES
 
-### 1. **AppController y AppService sin uso real**
-**Archivos:** 
-- `apps/api/src/app.controller.ts`
-- `apps/api/src/app.service.ts`
+### **FLUJO 1: Registro/Login con Google OAuth**
+| Paso | Estado | Problema |
+|------|--------|----------|
+| 1. Click "Continuar con Google" | ✅ OK | - |
+| 2. Popup abre Google | ✅ OK | - |
+| 3. Google redirige a callback | ✅ OK | - |
+| 4. API genera JWT | ✅ OK | - |
+| 5. Redirect a `/login?token=...` | ✅ OK | - |
+| 6. Popup envía token a opener | 🟡 PARCIAL | postMessage puede fallar cross-origin |
+| 7. Popup se cierra | ✅ OK | - |
+| 8. Parent redirige a dashboard | 🟡 PARCIAL | No siempre detecta el token |
+| 9. Email de bienvenida | 🔴 FALLA | SMTP no configurado |
 
-Solo retornan "Hello World!" - sin funcionalidad real.
-**Acción:** Eliminar o implementar health check.
+### **FLUJO 2: Crear Split Sheet**
+| Paso | Estado | Problema |
+|------|--------|----------|
+| 1. Click "+ New Split Sheet" | ✅ OK | - |
+| 2. Formulario de creación | ✅ OK | - |
+| 3. Agregar colaboradores | ✅ OK | - |
+| 4. Validar 100% total | ✅ OK | - |
+| 5. Click "Generate Agreement" | 🔴 FALLA | `inviteToken` column missing |
+| 6. Guardar en DB | 🔴 FALLA | Schema desync |
 
-### 2. **Código comentado sin implementar**
-**Archivo:** `apps/api/src/split-sheet/split-sheet.service.ts`
-```typescript
-// throw new UnauthorizedException('Only owner can start signatures');
-// throw new UnauthorizedException('Only owner can invite');
-```
-**Acción:** Implementar o eliminar comentarios.
+### **FLUJO 3: Firmar Split Sheet**
+| Paso | Estado | Problema |
+|------|--------|----------|
+| 1. Owner inicia firmas | ✅ OK (código) | Falla por DB |
+| 2. Emails a colaboradores | 🔴 FALLA | SMTP no configurado |
+| 3. Colaborador firma | ✅ OK (código) | - |
+| 4. Todos firman → COMPLETED | ✅ OK (código) | - |
+| 5. Email de completado | 🔴 FALLA | SMTP no configurado |
 
-### 3. **Archivo default.php en raíz**
-**Archivo:** `default.php` (1078 líneas)  
-Landing page estático duplicado fuera del monorepo.
-**Acción:** Migrar contenido a Next.js o eliminar.
-
-### 4. **client_secret JSON expuesto**
-**Archivo:** `client_secret_2_609647959676-*.json`  
-Credenciales de Google OAuth en raíz del proyecto.
-**Acción:** Eliminar y usar variables de entorno.
-
-### 5. **Error no declarado en smooth scroll**
-**Archivo:** `default.php:1065`
-```javascript
-e.preventDefault(); // ❌ 'e' no está definido en el scope
-```
-
----
-
-## 🔄 CÓDIGO REPETIDO
-
-### 1. **Fetch de token repetido en múltiples archivos**
-Patrón repetido en:
-- `apps/web/src/app/[locale]/dashboard/page.tsx`
-- `apps/web/src/app/[locale]/dashboard/layout.tsx`
-- `apps/web/src/components/dashboard/ActionsRow.tsx`
-
-```typescript
-const tokenMatch = document.cookie.match(/token=([^;]+)/);
-const token = tokenMatch ? tokenMatch[1] : null;
-```
-**Solución:** Crear hook `useAuth()` o utility `getToken()`.
-
-### 2. **URL de API hardcodeada repetida**
-```typescript
-`${process.env.NEXT_PUBLIC_API_URL || 'https://app.saldanamusic.com/api'}`
-```
-**Solución:** Crear constante `API_BASE_URL` centralizada.
-
-### 3. **Colores duplicados**
-- `apps/web/tailwind.config.ts`: `primary: "#D4AF37"`
-- `apps/web/src/app/globals.css`: `--primary: #D4AF37`
-- `default.php`: `--primary: #D4AF37`
-
-**Solución:** Unificar en un solo lugar.
+### **FLUJO 4: Cambio de Idioma**
+| Paso | Estado | Problema |
+|------|--------|----------|
+| 1. Click EN/ES toggle | ✅ OK | - |
+| 2. URL cambia locale prefix | ✅ OK | Corregido |
+| 3. Mensajes se cargan | 🟡 PARCIAL | Algunos textos hardcoded |
 
 ---
 
-## 📦 DEPENDENCIAS
+## � AUDITORÍA DE BOTONES
 
-### Estado Actual (Actualizado ✅)
-| Paquete | Versión | Estado |
-|---------|---------|--------|
-| Next.js | 15.1.4 | ✅ Último |
-| React | 19.0.0 | ✅ Último |
-| NestJS | 11.0.1 | ✅ Último |
-| TypeORM | 0.3.28 | ✅ Actual |
-| Turbo | 2.7.6 | ✅ Actual |
-| TypeScript | 5.7.3 | ✅ Actual |
+### **Landing Page (`/[locale]/page.tsx`)**
+| Botón | Funciona | Problema |
+|-------|----------|----------|
+| "Iniciar Sesión" (nav) | ✅ | - |
+| "Unirse al Roster" (nav) | ✅ | - |
+| "Comenzar Ahora" (hero) | ✅ | - |
+| "Privacidad" (footer) | ✅ | - |
+| "Términos" (footer) | ✅ | - |
+| "Soporte" (footer) | ✅ | - |
 
-### Dependencias Faltantes
-- **bcrypt** - Para hash de contraseñas (actualmente almacena plain text)
-- **@nestjs/jwt** - Listado en imports pero no en package.json explícitamente
-- **rate-limiter-flexible** - Para rate limiting más granular
+### **Login Page (`/[locale]/login/page.tsx`)**
+| Botón | Funciona | Problema |
+|-------|----------|----------|
+| "Continuar con Google" | 🟡 | Popup flow puede fallar |
+| "Sign In" (form) | ⚠️ | Solo console.log, no implementado |
+| "Apply for Access" | ✅ | - |
 
-### Dependencias con Wildcards ⚠️
-**Archivo:** `apps/api/package.json:27`
-```json
-"@nestjs/mapped-types": "*"  // ❌ Versión no fijada
-```
+### **Dashboard (`/[locale]/dashboard/page.tsx`)**
+| Botón | Funciona | Problema |
+|-------|----------|----------|
+| "+ New Split Sheet" | ✅ | - |
+| "New Split Sheet" card | ✅ | - |
+| "My Collaborators" card | ⚠️ | Solo "Coming Soon" |
+| "Royalty Analytics" card | ⚠️ | Solo "Coming Soon" |
 
----
+### **Create Split Sheet (`/[locale]/dashboard/create/page.tsx`)**
+| Botón | Funciona | Problema |
+|-------|----------|----------|
+| "+ Add Collaborator" | ✅ | - |
+| "Save Draft" | ⚠️ | No implementado (solo texto) |
+| "Generate Agreement" | 🔴 | Falla por DB schema |
 
-## 🏗️ PROBLEMAS DE ARQUITECTURA
+### **Actions Row (per split sheet)**
+| Botón | Funciona | Problema |
+|-------|----------|----------|
+| Share/Invite | 🟡 | Depende de inviteToken |
+| Start Signatures | 🟡 | Falla por DB |
+| Sign | ✅ (código) | - |
+| Download PDF | ✅ | - |
 
-### 1. **synchronize: true en TypeORM**
-**Archivo:** `apps/api/src/app.module.ts:44`
-```typescript
-synchronize: true, // ❌ PELIGROSO EN PRODUCCIÓN
-```
-**Solución:** Usar migraciones en producción.
+### **Profile Page**
+| Botón | Funciona | Problema |
+|-------|----------|----------|
+| "Save Profile" | ✅ | - |
 
-### 2. **DTOs sin tipado fuerte**
-Múltiples métodos usan `any`:
-```typescript
-async create(createUserDto: any) // ❌
-async updateProfile(id: string, data: any) // ❌
-```
-**Solución:** Crear DTOs con class-validator.
-
-### 3. **Sin manejo centralizado de errores**
-Los servicios lanzan `new Error()` genérico.
-**Solución:** Implementar excepciones HTTP de NestJS.
-
-### 4. **Sin logging estructurado**
-Solo `console.log/error`.
-**Solución:** Implementar Winston o Pino.
-
----
-
-## ✅ FORTALEZAS
-
-1. **Arquitectura Monorepo bien estructurada** - Turborepo + pnpm workspaces
-2. **Stack moderno** - Next.js 15, React 19, NestJS 11
-3. **Internacionalización** - next-intl implementado
-4. **Throttling básico** - ThrottlerModule configurado
-5. **Swagger documentado** - API docs en `/api/docs`
-6. **Helmet activado** - Headers de seguridad básicos
-7. **Compresión gzip** - Implementada
-8. **Validación global** - ValidationPipe con whitelist
-9. **Diseño UI premium** - Glassmorphism, animaciones fluidas
-10. **Audit Log** - Sistema de auditoría implementado
+### **Sidebar Navigation**
+| Link | Funciona | Problema |
+|------|----------|----------|
+| Panel Principal | ✅ | - |
+| Mis Split Sheets | ✅ | Página existe |
+| Colaboradores | ⚠️ | Página vacía/placeholder |
+| Perfil | ✅ | - |
+| Regalías | ⚠️ | Página vacía/placeholder |
+| Configuración | ⚠️ | Página vacía/placeholder |
+| Language Switcher | ✅ | Corregido |
 
 ---
 
-## 📋 PLAN DE ACCIÓN PRIORIZADO
+## 🎨 AUDITORÍA DE BRANDING
 
-### 🔴 INMEDIATO (24-48h)
-1. [ ] Mover TODAS las credenciales a variables de entorno
-2. [ ] Eliminar fallbacks inseguros de JWT_SECRET y MASTER_PASSWORD
-3. [ ] Configurar CORS restrictivo
-4. [ ] Proteger endpoint `/users/:email` con AuthGuard
-5. [ ] Eliminar archivo `client_secret*.json`
+### **Colores (Consistente ✅)**
+| Variable | Valor | Uso |
+|----------|-------|-----|
+| Primary (Gold) | `#D4AF37` | Botones CTA, acentos, hover |
+| Background | `#050505` / `#121212` | Fondos principales |
+| Glass Border | `rgba(212, 175, 55, 0.1)` | Paneles glassmorphism |
+| Text Primary | `#FFFFFF` | Títulos |
+| Text Secondary | `#9CA3AF` (gray-400) | Subtítulos, labels |
+| Status Green | `#22C55E` | Completed |
+| Status Yellow | `#EAB308` | Draft/Pending |
+| Status Blue | `#3B82F6` | Action Required |
 
-### 🟠 CORTO PLAZO (1 semana)
-1. [ ] Implementar bcrypt para hash de contraseñas
-2. [ ] Crear DTOs tipados para todos los endpoints
-3. [ ] Capturar IP real en firmas
-4. [ ] Implementar refresh tokens
-5. [ ] Desactivar `synchronize: true` y crear migraciones
+### **Tipografía**
+| Fuente | Uso | Estado |
+|--------|-----|--------|
+| Montserrat | Principal | ✅ Configurada |
+| Serif (italic) | Hero "Blindado" | ✅ OK |
 
-### 🟡 MEDIO PLAZO (2-4 semanas)
-1. [ ] Crear utility centralizado para autenticación en frontend
-2. [ ] Implementar logging estructurado (Winston)
-3. [ ] Eliminar código muerto (AppController, default.php)
-4. [ ] Implementar tests unitarios y e2e
-5. [ ] Configurar CI/CD con checks de seguridad
+### **Logo**
+| Archivo | Ubicación | Estado |
+|---------|-----------|--------|
+| `/logo.svg` | Sidebar, Login, Register | ✅ |
+| `/logo.png` | Landing navbar, footer | ✅ |
 
-### 🟢 MEJORAS OPCIONALES
-1. [ ] Implementar rate limiting por usuario
-2. [ ] Agregar 2FA
-3. [ ] Implementar CSP headers
-4. [ ] Optimizar bundle size
-5. [ ] Implementar WebSockets para notificaciones en tiempo real
+### **Problemas de Branding**
+1. **Texto hardcoded en inglés dentro de código español:**
+   - "New Split Sheet" debería ser traducible
+   - "Coming Soon" debería estar en i18n
+   - "Generate Agreement" debería ser traducible
 
----
-
-## 📁 ARCHIVOS A ELIMINAR
-
-```
-/client_secret_2_609647959676-*.json  (credenciales expuestas)
-/default.php                           (código legacy duplicado)
-/.npmrc                                (archivo vacío)
-```
+2. **Inconsistencia de nombres:**
+   - "Member Portal" (sidebar) vs "MEMBER PORTAL" (inconsistencia case)
+   - Email from: `info@renace.space` debería ser `@saldanamusic.com`
 
 ---
 
-## 🔧 COMANDOS DE VERIFICACIÓN
+## 📧 AUDITORÍA DE NOTIFICACIONES (EMAIL)
 
+### **Templates Existentes**
+| Template | Función | Estado |
+|----------|---------|--------|
+| `sendUserWelcome` | Nuevo usuario | 🔴 FALLA (SMTP) |
+| `sendSignatureRequest` | Solicitar firma | 🔴 FALLA (SMTP) |
+| `sendPasswordReset` | Reset password | 🔴 FALLA (SMTP) |
+| `sendSplitSheetCompleted` | Sheet completado | 🔴 FALLA (SMTP) |
+| `sendCollaboratorInvite` | Invitar colaborador | 🔴 FALLA (SMTP) |
+
+### **Problemas de Email**
+1. **SMTP sin credenciales** - Variables de entorno no configuradas
+2. **From address incorrecto** - `info@renace.space` debería ser dominio propio
+3. **BCC hardcoded** - `expertostird@gmail.com` en todos los emails
+4. **Sin templates HTML profesionales** - Solo HTML básico inline
+5. **Sin retry logic** - Si falla, se pierde el email
+6. **Sin cola de emails** - Todo síncrono
+
+### **Variables Requeridas para Email**
 ```bash
-# Buscar credenciales hardcodeadas
-grep -r "password\|secret\|key" apps/api/src --include="*.ts" | grep -v node_modules
-
-# Verificar endpoints sin protección
-grep -r "@Get\|@Post\|@Patch\|@Delete" apps/api/src --include="*.ts" -A2 | grep -v UseGuards
-
-# Buscar console.log en producción
-grep -r "console\." apps/ --include="*.ts" --include="*.tsx" | wc -l
+SMTP_HOST=smtp.hostinger.com  # o tu proveedor
+SMTP_PORT=465
+SMTP_SECURE=true
+SMTP_USER=notifications@saldanamusic.com
+SMTP_PASS=<secure_password>
 ```
 
 ---
 
-**Generado por:** Auditoría Automatizada Cascade  
-**Próxima revisión recomendada:** 30 días
+## 🌐 AUDITORÍA i18n (TRADUCCIONES)
+
+### **Cobertura de Traducciones**
+| Sección | ES | EN | Problema |
+|---------|----|----|----------|
+| Landing.heroTitle | ✅ | ✅ | - |
+| Landing.heroSubtitle | ✅ | ✅ | - |
+| Landing.ctaStart | ✅ | ✅ | - |
+| Dashboard.nav.* | ✅ | ✅ | - |
+| Dashboard.nav.profile | ❌ | ❌ | **FALTA** |
+| Dashboard.header.* | ✅ | ✅ | - |
+| Common.* | ✅ | ✅ | - |
+| Create.* | ❌ | ❌ | **FALTA TODO** |
+| Profile.* | ❌ | ❌ | **FALTA TODO** |
+| Onboarding.* | ❌ | ❌ | **FALTA TODO** |
+| Errors.* | ❌ | ❌ | **FALTA TODO** |
+
+### **Textos Hardcoded que Necesitan i18n**
+```
+- "New Split Sheet"
+- "Create New Split Sheet"
+- "Song Title"
+- "Collaborators"
+- "Generate Agreement"
+- "Save Draft"
+- "Coming Soon"
+- "COMPLETE YOUR PROFILE"
+- "My Profile"
+- "First Name" / "Last Name"
+- "Save Profile"
+- Status labels: "DRAFT", "PENDING_SIGNATURES", "COMPLETED"
+```
+
+---
+
+## 📋 PLAN DE ACCIÓN ACTUALIZADO
+
+### � INMEDIATO (Antes de usar en producción)
+1. [x] ~~Google OAuth funcionando~~ ✅
+2. [ ] **Agregar columna `inviteToken` a DB** ← CRÍTICO
+3. [ ] **Configurar SMTP en stack** ← CRÍTICO
+4. [ ] Mover credenciales a env vars
+5. [ ] Proteger endpoint `/users/:email`
+
+### � ESTA SEMANA
+1. [ ] Completar traducciones i18n (es.json, en.json)
+2. [ ] Implementar botón "Save Draft" funcional
+3. [ ] Implementar páginas placeholder (Colaboradores, Regalías, Settings)
+4. [ ] Mejorar popup OAuth con polling fallback
+5. [ ] Cambiar email from a dominio propio
+
+### � PRÓXIMAS 2 SEMANAS
+1. [ ] Templates de email profesionales (HTML)
+2. [ ] Sistema de notificaciones in-app
+3. [ ] Implementar login con email/password funcional
+4. [ ] Tests e2e para flujos críticos
+
+---
+
+**Generado por:** Auditoría Cascade v2.0  
+**Última actualización:** 02/02/2026

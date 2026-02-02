@@ -1,5 +1,7 @@
 "use client";
 import { useState } from "react";
+import { useTranslations } from 'next-intl';
+import { API_BASE_URL, getToken } from '@/lib/auth';
 
 type Role = "Songwriter" | "Producer";
 
@@ -10,10 +12,12 @@ type Collaborator = {
 };
 
 export default function CreateSplitSheet() {
+    const t = useTranslations();
     const [title, setTitle] = useState("");
     const [collaborators, setCollaborators] = useState<Collaborator[]>([
         { name: "My User (Owner)", role: "Songwriter", percentage: 50 },
     ]);
+    const [message, setMessage] = useState<string>('');
 
     const addCollaborator = () => {
         setCollaborators([...collaborators, { name: "", role: "Songwriter", percentage: 0 }]);
@@ -31,11 +35,18 @@ export default function CreateSplitSheet() {
 
     const handleGenerate = async () => {
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://app.saldanamusic.com/api'}/split-sheets`, {
+            setMessage('');
+            const token = getToken();
+            if (!token) {
+                setMessage(t('System.pleaseLogin'));
+                return;
+            }
+
+            const res = await fetch(`${API_BASE_URL}/split-sheets`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1]}`
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({
                     title,
@@ -46,13 +57,13 @@ export default function CreateSplitSheet() {
 
             if (res.ok) {
                 const data = await res.json();
-                alert('Split Sheet Created Successfully!');
+                setMessage(t('System.splitSheetCreated'));
             } else {
-                alert('Failed to create Split Sheet');
+                setMessage(t('System.splitSheetCreateFailed'));
             }
         } catch (error) {
             console.error(error);
-            alert('Error creating agreement');
+            setMessage(t('System.genericError'));
         }
     };
 
@@ -121,6 +132,10 @@ export default function CreateSplitSheet() {
                     Generate Agreement
                 </button>
             </div>
+
+            {message && (
+                <div className="mt-4 text-sm font-semibold text-gray-300">{message}</div>
+            )}
         </div>
     );
 }

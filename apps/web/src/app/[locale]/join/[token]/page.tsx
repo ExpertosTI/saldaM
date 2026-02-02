@@ -4,10 +4,12 @@
 import { useTranslations } from 'next-intl';
 import { useRouter, useParams } from 'next/navigation';
 import { useState } from 'react';
+import { API_BASE_URL, getToken } from '@/lib/auth';
 
 export default function JoinPage() {
     const params = useParams<{ locale: string; token: string }>();
     const router = useRouter();
+    const t = useTranslations();
     const [status, setStatus] = useState<'idle' | 'joining' | 'success' | 'error'>('idle');
     const [message, setMessage] = useState('');
 
@@ -20,8 +22,7 @@ export default function JoinPage() {
             // We need to read it to set Authorization header.
 
             // Allow basic "document.cookie" read since we are in client component
-            const tokenMatch = document.cookie.match(/token=([^;]+)/);
-            const token = tokenMatch ? tokenMatch[1] : null;
+            const token = getToken();
 
             if (!token) {
                 // Redirect to login if not logged in
@@ -29,7 +30,7 @@ export default function JoinPage() {
                 return;
             }
 
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://app.saldanamusic.com/api'}/split-sheets/join/${params.token}`, {
+            const res = await fetch(`${API_BASE_URL}/split-sheets/join/${params.token}`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -40,17 +41,17 @@ export default function JoinPage() {
 
             if (res.ok) {
                 setStatus('success');
-                setMessage('Successfully joined! Redirecting...');
+                setMessage(t('System.joinSuccess'));
                 setTimeout(() => {
                     router.push(`/${params.locale}/dashboard`);
                 }, 2000);
             } else {
                 setStatus('error');
-                setMessage(data.message || 'Failed to join');
+                setMessage(data.message || t('System.joinFailed'));
             }
         } catch (e) {
             setStatus('error');
-            setMessage('An error occurred');
+            setMessage(t('System.genericError'));
         }
     };
 
@@ -63,20 +64,20 @@ export default function JoinPage() {
                     </svg>
                 </div>
 
-                <h1 className="text-2xl font-bold text-white mb-2">Join Split Sheet</h1>
-                <p className="text-gray-400 mb-8">You have been invited to collaborate on a Split Sheet.</p>
+                <h1 className="text-2xl font-bold text-white mb-2">{t('System.joinTitle')}</h1>
+                <p className="text-gray-400 mb-8">{t('System.joinSubtitle')}</p>
 
                 {status === 'idle' && (
                     <button
                         onClick={handleJoin}
                         className="w-full py-3 bg-primary text-black font-bold rounded-lg hover:brightness-110 transition-all"
                     >
-                        Accept Invitation
+                        {t('System.joinAccept')}
                     </button>
                 )}
 
                 {status === 'joining' && (
-                    <div className="text-primary font-bold animate-pulse">Joining...</div>
+                    <div className="text-primary font-bold animate-pulse">{t('System.joinJoining')}</div>
                 )}
 
                 {status === 'success' && (
