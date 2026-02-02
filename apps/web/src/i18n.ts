@@ -14,14 +14,24 @@ export default getRequestConfig(async ({ requestLocale }) => {
     const fs = await import('fs');
     const path = await import('path');
 
-    // In Docker standalone, process.cwd() is /app
-    // We copied messages to /app/apps/web/messages
-    const messagesPath = path.resolve(process.cwd(), 'apps/web/messages', `${locale}.json`);
-
     let messages;
     try {
-        const fileContents = fs.readFileSync(messagesPath, 'utf8');
-        messages = JSON.parse(fileContents);
+        const candidates = [
+            path.resolve(process.cwd(), 'apps/web/messages', `${locale}.json`),
+            path.resolve(process.cwd(), 'messages', `${locale}.json`)
+        ];
+
+        let fileContents: string | null = null;
+        for (const candidate of candidates) {
+            try {
+                if (fs.existsSync(candidate)) {
+                    fileContents = fs.readFileSync(candidate, 'utf8');
+                    break;
+                }
+            } catch { }
+        }
+
+        messages = fileContents ? JSON.parse(fileContents) : {};
     } catch (error) {
         // Fallback to empty
         messages = {};

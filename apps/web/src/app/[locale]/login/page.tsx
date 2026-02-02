@@ -2,12 +2,15 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { useLocale } from 'next-intl';
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const router = useRouter();
+    const locale = useLocale();
+    const pathname = usePathname();
 
     const searchParams = useSearchParams();
 
@@ -16,15 +19,41 @@ export default function LoginPage() {
         const isNewUser = searchParams.get('isNewUser') === 'true';
 
         if (token) {
-            // If we have a token and a window opener (we are a popup)
-            if (window.opener) {
-                // Send to any origin since we might be on app. subdomain talking to root domain
-                window.opener.postMessage({ token, isNewUser }, process.env.NEXT_PUBLIC_APP_URL || 'https://app.saldanamusic.com');
+            const isPopup = (!!window.opener && !window.opener.closed) || window.name === 'Google_Auth';
+            const payload = { token, isNewUser, ts: Date.now() };
+
+            const cookieDomain = window.location.hostname.endsWith('saldanamusic.com')
+                ? '; Domain=.saldanamusic.com'
+                : '';
+
+            document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax; Secure${cookieDomain}`;
+            document.cookie = `saldana_is_new_user=${isNewUser ? '1' : '0'}; path=/; max-age=600; SameSite=Lax; Secure${cookieDomain}`;
+            try {
+                if (window.opener && !window.opener.closed) {
+                    window.opener.postMessage(payload, '*');
+                }
+            } catch { }
+
+            try {
+                localStorage.setItem('saldana_auth', JSON.stringify(payload));
+            } catch { }
+
+            if (isPopup) {
                 window.close();
+                return;
+            }
+            let preAuthPath: string | null = null;
+            try {
+                preAuthPath = sessionStorage.getItem('saldana_pre_auth_path');
+                sessionStorage.removeItem('saldana_pre_auth_path');
+            } catch { }
+
+            const isLoop = typeof preAuthPath === 'string' && (preAuthPath.includes('/login') || preAuthPath.includes('/register'));
+
+            if (!isNewUser && preAuthPath && !isLoop) {
+                router.replace(preAuthPath);
             } else {
-                // If we are not a popup (e.g. direct link), set cookie and go to dashboard
-                document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
-                router.push(isNewUser ? '/onboarding' : '/dashboard/profile');
+                router.push(isNewUser ? `/${locale}/onboarding` : `/${locale}/dashboard/profile`);
             }
         }
     }, [searchParams, router]);
@@ -67,30 +96,80 @@ export default function LoginPage() {
                             const left = window.screen.width / 2 - width / 2;
                             const top = window.screen.height / 2 - height / 2;
 
+                            try {
+                                sessionStorage.setItem('saldana_pre_auth_path', `${pathname}${window.location.search}`);
+                            } catch { }
+
                             const popup = window.open(
                                 `${process.env.NEXT_PUBLIC_API_URL || 'https://app.saldanamusic.com/api'}/auth/google`,
                                 'Google_Auth',
                                 `width=${width},height=${height},top=${top},left=${left},toolbar=no,menubar=no`
                             );
 
-                            const handleMessage = (event: MessageEvent) => {
-                                // Add security check for origin if needed
-                                if (event.data?.token) {
-                                    // SAVE TOKEN COOKIE
-                                    document.cookie = `token=${event.data.token}; path=/; max-age=86400; SameSite=Lax`;
+                            const pollCookie = () => {
+                                const tokenMatch = document.cookie.match(/(?:^|; )token=([^;]+)/);
+                                if (!tokenMatch?.[1]) return null;
+                                const newUserMatch = document.cookie.match(/(?:^|; )saldana_is_new_user=([^;]+)/);
+                                const isNew = newUserMatch?.[1] === '1';
+                                return { token: tokenMatch[1], isNewUser: isNew };
+                            };
 
-                                    popup?.close();
+                            const finalizeAuth = (token: string, isNewUser: boolean) => {
+                                const cookieDomain = window.location.hostname.endsWith('saldanamusic.com')
+                                    ? '; Domain=.saldanamusic.com'
+                                    : '';
+                                document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax; Secure${cookieDomain}`;
+                                document.cookie = `saldana_is_new_user=${isNewUser ? '1' : '0'}; path=/; max-age=600; SameSite=Lax; Secure${cookieDomain}`;
+                                popup?.close();
+                                let preAuthPath: string | null = null;
+                                try {
+                                    preAuthPath = sessionStorage.getItem('saldana_pre_auth_path');
+                                    sessionStorage.removeItem('saldana_pre_auth_path');
+                                } catch { }
 
-                                    if (event.data.isNewUser) {
-                                        router.push('/onboarding');
-                                    } else {
-                                        router.push('/dashboard/profile');
-                                    }
+                                const isLoop = typeof preAuthPath === 'string' && (preAuthPath.includes('/login') || preAuthPath.includes('/register'));
 
-                                    window.removeEventListener('message', handleMessage);
+                                if (!isNewUser && preAuthPath && !isLoop) {
+                                    router.replace(preAuthPath);
+                                } else if (isNewUser) {
+                                    router.push(`/${locale}/onboarding`);
+                                } else {
+                                    router.push(`/${locale}/dashboard/profile`);
                                 }
                             };
+
+                            const handleMessage = (event: MessageEvent) => {
+                                // Add security check for origin if needed
+                                if (!event.origin.endsWith('saldanamusic.com')) return;
+                                if (event.data?.token) finalizeOnce(event.data.token, !!event.data.isNewUser);
+                            };
+
+                            const handleStorage = (event: StorageEvent) => {
+                                if (event.key !== 'saldana_auth' || !event.newValue) return;
+                                try {
+                                    const data = JSON.parse(event.newValue);
+                                    if (data?.token) finalizeOnce(data.token, !!data.isNewUser);
+                                } catch { }
+                            };
+
+                            const cleanup = () => {
+                                window.removeEventListener('message', handleMessage);
+                                window.removeEventListener('storage', handleStorage);
+                                if (pollId) window.clearInterval(pollId);
+                            };
+
+                            const finalizeOnce = (token: string, isNewUser: boolean) => {
+                                cleanup();
+                                finalizeAuth(token, isNewUser);
+                            };
+
                             window.addEventListener('message', handleMessage);
+                            window.addEventListener('storage', handleStorage);
+
+                            const pollId = window.setInterval(() => {
+                                const data = pollCookie();
+                                if (data?.token) finalizeOnce(data.token, !!data.isNewUser);
+                            }, 300);
                         }}
                         className="w-full flex items-center justify-center gap-3 px-6 py-3 rounded-xl bg-white text-black font-semibold hover:bg-gray-100 transition-colors"
                     >
@@ -147,7 +226,7 @@ export default function LoginPage() {
                 </form>
 
                 <p className="mt-8 text-center text-gray-500 text-sm">
-                    New to Saldaña Music? <Link href="/register" className="text-primary hover:underline">Apply for Access</Link>
+                    New to Saldaña Music? <Link href={`/${locale}/register`} className="text-primary hover:underline">Apply for Access</Link>
                 </p>
             </div>
         </main>

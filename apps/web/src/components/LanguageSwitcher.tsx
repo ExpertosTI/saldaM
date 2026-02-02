@@ -1,24 +1,31 @@
 "use client";
 
 import { useLocale } from 'next-intl';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useTransition } from 'react';
 
 export default function LanguageSwitcher() {
     const locale = useLocale();
     const router = useRouter();
     const pathname = usePathname();
+    const searchParams = useSearchParams();
     const [isPending, startTransition] = useTransition();
 
     const toggleLanguage = () => {
         const nextLocale = locale === 'es' ? 'en' : 'es';
         startTransition(() => {
-            // Very simple replacement for now, in a robust app use next-intl/navigation's Link/useRouter
-            const newPath = pathname.replace(`/${locale}`, `/${nextLocale}`);
-            // Fallback if path doesn't start with locale (homepage root)
-            const finalPath = newPath === pathname ? `/${nextLocale}${pathname}` : newPath;
+            const prefix = `/${locale}`;
+            const pathWithoutLocale = pathname.startsWith(prefix)
+                ? (pathname.slice(prefix.length) || '/')
+                : pathname;
 
-            router.replace(finalPath);
+            const normalized = pathWithoutLocale === '/' ? '' : pathWithoutLocale;
+            const nextPath = `/${nextLocale}${normalized}`;
+
+            const qs = searchParams?.toString();
+            const href = qs ? `${nextPath}?${qs}` : nextPath;
+
+            router.replace(href);
         });
     };
 
