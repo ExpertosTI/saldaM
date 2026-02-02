@@ -14,13 +14,13 @@
 | Funciones/Flujo | 🟡 MODERADO | Alta |
 | Botones/UI | 🟡 MODERADO | Media |
 | Branding | 🟢 BUENO | Baja |
-| Notificaciones | � CRÍTICO | Alta |
-| i18n Traducciones | � INCOMPLETO | Media |
-| Base de Datos | � SCHEMA DESYNC | Alta |
+| Notificaciones |  CRÍTICO | Alta |
+| i18n Traducciones |  INCOMPLETO | Media |
+| Base de Datos |  SCHEMA DESYNC | Alta |
 
 ---
 
-## � PROBLEMAS CRÍTICOS EN PRODUCCIÓN (AHORA MISMO)
+## PROBLEMAS CRÍTICOS EN PRODUCCIÓN (AHORA MISMO)
 
 ### 1. **SCHEMA DB DESINCRONIZADO** 🔴
 **Error:** `column SplitSheet.inviteToken does not exist`
@@ -83,7 +83,7 @@ ALTER TABLE "split_sheet" ADD COLUMN IF NOT EXISTS "inviteToken" character varyi
 
 ---
 
-## � AUDITORÍA DE BOTONES
+## AUDITORÍA DE BOTONES
 
 ### **Landing Page (`/[locale]/page.tsx`)**
 | Botón | Funciona | Problema |
@@ -248,21 +248,21 @@ SMTP_PASS=<secure_password>
 
 ## 📋 PLAN DE ACCIÓN ACTUALIZADO
 
-### � INMEDIATO (Antes de usar en producción)
+### INMEDIATO (Antes de usar en producción)
 1. [x] ~~Google OAuth funcionando~~ ✅
 2. [ ] **Agregar columna `inviteToken` a DB** ← CRÍTICO
 3. [ ] **Configurar SMTP en stack** ← CRÍTICO
 4. [ ] Mover credenciales a env vars
 5. [ ] Proteger endpoint `/users/:email`
 
-### � ESTA SEMANA
+### ESTA SEMANA
 1. [ ] Completar traducciones i18n (es.json, en.json)
 2. [ ] Implementar botón "Save Draft" funcional
 3. [ ] Implementar páginas placeholder (Colaboradores, Regalías, Settings)
 4. [ ] Mejorar popup OAuth con polling fallback
 5. [ ] Cambiar email from a dominio propio
 
-### � PRÓXIMAS 2 SEMANAS
+### PRÓXIMAS 2 SEMANAS
 1. [ ] Templates de email profesionales (HTML)
 2. [ ] Sistema de notificaciones in-app
 3. [ ] Implementar login con email/password funcional
