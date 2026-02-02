@@ -59,6 +59,7 @@ export class UserService {
         if (data.avatarUrl) user.avatarUrl = data.avatarUrl;
         if (data.proAffiliation) user.proAffiliation = data.proAffiliation;
         if (data.ipiNumber) user.ipiNumber = data.ipiNumber;
+        if (data.publishingCompany) user.publishingCompany = data.publishingCompany;
         if (data.userType) user.userType = data.userType; // Allow updating userType (e.g. from onboarding)
 
         return this.userRepository.save(user);

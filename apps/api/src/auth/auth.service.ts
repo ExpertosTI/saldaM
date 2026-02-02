@@ -10,10 +10,17 @@ export class AuthService {
         private jwtService: JwtService
     ) { }
 
-    async validateGoogleUser(details: { email: string; firstName: string; lastName: string; picture: string; accessToken: string }) {
+    async validateGoogleUser(details: { email: string; firstName: string; lastName: string; picture: string | null }) {
         // Check if user exists
         const user = await this.userService.findOne(details.email);
         if (user) {
+            const patch: any = {};
+            if (!user.firstName && details.firstName) patch.firstName = details.firstName;
+            if (!user.lastName && details.lastName) patch.lastName = details.lastName;
+            if (!user.avatarUrl && details.picture) patch.avatarUrl = details.picture;
+            if (Object.keys(patch).length > 0) {
+                return this.userService.updateProfile(user.id, patch);
+            }
             return user; // Log in existing user
         }
 
@@ -23,7 +30,9 @@ export class AuthService {
             email: details.email,
             firstName: details.firstName,
             lastName: details.lastName,
+            avatarUrl: details.picture,
             passwordHash: null,
+            isEmailVerified: true,
         });
     }
 

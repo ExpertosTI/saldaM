@@ -32,11 +32,16 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
         done: VerifyCallback,
     ): Promise<any> {
         try {
-            console.log('Google Profile Received:', JSON.stringify(profile)); // Debug Log
             const { name, emails, photos } = profile;
 
+            const email = emails?.[0]?.value;
+            if (!email) {
+                done(new Error('Google account missing email'), null);
+                return;
+            }
+
             const user = await this.authService.validateGoogleUser({
-                email: emails?.[0]?.value,
+                email,
                 firstName: name?.givenName || 'User',
                 lastName: name?.familyName || '',
                 picture: photos?.[0]?.value || null,

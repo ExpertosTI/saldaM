@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Param, Patch, Delete, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Patch, Delete, UseGuards, Req, ForbiddenException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { UserService } from './user.service';
 
@@ -11,12 +11,18 @@ export class UserController {
         return this.userService.create(body);
     }
 
+    @Get('me')
+    @UseGuards(AuthGuard('jwt'))
+    getMe(@Req() req: any) {
+        return this.userService.findById(req.user.id);
+    }
+
     @Get(':email')
     @UseGuards(AuthGuard('jwt'))
     findOne(@Param('email') email: string, @Req() req: any) {
         // Security: Only allow users to fetch their own data
         if (req.user.email !== email) {
-            throw new Error('Unauthorized: You can only access your own profile');
+            throw new ForbiddenException('Unauthorized: You can only access your own profile');
         }
         return this.userService.findOne(email);
     }
@@ -25,12 +31,6 @@ export class UserController {
     @UseGuards(AuthGuard('jwt'))
     updateProfile(@Req() req: any, @Body() body: any) {
         return this.userService.updateProfile(req.user.id, body);
-    }
-
-    @Get('me')
-    @UseGuards(AuthGuard('jwt'))
-    getMe(@Req() req: any) {
-        return this.userService.findById(req.user.id);
     }
 
     @Delete('account')
