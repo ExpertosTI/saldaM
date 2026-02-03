@@ -2,12 +2,17 @@ FROM node:20-alpine AS builder
 
 # Standardize pnpm installation
 RUN npm install -g pnpm@9.0.0
-RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache libc6-compat imagemagick
 
 WORKDIR /app
 
 # Copy entire project
 COPY . .
+
+# Convert SVG logo to small PNG (avoid PDF freeze with large PNG)
+RUN if [ -f apps/web/public/logo.svg ]; then \
+        convert apps/web/public/logo.svg -resize 200x apps/web/public/logo.png 2>/dev/null || true; \
+    fi
 
 # Bypass peer dependency strictness
 RUN pnpm config set strict-peer-dependencies false
