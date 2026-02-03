@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { getLocale } from 'next-intl/server';
 
 export default async function SplitSheetsPage() {
@@ -7,9 +8,18 @@ export default async function SplitSheetsPage() {
     return (
         <div>
             <header className="flex justify-between items-center mb-8">
-                <div>
-                    <h1 className="text-3xl font-bold text-white mb-2">My Split Sheets</h1>
-                    <p className="text-gray-400">View and manage your registered agreements.</p>
+                <div className="flex items-center gap-4">
+                    <Image 
+                        src="/logo.svg" 
+                        alt="Saldaña Music" 
+                        width={48} 
+                        height={48} 
+                        className="w-12 h-12"
+                    />
+                    <div>
+                        <h1 className="text-3xl font-bold text-white mb-2">My Split Sheets</h1>
+                        <p className="text-gray-400">View and manage your registered agreements.</p>
+                    </div>
                 </div>
                 <Link href={`/${locale}/dashboard/create`} className="px-5 py-2 bg-primary text-black font-bold rounded-lg hover:brightness-110 transition-all">
                     + Create New
