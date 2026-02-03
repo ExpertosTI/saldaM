@@ -26,9 +26,11 @@
     },
     "Dashboard": {
         "nav": {
+            "memberPortal": "Member Portal",
             "dashboard": "Dashboard",
             "splitSheets": "My Split Sheets",
             "collaborators": "Collaborators",
+            "profile": "My Profile",
             "royalties": "Royalties",
             "settings": "Settings"
         },
@@ -36,6 +38,57 @@
             "myCatalog": "My Catalog",
             "manageRights": "Manage your tracking rights and agreements."
         }
+    },
+    "Auth": {
+        "common": {
+            "firstNameLabel": "First Name",
+            "lastNameLabel": "Last Name",
+            "emailLabel": "Email Address",
+            "passwordLabel": "Password"
+        },
+        "login": {
+            "title": "Member Access",
+            "authenticating": "Authenticating...",
+            "continueWithGoogle": "Continue with Google",
+            "orLoginWithEmail": "OR LOGIN WITH EMAIL",
+            "emailPlaceholder": "you@saldanamusic.com",
+            "rememberMe": "Remember me",
+            "forgotPassword": "Forgot Password?",
+            "submit": "Enter Portal",
+            "noAccount": "New to Saldaña Music?",
+            "applyForAccess": "Apply for Access"
+        },
+        "register": {
+            "title": "Join the Roster",
+            "subtitle": "Professional Access for Music Creators",
+            "signUpWithGoogle": "Sign up with Google",
+            "orRegisterWithEmail": "OR REGISTER WITH EMAIL",
+            "iAmA": "I am a...",
+            "userType": {
+                "ARTIST": "Artist",
+                "PRODUCER": "Producer",
+                "PUBLISHER": "Publisher"
+            },
+            "creatingProfile": "Creating Profile...",
+            "createAccount": "Create Account",
+            "alreadyHaveAccount": "Already have an account?",
+            "signIn": "Sign In"
+        }
+    },
+    "Profile": {
+        "title": "My Profile",
+        "firstNameLabel": "First Name",
+        "firstNamePlaceholder": "Enter first name",
+        "lastNameLabel": "Last Name",
+        "lastNamePlaceholder": "Enter last name",
+        "bioLabel": "Bio",
+        "bioPlaceholder": "Tell us about yourself...",
+        "proAffiliationLabel": "PRO Affiliation",
+        "proAffiliationPlaceholder": "Select PRO",
+        "ipiNumberLabel": "IPI Number",
+        "ipiNumberPlaceholder": "000000000",
+        "saving": "Saving...",
+        "save": "Save Profile"
     },
     "System": {
         "pleaseLogin": "Please login first.",
@@ -46,6 +99,10 @@
         "inviteCopied": "Invite link copied to clipboard.",
         "inviteFailed": "Could not generate invite link.",
         "shareError": "Could not share invite right now.",
+        "shareActionTitle": "Share / Invite",
+        "startSigningTitle": "Start Signing Process",
+        "signAgreementTitle": "Sign Agreement",
+        "downloadPdfTitle": "Download PDF",
         "profileUpdated": "Profile updated successfully.",
         "profileUpdateFailed": "Could not update profile.",
         "registrationFailed": "Registration failed.",

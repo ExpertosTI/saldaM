@@ -26,9 +26,11 @@
     },
     "Dashboard": {
         "nav": {
+            "memberPortal": "Portal de Miembros",
             "dashboard": "Panel Principal",
             "splitSheets": "Mis Split Sheets",
             "collaborators": "Colaboradores",
+            "profile": "Mi Perfil",
             "royalties": "Regalías",
             "settings": "Configuración"
         },
@@ -36,6 +38,57 @@
             "myCatalog": "Mi Catálogo",
             "manageRights": "Gestiona tus derechos y acuerdos."
         }
+    },
+    "Auth": {
+        "common": {
+            "firstNameLabel": "Nombre",
+            "lastNameLabel": "Apellido",
+            "emailLabel": "Correo electrónico",
+            "passwordLabel": "Contraseña"
+        },
+        "login": {
+            "title": "Acceso de Miembros",
+            "authenticating": "Autenticando...",
+            "continueWithGoogle": "Continuar con Google",
+            "orLoginWithEmail": "O INGRESA CON TU EMAIL",
+            "emailPlaceholder": "tu@saldanamusic.com",
+            "rememberMe": "Recordarme",
+            "forgotPassword": "¿Olvidaste tu contraseña?",
+            "submit": "Entrar",
+            "noAccount": "¿Nuevo en Saldaña Music?",
+            "applyForAccess": "Solicitar Acceso"
+        },
+        "register": {
+            "title": "Únete al Roster",
+            "subtitle": "Acceso profesional para creadores de música",
+            "signUpWithGoogle": "Registrarse con Google",
+            "orRegisterWithEmail": "O REGÍSTRATE CON EMAIL",
+            "iAmA": "Soy...",
+            "userType": {
+                "ARTIST": "Artista",
+                "PRODUCER": "Productor",
+                "PUBLISHER": "Publisher"
+            },
+            "creatingProfile": "Creando perfil...",
+            "createAccount": "Crear Cuenta",
+            "alreadyHaveAccount": "¿Ya tienes cuenta?",
+            "signIn": "Iniciar Sesión"
+        }
+    },
+    "Profile": {
+        "title": "Mi Perfil",
+        "firstNameLabel": "Nombre",
+        "firstNamePlaceholder": "Escribe tu nombre",
+        "lastNameLabel": "Apellido",
+        "lastNamePlaceholder": "Escribe tu apellido",
+        "bioLabel": "Biografía",
+        "bioPlaceholder": "Cuéntanos sobre ti...",
+        "proAffiliationLabel": "Afiliación PRO",
+        "proAffiliationPlaceholder": "Selecciona PRO",
+        "ipiNumberLabel": "Número IPI",
+        "ipiNumberPlaceholder": "000000000",
+        "saving": "Guardando...",
+        "save": "Guardar Perfil"
     },
     "System": {
         "pleaseLogin": "Por favor inicia sesión.",
@@ -46,6 +99,10 @@
         "inviteCopied": "Enlace de invitación copiado.",
         "inviteFailed": "No se pudo generar el enlace de invitación.",
         "shareError": "No se pudo compartir la invitación.",
+        "shareActionTitle": "Compartir / Invitar",
+        "startSigningTitle": "Iniciar proceso de firma",
+        "signAgreementTitle": "Firmar acuerdo",
+        "downloadPdfTitle": "Descargar PDF",
         "profileUpdated": "Perfil actualizado correctamente.",
         "profileUpdateFailed": "No se pudo actualizar el perfil.",
         "registrationFailed": "El registro falló.",

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
+import AuthCallbackClient from '@/components/AuthCallbackClient';
 import "../globals.css";
 
 const montserrat = Montserrat({ subsets: ["latin"], variable: "--font-montserrat" });
@@ -32,6 +33,7 @@ export default async function LocaleLayout({
             </head>
             <body className={montserrat.className}>
                 <NextIntlClientProvider messages={messages}>
+                    <AuthCallbackClient />
                     {children}
                 </NextIntlClientProvider>
             </body>

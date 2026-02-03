@@ -19,6 +19,7 @@ export default function RegisterPage() {
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState<string>('');
     const t = useTranslations();
+    const a = useTranslations('Auth');
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -48,13 +49,13 @@ export default function RegisterPage() {
         <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-background">
             <div className="w-full max-w-lg p-8 glass-panel rounded-2xl shadow-2xl relative overflow-hidden">
                 {/* Logo & Decorative Gold Glow */}
-                <Link href="/" className="flex flex-col items-center mb-6 hover:scale-105 transition-transform cursor-pointer">
+                <Link href={`/${locale}`} className="flex flex-col items-center mb-6 hover:scale-105 transition-transform cursor-pointer">
                     <img src="/logo.svg" alt="Saldaña Music Logo" className="h-16 w-auto drop-shadow-[0_0_10px_rgba(212,175,55,0.4)] mb-4" />
                     <div className="w-24 h-1 bg-primary shadow-[0_0_30px_2px_rgba(212,175,55,0.6)]"></div>
                 </Link>
 
-                <h2 className="text-3xl font-bold text-center text-primary mb-2 tracking-wider uppercase">JOIN THE ROSTER</h2>
-                <p className="text-center text-gray-400 mb-8 text-sm">Professional Access for Music Creators</p>
+                <h2 className="text-3xl font-bold text-center text-primary mb-2 tracking-wider uppercase">{a('register.title')}</h2>
+                <p className="text-center text-gray-400 mb-8 text-sm">{a('register.subtitle')}</p>
 
                 <div className="mb-6 flex flex-col gap-3">
                     <button
@@ -143,12 +144,12 @@ export default function RegisterPage() {
                         className="w-full flex items-center justify-center gap-3 px-6 py-3 rounded-xl bg-white text-black font-semibold hover:bg-gray-100 transition-colors"
                     >
                         <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
-                        Sign up with Google
+                        {a('register.signUpWithGoogle')}
                     </button>
 
                     <div className="relative flex py-2 items-center">
                         <div className="flex-grow border-t border-neutral-700"></div>
-                        <span className="flex-shrink mx-4 text-gray-500 text-xs">OR REGISTER WITH EMAIL</span>
+                        <span className="flex-shrink mx-4 text-gray-500 text-xs">{a('register.orRegisterWithEmail')}</span>
                         <div className="flex-grow border-t border-neutral-700"></div>
                     </div>
                 </div>
@@ -156,7 +157,7 @@ export default function RegisterPage() {
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">First Name</label>
+                            <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">{a('common.firstNameLabel')}</label>
                             <input
                                 required
                                 className="w-full px-4 py-3 bg-neutral-900 border border-neutral-700 rounded-lg focus:border-primary outline-none text-white"
@@ -165,7 +166,7 @@ export default function RegisterPage() {
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Last Name</label>
+                            <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">{a('common.lastNameLabel')}</label>
                             <input
                                 required
                                 className="w-full px-4 py-3 bg-neutral-900 border border-neutral-700 rounded-lg focus:border-primary outline-none text-white"
@@ -176,7 +177,7 @@ export default function RegisterPage() {
                     </div>
 
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">I am a...</label>
+                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">{a('register.iAmA')}</label>
                         <div className="grid grid-cols-3 gap-2">
                             {['ARTIST', 'PRODUCER', 'PUBLISHER'].map((type) => (
                                 <button
@@ -188,14 +189,14 @@ export default function RegisterPage() {
                                         : 'bg-transparent text-gray-400 border-neutral-700 hover:border-gray-500'
                                         }`}
                                 >
-                                    {type}
+                                    {a(`register.userType.${type}`)}
                                 </button>
                             ))}
                         </div>
                     </div>
 
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Email Address</label>
+                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">{a('common.emailLabel')}</label>
                         <input
                             type="email"
                             required
@@ -206,7 +207,7 @@ export default function RegisterPage() {
                     </div>
 
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Password</label>
+                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">{a('common.passwordLabel')}</label>
                         <input
                             type="password"
                             required
@@ -221,7 +222,7 @@ export default function RegisterPage() {
                         disabled={loading}
                         className="w-full py-4 mt-4 bg-primary text-black font-bold uppercase tracking-widest rounded-lg hover:bg-yellow-500 transition-all"
                     >
-                        {loading ? 'Creating Profile...' : 'Create Account'}
+                        {loading ? a('register.creatingProfile') : a('register.createAccount')}
                     </button>
                 </form>
 
@@ -230,7 +231,7 @@ export default function RegisterPage() {
                 )}
 
                 <p className="mt-8 text-center text-gray-500 text-sm">
-                    Already have an account? <Link href={`/${locale}/login`} className="text-primary hover:underline">Sign In</Link>
+                    {a('register.alreadyHaveAccount')} <Link href={`/${locale}/login`} className="text-primary hover:underline">{a('register.signIn')}</Link>
                 </p>
             </div>
         </main>

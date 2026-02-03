@@ -4,9 +4,11 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { API_BASE_URL, getToken } from '@/lib/auth';
+import { User } from 'lucide-react';
 
 export default function ProfilePage() {
     const t = useTranslations();
+    const p = useTranslations('Profile');
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
@@ -64,67 +66,70 @@ export default function ProfilePage() {
 
     return (
         <div className="text-white">
-            <h1 className="text-3xl font-bold mb-8">My Profile</h1>
+            <h1 className="text-3xl font-bold mb-8 flex items-center gap-3">
+                <User className="w-7 h-7 text-primary" />
+                {p('title')}
+            </h1>
             <div className="glass-panel p-8 rounded-xl max-w-2xl">
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid grid-cols-2 gap-6">
                         <div>
-                            <label className="block text-sm text-gray-400 mb-2">First Name</label>
+                            <label className="block text-sm text-gray-400 mb-2">{p('firstNameLabel')}</label>
                             <input
                                 name="firstName"
                                 value={formData.firstName}
                                 onChange={handleChange}
                                 className="w-full bg-neutral-900 border border-neutral-700 rounded-lg p-3 text-white focus:border-primary focus:outline-none"
-                                placeholder="Enter first name"
+                                placeholder={p('firstNamePlaceholder')}
                             />
                         </div>
                         <div>
-                            <label className="block text-sm text-gray-400 mb-2">Last Name</label>
+                            <label className="block text-sm text-gray-400 mb-2">{p('lastNameLabel')}</label>
                             <input
                                 name="lastName"
                                 value={formData.lastName}
                                 onChange={handleChange}
                                 className="w-full bg-neutral-900 border border-neutral-700 rounded-lg p-3 text-white focus:border-primary focus:outline-none"
-                                placeholder="Enter last name"
+                                placeholder={p('lastNamePlaceholder')}
                             />
                         </div>
                     </div>
 
                     <div>
-                        <label className="block text-sm text-gray-400 mb-2">Bio</label>
+                        <label className="block text-sm text-gray-400 mb-2">{p('bioLabel')}</label>
                         <textarea
                             name="bio"
                             value={formData.bio}
                             onChange={handleChange}
                             rows={4}
                             className="w-full bg-neutral-900 border border-neutral-700 rounded-lg p-3 text-white focus:border-primary focus:outline-none"
-                            placeholder="Tell us about yourself..."
+                            placeholder={p('bioPlaceholder')}
                         />
                     </div>
 
                     <div className="grid grid-cols-2 gap-6">
                         <div>
-                            <label className="block text-sm text-gray-400 mb-2">PRO Affiliation</label>
+                            <label className="block text-sm text-gray-400 mb-2">{p('proAffiliationLabel')}</label>
                             <select
                                 name="proAffiliation"
                                 value={formData.proAffiliation}
                                 onChange={handleChange}
                                 className="w-full bg-neutral-900 border border-neutral-700 rounded-lg p-3 text-white focus:border-primary focus:outline-none"
                             >
-                                <option value="">Select PRO</option>
+                                <option value="">{p('proAffiliationPlaceholder')}</option>
                                 <option value="ASCAP">ASCAP</option>
                                 <option value="BMI">BMI</option>
                                 <option value="SESAC">SESAC</option>
                             </select>
                         </div>
                         <div>
-                            <label className="block text-sm text-gray-400 mb-2">IPI Number</label>
+                            <label className="block text-sm text-gray-400 mb-2">{p('ipiNumberLabel')}</label>
                             <input
                                 name="ipiNumber"
                                 value={formData.ipiNumber}
                                 onChange={handleChange}
                                 className="w-full bg-neutral-900 border border-neutral-700 rounded-lg p-3 text-white focus:border-primary focus:outline-none"
-                                placeholder="000000000"
+                                placeholder={p('ipiNumberPlaceholder')}
                             />
                         </div>
                     </div>
@@ -134,7 +139,7 @@ export default function ProfilePage() {
                         disabled={loading}
                         className="w-full py-4 bg-primary text-black font-bold rounded-lg hover:brightness-110 transition-all shadow-[0_0_20px_rgba(212,175,55,0.3)]"
                     >
-                        {loading ? 'Saving...' : 'Save Profile'}
+                        {loading ? p('saving') : p('save')}
                     </button>
 
                     {message && (
