@@ -71,6 +71,7 @@ export class SignatureService {
 
         const marginX = 50;
         let y = height - 50;
+        let logoBottomY: number | null = null;
 
         const logoPath = this.resolveLogoPngPath();
         if (logoPath) {
@@ -79,7 +80,9 @@ export class SignatureService {
                 const logo = await pdfDoc.embedPng(logoBytes);
                 const logoWidth = 70;
                 const logoHeight = (logo.height / logo.width) * logoWidth;
-                page.drawImage(logo, { x: marginX, y: y - logoHeight + 10, width: logoWidth, height: logoHeight });
+                const bottomY = y - logoHeight + 10;
+                page.drawImage(logo, { x: marginX, y: bottomY, width: logoWidth, height: logoHeight });
+                logoBottomY = bottomY;
             } catch {
             }
         }
@@ -93,6 +96,9 @@ export class SignatureService {
         page.drawText(`DOC ID: ${this.safeText(splitSheet.id)}`, { x: width - marginX - 200, y: metaY - 14, size: 8, font, color: rgb(0.35, 0.35, 0.35) });
 
         y -= 26;
+        if (logoBottomY !== null && y > logoBottomY - 14) {
+            y = logoBottomY - 14;
+        }
         page.drawLine({ start: { x: marginX, y }, end: { x: width - marginX, y }, thickness: 1, color: rgb(0.85, 0.85, 0.85) });
         y -= 18;
 
