@@ -77,13 +77,19 @@ export class SignatureService {
         if (logoPath) {
             try {
                 const logoBytes = readFileSync(logoPath);
-                const logo = await pdfDoc.embedPng(logoBytes);
-                const logoWidth = 70;
-                const logoHeight = (logo.height / logo.width) * logoWidth;
-                const bottomY = y - logoHeight + 10;
-                page.drawImage(logo, { x: marginX, y: bottomY, width: logoWidth, height: logoHeight });
-                logoBottomY = bottomY;
-            } catch {
+                // Limitar tamaño máximo a 500KB para evitar cuelgues
+                if (logoBytes.length > 500 * 1024) {
+                    console.warn(`Logo too large (${logoBytes.length} bytes), skipping to prevent PDF hang`);
+                } else {
+                    const logo = await pdfDoc.embedPng(logoBytes);
+                    const logoWidth = 40; // Reducido de 70 a 40 para evitar procesamiento pesado
+                    const logoHeight = (logo.height / logo.width) * logoWidth;
+                    const bottomY = y - logoHeight + 10;
+                    page.drawImage(logo, { x: marginX, y: bottomY, width: logoWidth, height: logoHeight });
+                    logoBottomY = bottomY;
+                }
+            } catch (err) {
+                console.warn('Logo embed failed, continuing without logo:', err.message);
             }
         }
 
@@ -196,13 +202,19 @@ export class SignatureService {
         if (logoPath) {
             try {
                 const logoBytes = readFileSync(logoPath);
-                const logo = await pdfDoc.embedPng(logoBytes);
-                const logoWidth = 60;
-                const logoHeight = (logo.height / logo.width) * logoWidth;
-                const bottomY = y - logoHeight + 8;
-                page1.drawImage(logo, { x: marginX, y: bottomY, width: logoWidth, height: logoHeight });
-                logoBottomY = bottomY;
-            } catch {
+                // Limitar tamaño máximo a 500KB para evitar cuelgues
+                if (logoBytes.length > 500 * 1024) {
+                    console.warn(`Logo too large (${logoBytes.length} bytes), skipping to prevent PDF hang`);
+                } else {
+                    const logo = await pdfDoc.embedPng(logoBytes);
+                    const logoWidth = 35; // Reducido de 60 a 35
+                    const logoHeight = (logo.height / logo.width) * logoWidth;
+                    const bottomY = y - logoHeight + 8;
+                    page1.drawImage(logo, { x: marginX, y: bottomY, width: logoWidth, height: logoHeight });
+                    logoBottomY = bottomY;
+                }
+            } catch (err) {
+                console.warn('Logo embed failed, continuing without logo:', err.message);
             }
         }
 
