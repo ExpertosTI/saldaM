@@ -10,8 +10,9 @@ WORKDIR /app
 COPY . .
 
 # Convert SVG logo to small PNG (avoid PDF freeze with large PNG)
-RUN if [ -f apps/web/public/logo.svg ]; then \
-        convert apps/web/public/logo.svg -resize 200x apps/web/public/logo.png 2>/dev/null || true; \
+RUN rm -f apps/web/public/logo.png && \
+    if [ -f apps/web/public/logo.svg ]; then \
+        convert apps/web/public/logo.svg -resize 200x apps/web/public/logo.png; \
     fi
 
 # Bypass peer dependency strictness
