@@ -103,6 +103,7 @@
         "startSigningTitle": "Iniciar proceso de firma",
         "signAgreementTitle": "Firmar acuerdo",
         "downloadPdfTitle": "Descargar PDF",
+        "downloadFullPdfTitle": "Descargar PDF completo del Split Sheet",
         "profileUpdated": "Perfil actualizado correctamente.",
         "profileUpdateFailed": "No se pudo actualizar el perfil.",
         "registrationFailed": "El registro falló.",

@@ -174,6 +174,22 @@ export class SplitSheetService {
         return this.signatureService.generateSplitSheetPdf(splitSheet);
     }
 
+    async downloadFullPdf(id: string, user: any): Promise<Buffer> {
+        const splitSheet = await this.findOne(id);
+        if (!splitSheet) {
+            throw new Error('Split Sheet not found');
+        }
+
+        const isOwner = splitSheet.owner?.id === user.id;
+        const isCollaborator = splitSheet.collaborators.some(c => c.email === user.email);
+
+        if (!isCollaborator && !isOwner) {
+            throw new Error('You do not have permission to download this file');
+        }
+
+        return this.signatureService.generateFullSplitSheetPdf(splitSheet);
+    }
+
     async generateInvite(id: string, user: any): Promise<string> {
         const splitSheet = await this.findOne(id);
         if (!splitSheet) throw new Error('Split Sheet not found');

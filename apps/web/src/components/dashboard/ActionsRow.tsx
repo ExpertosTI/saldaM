@@ -47,6 +47,40 @@ export default function ActionsRow({ sheet, currentUserId }: { sheet: any; curre
         }
     };
 
+    const handleDownloadFullPdf = async () => {
+        setLoading(true);
+        try {
+            const token = getToken();
+            if (!token) {
+                notify(t('System.pleaseLogin'));
+                return;
+            }
+
+            const res = await fetch(`${API_BASE_URL}/split-sheets/${sheet.id}/full-pdf`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!res.ok) {
+                notify(t('System.genericError'));
+                return;
+            }
+
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `full-split-sheet-${sheet.id}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        } catch {
+            notify(t('System.genericError'));
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // Removed original status state and comments
     const [localStatus, setLocalStatus] = useState(sheet.status); // New localStatus state based on sheet prop
 
@@ -163,6 +197,17 @@ export default function ActionsRow({ sheet, currentUserId }: { sheet: any; curre
             >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+            </button>
+
+            <button
+                onClick={handleDownloadFullPdf}
+                disabled={loading}
+                className="p-2 bg-neutral-800 rounded-full hover:bg-primary/20 hover:text-primary transition-colors disabled:opacity-50"
+                title={t('System.downloadFullPdfTitle')}
+            >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h10M7 11h10M7 15h10M4 19h16" />
                 </svg>
             </button>
 

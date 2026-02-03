@@ -103,6 +103,7 @@
         "startSigningTitle": "Start Signing Process",
         "signAgreementTitle": "Sign Agreement",
         "downloadPdfTitle": "Download PDF",
+        "downloadFullPdfTitle": "Download Full Split Sheet PDF",
         "profileUpdated": "Profile updated successfully.",
         "profileUpdateFailed": "Could not update profile.",
         "registrationFailed": "Registration failed.",

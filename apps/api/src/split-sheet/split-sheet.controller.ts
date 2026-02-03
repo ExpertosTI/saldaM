@@ -42,6 +42,19 @@ export class SplitSheetController {
         });
         res.end(pdfBuffer);
     }
+
+    @Get(':id/full-pdf')
+    @UseGuards(AuthGuard('jwt'))
+    async downloadFullPdf(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string, @Req() req: any, @Res() res: Response) {
+        const user = req.user;
+        const pdfBuffer = await this.splitSheetService.downloadFullPdf(id, user);
+        res.set({
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `attachment; filename="full-split-sheet-${id}.pdf"`,
+            'Content-Length': pdfBuffer.length,
+        });
+        res.end(pdfBuffer);
+    }
     @Post(':id/invite')
     @UseGuards(AuthGuard('jwt'))
     async generateInvite(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string, @Req() req: any) {
