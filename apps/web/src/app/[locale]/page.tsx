@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getTranslations } from 'next-intl/server';
 
 export default async function Home({
     params
@@ -6,6 +7,8 @@ export default async function Home({
     params: Promise<{ locale: string }>;
 }) {
     const { locale } = await params;
+    const t = await getTranslations('Landing');
+    const c = await getTranslations('Common');
     return (
         <main className="flex min-h-screen flex-col items-center relative overflow-hidden bg-[#050505] text-white selection:bg-primary/30">
             {/* Ambient Background */}
@@ -19,7 +22,7 @@ export default async function Home({
             {/* Navbar */}
             <nav className="fixed top-0 inset-x-0 z-50 backdrop-blur-md bg-black/20 border-b border-white/5">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-                    <Link href="/" className="flex items-center gap-4 group cursor-pointer">
+                    <Link href={`/${locale}`} className="flex items-center gap-4 group cursor-pointer">
                         <div className="relative">
                             <div className="absolute inset-0 bg-primary/20 blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                             <img src="/logo.png" alt="Saldaña Music Logo" className="relative h-10 w-auto object-contain" />
@@ -32,12 +35,12 @@ export default async function Home({
 
                     <div className="flex items-center gap-6">
                         <Link href={`/${locale}/login`} className="hidden md:block text-sm text-gray-400 hover:text-white transition-colors">
-                            Iniciar Sesión
+                            {t('navLogin')}
                         </Link>
                         <Link href={`/${locale}/register`} className="group relative px-6 py-2.5 rounded-full bg-white/5 border border-white/10 overflow-hidden transition-all duration-300 hover:border-primary/50 hover:bg-white/10">
                             <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/20 to-primary/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
                             <span className="relative text-sm font-medium text-white group-hover:text-primary transition-colors">
-                                Unirse al Roster
+                                {t('navJoinRoster')}
                             </span>
                         </Link>
                     </div>
@@ -51,25 +54,25 @@ export default async function Home({
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                     </span>
-                    <span className="text-xs font-medium tracking-wide text-gray-300">SISTEMA OPERATIVO LEGAL PARA MÚSICA</span>
+                    <span className="text-xs font-medium tracking-wide text-gray-300">{t('tagline')}</span>
                 </div>
 
                 <h1 className="text-5xl md:text-8xl font-bold tracking-tight mb-8 leading-[1.1] animate-fade-in-up delay-100">
                     <span className="block bg-clip-text text-transparent bg-gradient-to-b from-white via-white to-gray-500">
-                        Tu Legado Musical,
+                        {t('heroLine1')}
                     </span>
                     <span className="block text-transparent bg-clip-text bg-gradient-to-r from-primary via-yellow-200 to-primary/50 font-serif italic pr-2">
-                        Blindado.
+                        {t('heroLine2')}
                     </span>
                 </h1>
 
                 <p className="text-lg md:text-xl text-gray-400 max-w-2xl mb-12 leading-relaxed animate-fade-in-up delay-200">
-                    La plataforma definitiva para gestionar Split Sheets, catálogos y regalías con validez legal internacional. Diseñada para la élite de la industria.
+                    {t('heroSubtitle')}
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-4 w-full justify-center animate-fade-in-up delay-300">
                     <Link href={`/${locale}/register`} className="group relative px-8 py-4 rounded-full bg-white text-black font-bold text-lg overflow-hidden hover:scale-105 transition-transform duration-300">
-                        <span className="relative z-10">Comenzar Ahora</span>
+                        <span className="relative z-10">{t('ctaStart')}</span>
                         <div className="absolute inset-0 bg-gradient-to-r from-primary via-white to-primary opacity-0 group-hover:opacity-20 transition-opacity" />
                     </Link>
                 </div>
@@ -86,9 +89,9 @@ export default async function Home({
                         </div>
                         <div className="relative aspect-[16/9] w-full bg-gradient-to-br from-gray-900 to-black p-8 flex items-center justify-center">
                             <div className="text-center">
-                                <p className="text-sm text-primary mb-2 font-mono">ESTADO DEL SISTEMA</p>
-                                <h3 className="text-3xl font-bold text-white mb-1">Activo y Seguro</h3>
-                                <p className="text-gray-500 text-sm">Dashboard v2.0 Cargando...</p>
+                                <p className="text-sm text-primary mb-2 font-mono">{t('systemStatusLabel')}</p>
+                                <h3 className="text-3xl font-bold text-white mb-1">{t('systemStatusTitle')}</h3>
+                                <p className="text-gray-500 text-sm">{t('systemStatusSubtitle')}</p>
                             </div>
                             {/* Overlay Shine */}
                             <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
@@ -100,8 +103,8 @@ export default async function Home({
             {/* Features (Bento Grid) */}
             <section className="relative z-10 w-full max-w-7xl mx-auto px-6 py-24 border-t border-white/5">
                 <div className="text-center mb-16">
-                    <h2 className="text-3xl md:text-5xl font-bold mb-4">Todo lo que necesitas</h2>
-                    <p className="text-gray-400">Herramientas profesionales para una industria exigente.</p>
+                    <h2 className="text-3xl md:text-5xl font-bold mb-4">{t('featuresTitle')}</h2>
+                    <p className="text-gray-400">{t('featuresSubtitle')}</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -112,9 +115,9 @@ export default async function Home({
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
-                        <h3 className="text-xl font-bold text-white mb-3">Split Sheets Digitales</h3>
+                        <h3 className="text-xl font-bold text-white mb-3">{t('feature1Title')}</h3>
                         <p className="text-gray-400 leading-relaxed text-sm">
-                            Genera acuerdos de porcentajes en segundos. Firma digitalmente desde cualquier dispositivo con validez legal.
+                            {t('feature1Body')}
                         </p>
                     </div>
 
@@ -127,9 +130,9 @@ export default async function Home({
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.2-2.858.57-4.181m13.239 8.242a22 22 0 01-4.515 4.707m-5.323-2.365a21.807 21.807 0 01-3.235-3.297" />
                                     </svg>
                                 </div>
-                                <h3 className="text-xl font-bold text-white mb-3">Firma Biométrica & Auditoría</h3>
+                                <h3 className="text-xl font-bold text-white mb-3">{t('feature2Title')}</h3>
                                 <p className="text-gray-400 leading-relaxed text-sm mb-6">
-                                    Cada acuerdo genera un hash único SHA-256 grabado en un registro inmutable. Capturamos IP, dispositivo y huella de tiempo para máxima seguridad jurídica en disputas de regalías.
+                                    {t('feature2Body')}
                                 </p>
                                 <div className="flex gap-2">
                                     <span className="px-3 py-1 rounded bg-white/5 border border-white/10 text-xs text-gray-300">SHA-256</span>
@@ -155,9 +158,9 @@ export default async function Home({
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                             </svg>
                         </div>
-                        <h3 className="text-xl font-bold text-white mb-3">Catálogo Centralizado</h3>
+                        <h3 className="text-xl font-bold text-white mb-3">{t('feature3Title')}</h3>
                         <p className="text-gray-400 leading-relaxed text-sm">
-                            Tu inventario maestro de obras. Metadatos ISRC, ISWC y créditos de producción organizados y listos para exportar.
+                            {t('feature3Body')}
                         </p>
                     </div>
                 </div>
@@ -168,12 +171,12 @@ export default async function Home({
                 <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
                     <div className="flex items-center gap-2 opacity-50 hover:opacity-100 transition-opacity">
                         <img src="/logo.png" alt="Logo" className="h-6 w-auto grayscale" />
-                        <span className="text-xs tracking-widest uppercase">Saldaña Music © 2026</span>
+                        <span className="text-xs tracking-widest uppercase">{c('copyright')}</span>
                     </div>
                     <div className="flex gap-8 text-sm text-gray-500">
-                        <Link href={`/${locale}/privacy`} className="hover:text-primary transition-colors">Privacidad</Link>
-                        <Link href={`/${locale}/terms`} className="hover:text-primary transition-colors">Términos</Link>
-                        <Link href={`/${locale}/support`} className="hover:text-primary transition-colors">Soporte</Link>
+                        <Link href={`/${locale}/privacy`} className="hover:text-primary transition-colors">{c('privacy')}</Link>
+                        <Link href={`/${locale}/terms`} className="hover:text-primary transition-colors">{c('terms')}</Link>
+                        <Link href={`/${locale}/support`} className="hover:text-primary transition-colors">{c('support')}</Link>
                     </div>
                 </div>
             </footer>

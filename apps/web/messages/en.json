@@ -2,12 +2,27 @@
     "Landing": {
         "heroTitle": "Your Musical Legacy, Immutably Protected.",
         "heroSubtitle": "The first Blockchain-powered rights management platform for the modern era. Register, Manage, and Monetize.",
+        "heroLine1": "Your Musical Legacy,",
+        "heroLine2": "Protected.",
         "ctaStart": "Start Now",
         "ctaDemo": "Create Free Account",
         "navHome": "Home",
         "navFeatures": "Features",
         "navPricing": "Pricing",
-        "navLogin": "Login"
+        "navLogin": "Login",
+        "navJoinRoster": "Join the Roster",
+        "tagline": "LEGAL OPERATING SYSTEM FOR MUSIC",
+        "systemStatusLabel": "SYSTEM STATUS",
+        "systemStatusTitle": "Active & Secure",
+        "systemStatusSubtitle": "Dashboard v2.0 Loading...",
+        "featuresTitle": "Everything you need",
+        "featuresSubtitle": "Professional tools for a demanding industry.",
+        "feature1Title": "Digital Split Sheets",
+        "feature1Body": "Generate percentage agreements in seconds. Sign digitally from any device with legal validity.",
+        "feature2Title": "Biometric Signature & Audit",
+        "feature2Body": "Every agreement generates a unique SHA-256 hash recorded in an immutable ledger. We capture IP, device and timestamp for maximum legal security in royalty disputes.",
+        "feature3Title": "Centralized Catalog",
+        "feature3Body": "Your master inventory of works. ISRC/ISWC metadata and production credits organized and ready to export."
     },
     "Dashboard": {
         "nav": {
