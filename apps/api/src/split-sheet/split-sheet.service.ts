@@ -1,5 +1,5 @@
 
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SplitSheet, SplitSheetStatus } from './entities/split-sheet.entity';
@@ -22,14 +22,20 @@ export class SplitSheetService {
 
     async startSignatures(id: string, user: any) {
         const splitSheet = await this.findOne(id);
-        if (!splitSheet) throw new Error('Split Sheet not found');
+        if (!splitSheet) throw new NotFoundException('Split Sheet not found');
 
         if (splitSheet.owner?.id !== user.id) {
-            throw new Error('Only owner can start signatures');
+            throw new ForbiddenException('Only owner can start signatures');
         }
 
+        if (splitSheet.status === SplitSheetStatus.PENDING_SIGNATURES) {
+            throw new ConflictException('Split Sheet is already pending signatures');
+        }
+        if (splitSheet.status === SplitSheetStatus.COMPLETED) {
+            throw new ConflictException('Split Sheet is already completed');
+        }
         if (splitSheet.status !== SplitSheetStatus.DRAFT) {
-            throw new Error('Split Sheet is already pending or completed');
+            throw new ConflictException('Split Sheet cannot start signatures from current status');
         }
 
         splitSheet.status = SplitSheetStatus.PENDING_SIGNATURES;
