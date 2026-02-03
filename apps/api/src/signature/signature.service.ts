@@ -11,6 +11,12 @@ export class SignatureService {
 
     private resolveLogoPngPath() {
         const candidates = [
+            // Priorizar logo pequeño si existe
+            path.resolve(process.cwd(), 'apps/web/public/logo-small.png'),
+            path.resolve(process.cwd(), '../web/public/logo-small.png'),
+            path.resolve(process.cwd(), '../../web/public/logo-small.png'),
+            path.resolve(process.cwd(), '../../apps/web/public/logo-small.png'),
+            // Fallback a logo normal
             path.resolve(process.cwd(), 'apps/web/public/logo.png'),
             path.resolve(process.cwd(), '../web/public/logo.png'),
             path.resolve(process.cwd(), '../../web/public/logo.png'),
