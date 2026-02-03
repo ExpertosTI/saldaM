@@ -182,7 +182,9 @@ export class SignatureService {
         const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
         const marginX = 45;
+        const headerTextX = marginX + 75;
         let y = height - 45;
+        let logoBottomY: number | null = null;
 
         const logoPath = this.resolveLogoPngPath();
         if (logoPath) {
@@ -191,19 +193,25 @@ export class SignatureService {
                 const logo = await pdfDoc.embedPng(logoBytes);
                 const logoWidth = 60;
                 const logoHeight = (logo.height / logo.width) * logoWidth;
-                page1.drawImage(logo, { x: marginX, y: y - logoHeight + 8, width: logoWidth, height: logoHeight });
+                const bottomY = y - logoHeight + 8;
+                page1.drawImage(logo, { x: marginX, y: bottomY, width: logoWidth, height: logoHeight });
+                logoBottomY = bottomY;
             } catch {
             }
         }
 
-        page1.drawText('FULL SPLIT-SHEET', { x: marginX + 75, y, size: 16, font: fontBold, color: rgb(0.75, 0.55, 0.15) });
+        page1.drawText('FULL SPLIT-SHEET', { x: headerTextX, y, size: 16, font: fontBold, color: rgb(0.75, 0.55, 0.15) });
         y -= 18;
-        page1.drawText('DOCUMENTO DE REPARTO DE DERECHOS DE AUTOR', { x: marginX + 75, y, size: 10, font: fontBold, color: rgb(0.4, 0.4, 0.4) });
+        page1.drawText('DOCUMENTO DE REPARTO DE DERECHOS DE AUTOR', { x: headerTextX, y, size: 10, font: fontBold, color: rgb(0.4, 0.4, 0.4) });
         y -= 20;
 
-        page1.drawText(`Título de la canción: ${this.safeText(splitSheet.title)}`, { x: marginX, y, size: 9, font, color: rgb(0.15, 0.15, 0.15) });
+        if (logoBottomY !== null && y > logoBottomY - 10) {
+            y = logoBottomY - 10;
+        }
+
+        page1.drawText(`Título de la canción: ${this.safeText(splitSheet.title)}`, { x: headerTextX, y, size: 9, font, color: rgb(0.15, 0.15, 0.15) });
         y -= 12;
-        page1.drawText(`Fecha: ${this.formatDate(splitSheet.createdAt)}    Sello: ${this.safeText(splitSheet.label)}    Estudio: ${this.safeText(splitSheet.studio)}`, { x: marginX, y, size: 9, font, color: rgb(0.15, 0.15, 0.15) });
+        page1.drawText(`Fecha: ${this.formatDate(splitSheet.createdAt)}    Sello: ${this.safeText(splitSheet.label)}    Estudio: ${this.safeText(splitSheet.studio)}`, { x: headerTextX, y, size: 9, font, color: rgb(0.15, 0.15, 0.15) });
         y -= 14;
         page1.drawLine({ start: { x: marginX, y }, end: { x: width - marginX, y }, thickness: 1, color: rgb(0.85, 0.85, 0.85) });
         y -= 16;
