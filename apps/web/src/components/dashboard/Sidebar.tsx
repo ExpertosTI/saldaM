@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { getToken, removeToken, API_BASE_URL } from '@/lib/auth';
@@ -19,6 +19,7 @@ interface UserData {
 export default function Sidebar() {
     const locale = useLocale();
     const pathname = usePathname();
+    const router = useRouter();
     const t = useTranslations('Dashboard.nav');
     const [user, setUser] = useState<UserData | null>(null);
     const [loading, setLoading] = useState(true);
@@ -39,6 +40,9 @@ export default function Sidebar() {
                 if (res.ok) {
                     const data = await res.json();
                     setUser(data);
+                } else if (res.status === 401) {
+                    // Token expired - force logout
+                    handleLogout();
                 }
             } catch (e) {
                 console.error('Failed to fetch user', e);
@@ -55,13 +59,34 @@ export default function Sidebar() {
         setIsOpen(false);
     }, [pathname]);
 
+    // Prevent body scroll when sidebar is open
+    useEffect(() => {
+        if (isOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [isOpen]);
+
     const handleLogout = () => {
+        // Clear all auth data
         removeToken();
+        document.cookie = 'token=; path=/; max-age=0';
         document.cookie = 'saldana_is_new_user=; path=/; max-age=0';
+        sessionStorage.clear();
+        localStorage.removeItem('token');
+
+        // Redirect to login
         window.location.href = `/${locale}/login`;
     };
 
     const isActive = (path: string) => {
+        if (path === `/${locale}/dashboard`) {
+            return pathname === path;
+        }
         return pathname === path || pathname.startsWith(path + '/');
     };
 
@@ -70,7 +95,7 @@ export default function Sidebar() {
         { href: `/${locale}/dashboard/split-sheets`, label: t('splitSheets'), icon: 'document' },
         { href: `/${locale}/dashboard/collaborators`, label: t('collaborators'), icon: 'users' },
         { href: `/${locale}/dashboard/profile`, label: t('profile'), icon: 'user' },
-        { href: `/${locale}/dashboard/royalties`, label: t('royalties'), icon: 'chart' },
+        { href: `/${locale}/dashboard/royalties`, label: t('royalties'), icon: 'chart', disabled: true },
         { href: `/${locale}/dashboard/settings`, label: t('settings'), icon: 'settings' },
     ];
 
@@ -88,6 +113,8 @@ export default function Sidebar() {
                 return <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />;
             case 'settings':
                 return <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />;
+            case 'logout':
+                return <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />;
             default:
                 return null;
         }
@@ -96,10 +123,10 @@ export default function Sidebar() {
     return (
         <>
             {/* Mobile Header Bar */}
-            <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-black/95 backdrop-blur-xl border-b border-white/5 z-50 flex items-center justify-between px-4">
+            <div className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-black/95 backdrop-blur-xl border-b border-white/5 z-50 flex items-center justify-between px-4 safe-area-top">
                 <button
                     onClick={() => setIsOpen(!isOpen)}
-                    className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+                    className="p-2 -ml-2 rounded-lg hover:bg-white/10 active:bg-white/20 transition-colors"
                     aria-label="Toggle menu"
                 >
                     <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -110,17 +137,28 @@ export default function Sidebar() {
                         )}
                     </svg>
                 </button>
-                <Link href={`/${locale}`} className="flex items-center gap-2">
-                    <img src="/logo.svg" alt="Logo" className="h-8 w-auto" />
-                    <span className="text-lg font-bold tracking-wider text-white">SALDAÑA</span>
+                <Link href={`/${locale}/dashboard`} className="flex items-center gap-2">
+                    <img src="/logo.svg" alt="Logo" className="h-7 w-auto" />
+                    <span className="text-base font-bold tracking-wider text-white">SALDAÑA</span>
                 </Link>
-                <div className="w-10" /> {/* Spacer for centering */}
+                {/* Logout button in header for mobile */}
+                {user && (
+                    <button
+                        onClick={handleLogout}
+                        className="p-2 -mr-2 rounded-lg text-red-400 hover:bg-red-500/10 active:bg-red-500/20 transition-colors"
+                        aria-label="Cerrar sesión"
+                    >
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                    </button>
+                )}
             </div>
 
             {/* Mobile Overlay */}
             {isOpen && (
                 <div
-                    className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+                    className="lg:hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-40"
                     onClick={() => setIsOpen(false)}
                 />
             )}
@@ -131,15 +169,15 @@ export default function Sidebar() {
                 transform transition-transform duration-300 ease-in-out
                 lg:translate-x-0
                 ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-                lg:top-0 top-16
-                lg:h-screen h-[calc(100vh-4rem)]
+                lg:top-0 top-14
+                lg:h-screen h-[calc(100vh-3.5rem)]
             `}>
                 {/* Logo - Hidden on mobile (shown in header) */}
-                <div className="p-6 border-b border-white/5 hidden lg:block">
+                <div className="p-5 border-b border-white/5 hidden lg:block">
                     <Link href={`/${locale}`} className="flex items-center gap-3 group">
-                        <img src="/logo.svg" alt="Logo" className="h-10 w-auto" />
+                        <img src="/logo.svg" alt="Logo" className="h-9 w-auto" />
                         <div className="flex flex-col">
-                            <span className="text-lg font-bold tracking-[0.15em] text-white leading-none">SALDAÑA</span>
+                            <span className="text-base font-bold tracking-[0.15em] text-white leading-none">SALDAÑA</span>
                             <span className="text-[0.5rem] tracking-[0.5em] text-primary/80 uppercase font-light leading-none mt-0.5">MUSIC</span>
                         </div>
                     </Link>
@@ -149,10 +187,10 @@ export default function Sidebar() {
                 <div className="p-4 border-b border-white/5">
                     {loading ? (
                         <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-full bg-neutral-800 animate-pulse" />
+                            <div className="w-11 h-11 rounded-full bg-neutral-800 animate-pulse" />
                             <div className="flex-1">
-                                <div className="h-4 w-24 bg-neutral-800 rounded animate-pulse mb-2" />
-                                <div className="h-3 w-16 bg-neutral-800 rounded animate-pulse" />
+                                <div className="h-4 w-20 bg-neutral-800 rounded animate-pulse mb-1.5" />
+                                <div className="h-3 w-14 bg-neutral-800 rounded animate-pulse" />
                             </div>
                         </div>
                     ) : user ? (
@@ -161,10 +199,10 @@ export default function Sidebar() {
                                 <img
                                     src={user.avatarUrl}
                                     alt={user.firstName || 'Usuario'}
-                                    className="w-12 h-12 rounded-full object-cover ring-2 ring-primary/20 group-hover:ring-primary/50 transition-all"
+                                    className="w-11 h-11 rounded-full object-cover ring-2 ring-primary/20 group-hover:ring-primary/50 transition-all"
                                 />
                             ) : (
-                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center text-primary font-bold text-lg">
+                                <div className="w-11 h-11 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center text-primary font-bold text-base">
                                     {(user.firstName?.[0] || user.email[0] || '?').toUpperCase()}
                                 </div>
                             )}
@@ -178,14 +216,14 @@ export default function Sidebar() {
                                     {user.userType || 'Miembro'}
                                 </p>
                             </div>
-                            <svg className="w-4 h-4 text-gray-500 group-hover:text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg className="w-4 h-4 text-gray-500 group-hover:text-primary transition-colors flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                             </svg>
                         </Link>
                     ) : (
                         <Link href={`/${locale}/login`} className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors">
-                            <div className="w-12 h-12 rounded-full bg-neutral-800 flex items-center justify-center">
-                                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <div className="w-11 h-11 rounded-full bg-neutral-800 flex items-center justify-center">
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                 </svg>
                             </div>
@@ -195,45 +233,68 @@ export default function Sidebar() {
                 </div>
 
                 {/* Navigation */}
-                <nav className="flex-1 p-4 overflow-y-auto">
-                    <p className="text-[0.65rem] text-gray-600 uppercase tracking-wider font-semibold mb-4 px-2">{t('memberPortal')}</p>
-                    <ul className="space-y-1">
+                <nav className="flex-1 p-3 overflow-y-auto no-scrollbar">
+                    <p className="text-[0.6rem] text-gray-600 uppercase tracking-wider font-semibold mb-3 px-2">{t('memberPortal')}</p>
+                    <ul className="space-y-0.5">
                         {navItems.map((item) => (
                             <li key={item.href}>
-                                <Link
-                                    href={item.href}
-                                    onClick={() => setIsOpen(false)}
-                                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-sm font-medium ${isActive(item.href)
-                                        ? 'bg-primary/10 text-primary border-l-2 border-primary'
-                                        : 'text-gray-400 hover:bg-white/5 hover:text-white'
-                                        }`}
-                                >
-                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        {getIcon(item.icon)}
-                                    </svg>
-                                    {item.label}
-                                </Link>
+                                {item.disabled ? (
+                                    <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 text-sm cursor-not-allowed">
+                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            {getIcon(item.icon)}
+                                        </svg>
+                                        {item.label}
+                                        <span className="ml-auto text-[0.6rem] bg-neutral-800 px-1.5 py-0.5 rounded">Pronto</span>
+                                    </div>
+                                ) : (
+                                    <Link
+                                        href={item.href}
+                                        onClick={() => setIsOpen(false)}
+                                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-sm font-medium ${isActive(item.href)
+                                            ? 'bg-primary/10 text-primary border-l-2 border-primary'
+                                            : 'text-gray-400 hover:bg-white/5 hover:text-white active:bg-white/10'
+                                            }`}
+                                    >
+                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            {getIcon(item.icon)}
+                                        </svg>
+                                        {item.label}
+                                    </Link>
+                                )}
                             </li>
                         ))}
                     </ul>
                 </nav>
 
                 {/* Footer with Language & Logout */}
-                <div className="p-4 border-t border-white/5 space-y-3">
-                    <div className="flex items-center justify-between">
+                <div className="p-3 border-t border-white/5">
+                    {/* Quick Actions Row */}
+                    <div className="flex items-center justify-between mb-3">
                         <LanguageSwitcher />
-                        {user && (
-                            <button
-                                onClick={handleLogout}
-                                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors text-sm"
-                            >
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                </svg>
-                                Salir
-                            </button>
-                        )}
+                        <Link
+                            href={`/${locale}/dashboard/create`}
+                            onClick={() => setIsOpen(false)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/20 text-primary text-xs font-semibold hover:bg-primary/30 transition-colors"
+                        >
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                            Nuevo
+                        </Link>
                     </div>
+
+                    {/* Logout Button - Always visible */}
+                    {user && (
+                        <button
+                            onClick={handleLogout}
+                            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 active:bg-red-500/30 transition-colors text-sm font-medium"
+                        >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                {getIcon('logout')}
+                            </svg>
+                            Cerrar Sesión
+                        </button>
+                    )}
                 </div>
             </aside>
         </>
