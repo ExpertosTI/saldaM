@@ -4,198 +4,109 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 
 export default function SplashScreen({ children }: { children: React.ReactNode }) {
-    const [loading, setLoading] = useState(true);
+    const [isVisible, setIsVisible] = useState(true);
     const [fadeOut, setFadeOut] = useState(false);
 
     useEffect(() => {
-        // Check if this is the first load in session
-        const hasLoaded = sessionStorage.getItem('app_loaded');
-
-        if (hasLoaded) {
-            setLoading(false);
-            return;
+        // Check if already loaded in this session
+        if (typeof window !== 'undefined') {
+            const hasLoaded = sessionStorage.getItem('sm_loaded');
+            if (hasLoaded) {
+                setIsVisible(false);
+                return;
+            }
         }
 
-        // Show splash for minimum time, then fade out
+        // Start fade out after delay
         const timer = setTimeout(() => {
             setFadeOut(true);
             setTimeout(() => {
-                setLoading(false);
-                sessionStorage.setItem('app_loaded', 'true');
-            }, 500);
-        }, 1800);
+                setIsVisible(false);
+                if (typeof window !== 'undefined') {
+                    sessionStorage.setItem('sm_loaded', '1');
+                }
+            }, 600);
+        }, 2000);
 
         return () => clearTimeout(timer);
     }, []);
 
-    if (!loading) {
+    if (!isVisible) {
         return <>{children}</>;
     }
 
     return (
         <>
-            <div className={`splash-screen ${fadeOut ? 'fade-out' : ''}`}>
-                <div className="splash-content">
-                    {/* Animated Logo */}
-                    <div className="logo-container">
-                        <div className="logo-glow"></div>
+            {/* Splash Screen */}
+            <div
+                className={`fixed inset-0 z-[9999] flex items-center justify-center transition-opacity duration-500 ${fadeOut ? 'opacity-0' : 'opacity-100'}`}
+                style={{ background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%)' }}
+            >
+                <div className="flex flex-col items-center animate-fade-in">
+                    {/* Logo with glow */}
+                    <div className="relative mb-6">
+                        {/* Glow effect */}
+                        <div
+                            className="absolute -inset-6 rounded-full animate-pulse"
+                            style={{ background: 'radial-gradient(circle, rgba(212, 175, 55, 0.4) 0%, transparent 70%)' }}
+                        />
+                        {/* Logo */}
                         <Image
                             src="/logo.svg"
                             alt="Saldaña Music"
-                            width={120}
-                            height={120}
-                            className="splash-logo"
+                            width={100}
+                            height={100}
                             priority
+                            className="relative z-10 animate-float drop-shadow-[0_0_15px_rgba(212,175,55,0.5)]"
                         />
                     </div>
 
-                    {/* Brand Name */}
-                    <h1 className="splash-title">SALDAÑA</h1>
-                    <p className="splash-subtitle">MUSIC</p>
+                    {/* Brand text */}
+                    <h1
+                        className="text-2xl font-extrabold tracking-[0.4em] mb-1 animate-shimmer bg-clip-text text-transparent"
+                        style={{
+                            backgroundImage: 'linear-gradient(90deg, #D4AF37 0%, #FFFFFF 25%, #D4AF37 50%, #FFFFFF 75%, #D4AF37 100%)',
+                            backgroundSize: '200% auto',
+                        }}
+                    >
+                        SALDAÑA
+                    </h1>
+                    <p className="text-xs tracking-[0.5em] text-white/50 mb-8">MUSIC</p>
 
-                    {/* Loading indicator */}
-                    <div className="splash-loader">
-                        <div className="loader-bar"></div>
+                    {/* Loading bar */}
+                    <div className="w-24 h-0.5 bg-white/10 rounded-full overflow-hidden">
+                        <div
+                            className="h-full rounded-full animate-load-bar"
+                            style={{ background: 'linear-gradient(90deg, #D4AF37, #FFFFFF, #D4AF37)' }}
+                        />
                     </div>
                 </div>
             </div>
-            <div style={{ display: 'none' }}>{children}</div>
 
-            <style jsx>{`
-                .splash-screen {
-                    position: fixed;
-                    inset: 0;
-                    z-index: 9999;
-                    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    opacity: 1;
-                    transition: opacity 0.5s ease-out;
+            {/* Preload content hidden */}
+            <div className="hidden">{children}</div>
+
+            {/* CSS Keyframes */}
+            <style>{`
+                @keyframes fade-in {
+                    from { opacity: 0; transform: translateY(20px); }
+                    to { opacity: 1; transform: translateY(0); }
                 }
-
-                .splash-screen.fade-out {
-                    opacity: 0;
-                    pointer-events: none;
+                @keyframes float {
+                    0%, 100% { transform: translateY(0); }
+                    50% { transform: translateY(-6px); }
                 }
-
-                .splash-content {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    animation: fadeIn 0.6s ease-out;
-                }
-
-                @keyframes fadeIn {
-                    from {
-                        opacity: 0;
-                        transform: translateY(20px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
-                }
-
-                .logo-container {
-                    position: relative;
-                    margin-bottom: 24px;
-                }
-
-                .logo-glow {
-                    position: absolute;
-                    inset: -20px;
-                    background: radial-gradient(circle, rgba(212, 175, 55, 0.4) 0%, transparent 70%);
-                    border-radius: 50%;
-                    animation: pulse 2s ease-in-out infinite;
-                }
-
-                @keyframes pulse {
-                    0%, 100% {
-                        transform: scale(1);
-                        opacity: 0.5;
-                    }
-                    50% {
-                        transform: scale(1.2);
-                        opacity: 0.8;
-                    }
-                }
-
-                .splash-logo {
-                    position: relative;
-                    z-index: 1;
-                    animation: logoFloat 3s ease-in-out infinite;
-                    filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.5));
-                }
-
-                @keyframes logoFloat {
-                    0%, 100% {
-                        transform: translateY(0);
-                    }
-                    50% {
-                        transform: translateY(-8px);
-                    }
-                }
-
-                .splash-title {
-                    font-size: 32px;
-                    font-weight: 800;
-                    letter-spacing: 12px;
-                    color: #D4AF37;
-                    margin: 0;
-                    animation: shimmer 3s linear infinite;
-                    background: linear-gradient(
-                        90deg,
-                        #D4AF37 0%,
-                        #FFFFFF 25%,
-                        #D4AF37 50%,
-                        #FFFFFF 75%,
-                        #D4AF37 100%
-                    );
-                    background-size: 200% auto;
-                    -webkit-background-clip: text;
-                    -webkit-text-fill-color: transparent;
-                    background-clip: text;
-                }
-
                 @keyframes shimmer {
-                    to {
-                        background-position: 200% center;
-                    }
+                    to { background-position: 200% center; }
                 }
-
-                .splash-subtitle {
-                    font-size: 14px;
-                    letter-spacing: 8px;
-                    color: rgba(255, 255, 255, 0.5);
-                    margin-top: 4px;
-                    margin-bottom: 32px;
+                @keyframes load-bar {
+                    from { width: 0%; }
+                    to { width: 100%; }
                 }
-
-                .splash-loader {
-                    width: 120px;
-                    height: 2px;
-                    background: rgba(255, 255, 255, 0.1);
-                    border-radius: 4px;
-                    overflow: hidden;
-                }
-
-                .loader-bar {
-                    height: 100%;
-                    width: 0%;
-                    background: linear-gradient(90deg, #D4AF37, #FFFFFF, #D4AF37);
-                    border-radius: 4px;
-                    animation: loading 1.5s ease-out forwards;
-                }
-
-                @keyframes loading {
-                    0% {
-                        width: 0%;
-                    }
-                    100% {
-                        width: 100%;
-                    }
-                }
+                .animate-fade-in { animation: fade-in 0.6s ease-out; }
+                .animate-float { animation: float 2.5s ease-in-out infinite; }
+                .animate-shimmer { animation: shimmer 2s linear infinite; }
+                .animate-load-bar { animation: load-bar 1.6s ease-out forwards; }
             `}</style>
         </>
     );
