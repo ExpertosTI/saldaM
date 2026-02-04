@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useLocale, useTranslations } from 'next-intl';
@@ -15,12 +15,13 @@ export default function LoginPage() {
     const pathname = usePathname();
     const a = useTranslations('Auth');
     const searchParams = useSearchParams();
+    const popupRef = useRef<Window | null>(null);
 
-    // Check if user is already logged in
+    // Check if user is already logged in (only on mount)
     useEffect(() => {
         const token = getToken();
-        if (token && !searchParams.get('logout')) {
-            // Verify token is valid
+        // Only auto-redirect if NOT coming from logout and token exists
+        if (token && !searchParams.get('logout') && !searchParams.get('force')) {
             fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://app.saldanamusic.com/api'}/users/me`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             }).then(res => {
@@ -38,12 +39,10 @@ export default function LoginPage() {
     };
 
     const clearAuthData = () => {
-        // Clear ALL auth data before starting new OAuth flow
         removeToken();
         document.cookie = 'token=; path=/; max-age=0';
         document.cookie = 'saldana_is_new_user=; path=/; max-age=0';
 
-        // Clear domain-specific cookies
         const domain = window.location.hostname.endsWith('saldanamusic.com')
             ? '; Domain=.saldanamusic.com'
             : '';
@@ -57,9 +56,9 @@ export default function LoginPage() {
     };
 
     const startGoogleAuth = () => {
-        setIsLoading(true);
+        if (isLoading) return;
 
-        // IMPORTANT: Clear all existing auth data first
+        setIsLoading(true);
         clearAuthData();
 
         const width = 500;
@@ -71,117 +70,86 @@ export default function LoginPage() {
             sessionStorage.setItem('saldana_pre_auth_path', `${pathname}${window.location.search}`);
         } catch { }
 
-        // Add timestamp to prevent caching and force new auth
-        const authUrl = `${process.env.NEXT_PUBLIC_API_URL || 'https://app.saldanamusic.com/api'}/auth/google?t=${Date.now()}`;
+        const authUrl = `${process.env.NEXT_PUBLIC_API_URL || 'https://app.saldanamusic.com/api'}/auth/google`;
 
-        const popup = window.open(
+        popupRef.current = window.open(
             authUrl,
             'Google_Auth',
-            `width=${width},height=${height},top=${top},left=${left},toolbar=no,menubar=no`
+            `width=${width},height=${height},top=${top},left=${left},toolbar=no,menubar=no,resizable=yes`
         );
 
-        const finalizeAuth = (token: string, isNewUser: boolean) => {
+        // Handle message from popup
+        const handleMessage = (event: MessageEvent) => {
+            const allowedOrigins = ['saldanamusic.com', 'localhost', '127.0.0.1'];
+            const isAllowed = allowedOrigins.some(origin => event.origin.includes(origin));
+            if (!isAllowed) return;
+
+            if (event.data?.token) {
+                cleanup();
+                handleAuthSuccess(event.data.token, !!event.data.isNewUser);
+            }
+        };
+
+        // Handle storage event (backup for cross-origin)
+        const handleStorage = (event: StorageEvent) => {
+            if (event.key !== 'saldana_auth' || !event.newValue) return;
+            try {
+                const data = JSON.parse(event.newValue);
+                if (data?.token && Date.now() - data.ts < 60000) {
+                    cleanup();
+                    handleAuthSuccess(data.token, !!data.isNewUser);
+                }
+            } catch { }
+        };
+
+        // Handle popup close without auth
+        let checkClosedInterval: number | null = null;
+        const checkPopupClosed = () => {
+            if (popupRef.current?.closed) {
+                // Wait a moment for any pending messages/storage events
+                setTimeout(() => {
+                    // Check if we got auth data
+                    const tokenMatch = document.cookie.match(/(?:^|; )token=([^;]+)/);
+                    if (tokenMatch?.[1]) {
+                        const newUserMatch = document.cookie.match(/(?:^|; )saldana_is_new_user=([^;]+)/);
+                        cleanup();
+                        handleAuthSuccess(tokenMatch[1], newUserMatch?.[1] === '1');
+                    } else {
+                        // No auth - user closed popup
+                        cleanup();
+                        setIsLoading(false);
+                    }
+                }, 500);
+            }
+        };
+
+        const cleanup = () => {
+            window.removeEventListener('message', handleMessage);
+            window.removeEventListener('storage', handleStorage);
+            if (checkClosedInterval) clearInterval(checkClosedInterval);
+        };
+
+        const handleAuthSuccess = (token: string, isNewUser: boolean) => {
             const cookieDomain = window.location.hostname.endsWith('saldanamusic.com')
                 ? '; Domain=.saldanamusic.com'
                 : '';
             document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax${cookieDomain}`;
-            document.cookie = `saldana_is_new_user=${isNewUser ? '1' : '0'}; path=/; max-age=600; SameSite=Lax${cookieDomain}`;
-
-            try {
-                localStorage.setItem('saldana_auth', JSON.stringify({ token, isNewUser, ts: Date.now() }));
-            } catch { }
-
-            try {
-                popup?.close();
-            } catch { }
-
-            let preAuthPath: string | null = null;
-            try {
-                preAuthPath = sessionStorage.getItem('saldana_pre_auth_path');
-                sessionStorage.removeItem('saldana_pre_auth_path');
-            } catch { }
-
-            const isLoop = typeof preAuthPath === 'string' && (preAuthPath.includes('/login') || preAuthPath.includes('/register'));
 
             setIsLoading(false);
 
             if (isNewUser) {
                 router.push(`/${locale}/onboarding`);
-            } else if (preAuthPath && !isLoop) {
-                router.replace(preAuthPath);
             } else {
                 router.push(`/${locale}/dashboard`);
             }
         };
 
-        const handleMessage = (event: MessageEvent) => {
-            const allowedOrigins = ['saldanamusic.com', 'localhost', '127.0.0.1'];
-            const isAllowed = allowedOrigins.some(origin => event.origin.includes(origin));
-            if (!isAllowed) return;
-            if (event.data?.token) finalizeOnce(event.data.token, !!event.data.isNewUser);
-        };
-
-        const handleStorage = (event: StorageEvent) => {
-            if (event.key !== 'saldana_auth' || !event.newValue) return;
-            try {
-                const data = JSON.parse(event.newValue);
-                if (data?.token && Date.now() - data.ts < 30000) {
-                    finalizeOnce(data.token, !!data.isNewUser);
-                }
-            } catch { }
-        };
-
-        let pollId: number | null = null;
-        let finalized = false;
-
-        const cleanup = () => {
-            window.removeEventListener('message', handleMessage);
-            window.removeEventListener('storage', handleStorage);
-            if (pollId) window.clearInterval(pollId);
-        };
-
-        const finalizeOnce = (token: string, isNewUser: boolean) => {
-            if (finalized) return;
-            finalized = true;
-            cleanup();
-            finalizeAuth(token, isNewUser);
-        };
-
         window.addEventListener('message', handleMessage);
         window.addEventListener('storage', handleStorage);
-
-        // Poll for popup closed
-        pollId = window.setInterval(() => {
-            if (popup?.closed) {
-                // Wait for cookies/storage to settle
-                setTimeout(() => {
-                    if (!finalized) {
-                        // Check for token in cookies
-                        const tokenMatch = document.cookie.match(/(?:^|; )token=([^;]+)/);
-                        if (tokenMatch?.[1]) {
-                            const newUserMatch = document.cookie.match(/(?:^|; )saldana_is_new_user=([^;]+)/);
-                            finalizeOnce(tokenMatch[1], newUserMatch?.[1] === '1');
-                        } else {
-                            // Check localStorage
-                            try {
-                                const stored = localStorage.getItem('saldana_auth');
-                                if (stored) {
-                                    const parsed = JSON.parse(stored);
-                                    if (parsed?.token && Date.now() - parsed.ts < 30000) {
-                                        finalizeOnce(parsed.token, !!parsed.isNewUser);
-                                    }
-                                }
-                            } catch { }
-                        }
-                    }
-                    cleanup();
-                    setIsLoading(false);
-                }, 800);
-            }
-        }, 500);
+        checkClosedInterval = window.setInterval(checkPopupClosed, 1000);
     };
 
-    // If handling callbacks, show loader only
+    // If handling callbacks, show loader
     if (searchParams.get('token')) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-black text-primary">
@@ -196,7 +164,6 @@ export default function LoginPage() {
     return (
         <main className="flex min-h-screen flex-col items-center justify-center p-4 sm:p-6 bg-background">
             <div className="w-full max-w-md p-6 sm:p-8 glass-panel rounded-2xl shadow-2xl relative overflow-hidden">
-                {/* Logo & Decorative Gold Glow */}
                 <Link href={`/${locale}`} className="flex flex-col items-center mb-6 sm:mb-8 hover:scale-105 transition-transform cursor-pointer">
                     <img src="/logo.svg" alt="Saldaña Music Logo" className="h-12 sm:h-16 w-auto drop-shadow-[0_0_10px_rgba(212,175,55,0.4)] mb-3 sm:mb-4" />
                     <div className="w-20 sm:w-24 h-1 bg-primary shadow-[0_0_30px_2px_rgba(212,175,55,0.6)]"></div>
@@ -208,7 +175,7 @@ export default function LoginPage() {
                     <button
                         onClick={startGoogleAuth}
                         disabled={isLoading}
-                        className="w-full flex items-center justify-center gap-3 px-4 sm:px-6 py-3 sm:py-4 rounded-xl bg-white text-black font-semibold hover:bg-gray-100 transition-colors text-sm sm:text-base disabled:opacity-70 disabled:cursor-wait"
+                        className="w-full flex items-center justify-center gap-3 px-4 sm:px-6 py-3 sm:py-4 rounded-xl bg-white text-black font-semibold hover:bg-gray-100 active:bg-gray-200 transition-colors text-sm sm:text-base disabled:opacity-70"
                     >
                         {isLoading ? (
                             <>
