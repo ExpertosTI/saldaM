@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useLocale, useTranslations } from 'next-intl';
@@ -28,6 +28,71 @@ export default function LoginPage() {
     const pathname = usePathname();
     const a = useTranslations('Auth');
     const searchParams = useSearchParams();
+    const handledRef = useRef(false);
+
+    // Handle OAuth callback when this page receives token (popup flow)
+    useEffect(() => {
+        const token = searchParams.get('token');
+        if (!token) return;
+
+        // Prevent double execution (React StrictMode)
+        if (handledRef.current) return;
+        handledRef.current = true;
+
+        const isNewUser = searchParams.get('isNewUser') === 'true';
+        const payload = { token, isNewUser, ts: Date.now() };
+
+        // Detect if running in popup - use window.name (set when popup opened)
+        let isPopup = window.name === 'Google_Auth';
+
+        // Fallback: check window.opener
+        if (!isPopup) {
+            try {
+                isPopup = !!(window.opener && !window.opener.closed);
+            } catch {
+                isPopup = !!window.opener;
+            }
+        }
+
+        console.log('[LoginPage OAuth Callback] isPopup:', isPopup, 'window.name:', window.name, 'token:', token.substring(0, 20) + '...');
+
+        // Set cookies with proper domain
+        const cookieDomain = window.location.hostname.endsWith('saldanamusic.com')
+            ? '; Domain=.saldanamusic.com'
+            : '';
+        document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax${cookieDomain}`;
+        document.cookie = `saldana_is_new_user=${isNewUser ? '1' : '0'}; path=/; max-age=600; SameSite=Lax${cookieDomain}`;
+
+        // Save to localStorage (for cross-tab detection)
+        try {
+            localStorage.setItem('saldana_auth', JSON.stringify(payload));
+        } catch { }
+
+        // If popup, notify parent and close
+        if (isPopup) {
+            try {
+                // Send token to parent window - use * for cross-origin
+                window.opener?.postMessage(payload, '*');
+                console.log('[LoginPage] Sent postMessage to parent');
+            } catch (e) {
+                console.error('[LoginPage] Failed to notify parent:', e);
+            }
+
+            // Close popup after small delay
+            setTimeout(() => {
+                console.log('[LoginPage] Closing popup window');
+                window.close();
+            }, 500);
+            return;
+        }
+
+        // Not a popup - redirect directly
+        if (isNewUser) {
+            router.replace(`/${locale}/onboarding`);
+        } else {
+            router.replace(`/${locale}/dashboard`);
+        }
+    }, [searchParams, router, locale]);
 
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
