@@ -26,7 +26,7 @@ export default function SplashScreen({ children }: { children: React.ReactNode }
                     sessionStorage.setItem('sm_loaded', '1');
                 }
             }, 600);
-        }, 2000);
+        }, 1200);
 
         return () => clearTimeout(timer);
     }, []);

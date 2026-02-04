@@ -18,36 +18,31 @@ export default function AuthCallbackClient() {
         handledRef.current = true;
 
         const isNewUser = searchParams.get('isNewUser') === 'true';
-        const isPopup = window.opener && !window.opener.closed;
+        const isPopup = (!!window.opener && !window.opener.closed) || window.name === 'Google_Auth';
         const payload = { token, isNewUser, ts: Date.now() };
 
         const cookieDomain = window.location.hostname.endsWith('saldanamusic.com')
             ? '; Domain=.saldanamusic.com'
             : '';
 
-        // Set cookies
         document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax; Secure${cookieDomain}`;
         document.cookie = `saldana_is_new_user=${isNewUser ? '1' : '0'}; path=/; max-age=600; SameSite=Lax; Secure${cookieDomain}`;
 
-        // Store in localStorage for cross-tab detection
+        try {
+            if (window.opener && !window.opener.closed) {
+                window.opener.postMessage(payload, '*');
+            }
+        } catch { }
+
         try {
             localStorage.setItem('saldana_auth', JSON.stringify(payload));
         } catch { }
 
-        // If this is a popup, notify opener and close
         if (isPopup) {
-            try {
-                window.opener.postMessage(payload, '*');
-            } catch { }
-
-            // Small delay before closing to ensure message is sent
-            setTimeout(() => {
-                window.close();
-            }, 200);
+            window.close();
             return;
         }
 
-        // Not a popup - redirect directly
         let preAuthPath: string | null = null;
         try {
             preAuthPath = sessionStorage.getItem('saldana_pre_auth_path');
