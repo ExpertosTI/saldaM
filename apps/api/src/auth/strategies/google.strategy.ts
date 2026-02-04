@@ -17,6 +17,8 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
             // Use relative path to allow passport to construct URL based on host header (requires trust proxy)
             callbackURL: '/api/auth/google/callback',
             scope: ['email', 'profile'],
+            prompt: 'select_account', // Force account selection every time
+            accessType: 'offline',
             proxy: true, // Crucial when behind Traefik/Reverse Proxy
         });
 
