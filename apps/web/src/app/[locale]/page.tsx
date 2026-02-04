@@ -33,13 +33,13 @@ export default async function Home({
                         </div>
                     </Link>
 
-                    <div className="flex items-center gap-6">
-                        <Link href={`/${locale}/login`} className="hidden md:block text-sm text-gray-400 hover:text-white transition-colors">
+                    <div className="flex items-center gap-4 sm:gap-6">
+                        <Link href={`/${locale}/login`} className="text-sm text-gray-400 hover:text-white transition-colors">
                             {t('navLogin')}
                         </Link>
-                        <Link href={`/${locale}/register`} className="group relative px-6 py-2.5 rounded-full bg-white/5 border border-white/10 overflow-hidden transition-all duration-300 hover:border-primary/50 hover:bg-white/10">
+                        <Link href={`/${locale}/register`} className="group relative px-4 sm:px-6 py-2 sm:py-2.5 rounded-full bg-white/5 border border-white/10 overflow-hidden transition-all duration-300 hover:border-primary/50 hover:bg-white/10">
                             <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/20 to-primary/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-                            <span className="relative text-sm font-medium text-white group-hover:text-primary transition-colors">
+                            <span className="relative text-xs sm:text-sm font-medium text-white group-hover:text-primary transition-colors">
                                 {t('navJoinRoster')}
                             </span>
                         </Link>

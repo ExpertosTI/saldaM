@@ -42,10 +42,15 @@ export default function LoginPage() {
         const isNewUser = searchParams.get('isNewUser') === 'true';
         const payload = { token, isNewUser, ts: Date.now() };
 
-        // Detect if running in popup - use window.name (set when popup opened)
-        let isPopup = window.name === 'Google_Auth';
+        // Detect if running in popup - check cookie flag (set before opening popup)
+        // This cookie survives Google OAuth redirections unlike window.name
+        const popupCookie = document.cookie.match(/(?:^|; )saldana_popup=([^;]+)/);
+        let isPopup = popupCookie?.[1] === '1';
 
-        // Fallback: check window.opener
+        // Fallback: try window.name and window.opener
+        if (!isPopup) {
+            isPopup = window.name === 'Google_Auth';
+        }
         if (!isPopup) {
             try {
                 isPopup = !!(window.opener && !window.opener.closed);
@@ -54,7 +59,7 @@ export default function LoginPage() {
             }
         }
 
-        console.log('[LoginPage OAuth Callback] isPopup:', isPopup, 'window.name:', window.name, 'token:', token.substring(0, 20) + '...');
+        console.log('[LoginPage OAuth Callback] isPopup:', isPopup, 'popupCookie:', popupCookie?.[1], 'window.name:', window.name);
 
         // Set cookies with proper domain
         const cookieDomain = window.location.hostname.endsWith('saldanamusic.com')
@@ -70,6 +75,10 @@ export default function LoginPage() {
 
         // If popup, notify parent and close
         if (isPopup) {
+            // Clear popup flag cookie
+            document.cookie = 'saldana_popup=; path=/; max-age=0';
+            document.cookie = `saldana_popup=; path=/; max-age=0${cookieDomain}`;
+
             try {
                 // Send token to parent window - use * for cross-origin
                 window.opener?.postMessage(payload, '*');
@@ -147,6 +156,12 @@ export default function LoginPage() {
         try {
             sessionStorage.setItem('saldana_pre_auth_path', `${pathname}${window.location.search}`);
         } catch { }
+
+        // Set popup flag cookie BEFORE opening popup (survives Google OAuth redirections)
+        const cookieDomain = window.location.hostname.endsWith('saldanamusic.com')
+            ? '; Domain=.saldanamusic.com'
+            : '';
+        document.cookie = `saldana_popup=1; path=/; max-age=300; SameSite=Lax${cookieDomain}`;
 
         // Open Google OAuth popup
         const popup = window.open(
