@@ -22,6 +22,7 @@ export default function Sidebar() {
     const t = useTranslations('Dashboard.nav');
     const [user, setUser] = useState<UserData | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isOpen, setIsOpen] = useState(false);
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -49,9 +50,13 @@ export default function Sidebar() {
         fetchUser();
     }, []);
 
+    // Close sidebar when route changes on mobile
+    useEffect(() => {
+        setIsOpen(false);
+    }, [pathname]);
+
     const handleLogout = () => {
         removeToken();
-        // Also remove new user cookie
         document.cookie = 'saldana_is_new_user=; path=/; max-age=0';
         window.location.href = `/${locale}/login`;
     };
@@ -89,107 +94,148 @@ export default function Sidebar() {
     };
 
     return (
-        <aside className="fixed left-0 top-0 h-screen w-64 bg-black/90 backdrop-blur-xl border-r border-white/5 flex flex-col z-40">
-            {/* Logo */}
-            <div className="p-6 border-b border-white/5">
-                <Link href={`/${locale}`} className="flex items-center gap-3 group">
-                    <img src="/logo.svg" alt="Logo" className="h-10 w-auto" />
-                    <div className="flex flex-col">
-                        <span className="text-lg font-bold tracking-[0.15em] text-white leading-none">SALDAÑA</span>
-                        <span className="text-[0.5rem] tracking-[0.5em] text-primary/80 uppercase font-light leading-none mt-0.5">MUSIC</span>
-                    </div>
-                </Link>
-            </div>
-
-            {/* User Profile Section */}
-            <div className="p-4 border-b border-white/5">
-                {loading ? (
-                    <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-full bg-neutral-800 animate-pulse" />
-                        <div className="flex-1">
-                            <div className="h-4 w-24 bg-neutral-800 rounded animate-pulse mb-2" />
-                            <div className="h-3 w-16 bg-neutral-800 rounded animate-pulse" />
-                        </div>
-                    </div>
-                ) : user ? (
-                    <Link href={`/${locale}/dashboard/profile`} className="flex items-center gap-3 group hover:bg-white/5 rounded-lg p-2 -m-2 transition-colors">
-                        {user.avatarUrl ? (
-                            <img
-                                src={user.avatarUrl}
-                                alt={user.firstName || 'Usuario'}
-                                className="w-12 h-12 rounded-full object-cover ring-2 ring-primary/20 group-hover:ring-primary/50 transition-all"
-                            />
+        <>
+            {/* Mobile Header Bar */}
+            <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-black/95 backdrop-blur-xl border-b border-white/5 z-50 flex items-center justify-between px-4">
+                <button
+                    onClick={() => setIsOpen(!isOpen)}
+                    className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+                    aria-label="Toggle menu"
+                >
+                    <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        {isOpen ? (
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         ) : (
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center text-primary font-bold text-lg">
-                                {(user.firstName?.[0] || user.email[0] || '?').toUpperCase()}
-                            </div>
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                         )}
-                        <div className="flex-1 min-w-0">
-                            <p className="text-white font-semibold text-sm truncate">
-                                {user.firstName && user.lastName
-                                    ? `${user.firstName} ${user.lastName}`
-                                    : user.firstName || user.email.split('@')[0]}
-                            </p>
-                            <p className="text-gray-500 text-xs truncate">
-                                {user.userType || 'Miembro'}
-                            </p>
-                        </div>
-                        <svg className="w-4 h-4 text-gray-500 group-hover:text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                    </Link>
-                ) : (
-                    <Link href={`/${locale}/login`} className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors">
-                        <div className="w-12 h-12 rounded-full bg-neutral-800 flex items-center justify-center">
-                            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                        </div>
-                        <span className="text-sm">Iniciar Sesión</span>
-                    </Link>
-                )}
+                    </svg>
+                </button>
+                <Link href={`/${locale}`} className="flex items-center gap-2">
+                    <img src="/logo.svg" alt="Logo" className="h-8 w-auto" />
+                    <span className="text-lg font-bold tracking-wider text-white">SALDAÑA</span>
+                </Link>
+                <div className="w-10" /> {/* Spacer for centering */}
             </div>
 
-            {/* Navigation */}
-            <nav className="flex-1 p-4 overflow-y-auto">
-                <p className="text-[0.65rem] text-gray-600 uppercase tracking-wider font-semibold mb-4 px-2">{t('memberPortal')}</p>
-                <ul className="space-y-1">
-                    {navItems.map((item) => (
-                        <li key={item.href}>
-                            <Link
-                                href={item.href}
-                                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-sm font-medium ${isActive(item.href)
-                                    ? 'bg-primary/10 text-primary border-l-2 border-primary'
-                                    : 'text-gray-400 hover:bg-white/5 hover:text-white'
-                                    }`}
-                            >
-                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    {getIcon(item.icon)}
-                                </svg>
-                                {item.label}
-                            </Link>
-                        </li>
-                    ))}
-                </ul>
-            </nav>
+            {/* Mobile Overlay */}
+            {isOpen && (
+                <div
+                    className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+                    onClick={() => setIsOpen(false)}
+                />
+            )}
 
-            {/* Footer with Language & Logout */}
-            <div className="p-4 border-t border-white/5 space-y-3">
-                <div className="flex items-center justify-between">
-                    <LanguageSwitcher />
-                    {user && (
-                        <button
-                            onClick={handleLogout}
-                            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors text-sm"
-                        >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            {/* Sidebar */}
+            <aside className={`
+                fixed left-0 top-0 h-screen w-64 bg-black/95 backdrop-blur-xl border-r border-white/5 flex flex-col z-50
+                transform transition-transform duration-300 ease-in-out
+                lg:translate-x-0
+                ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+                lg:top-0 top-16
+                lg:h-screen h-[calc(100vh-4rem)]
+            `}>
+                {/* Logo - Hidden on mobile (shown in header) */}
+                <div className="p-6 border-b border-white/5 hidden lg:block">
+                    <Link href={`/${locale}`} className="flex items-center gap-3 group">
+                        <img src="/logo.svg" alt="Logo" className="h-10 w-auto" />
+                        <div className="flex flex-col">
+                            <span className="text-lg font-bold tracking-[0.15em] text-white leading-none">SALDAÑA</span>
+                            <span className="text-[0.5rem] tracking-[0.5em] text-primary/80 uppercase font-light leading-none mt-0.5">MUSIC</span>
+                        </div>
+                    </Link>
+                </div>
+
+                {/* User Profile Section */}
+                <div className="p-4 border-b border-white/5">
+                    {loading ? (
+                        <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-full bg-neutral-800 animate-pulse" />
+                            <div className="flex-1">
+                                <div className="h-4 w-24 bg-neutral-800 rounded animate-pulse mb-2" />
+                                <div className="h-3 w-16 bg-neutral-800 rounded animate-pulse" />
+                            </div>
+                        </div>
+                    ) : user ? (
+                        <Link href={`/${locale}/dashboard/profile`} className="flex items-center gap-3 group hover:bg-white/5 rounded-lg p-2 -m-2 transition-colors">
+                            {user.avatarUrl ? (
+                                <img
+                                    src={user.avatarUrl}
+                                    alt={user.firstName || 'Usuario'}
+                                    className="w-12 h-12 rounded-full object-cover ring-2 ring-primary/20 group-hover:ring-primary/50 transition-all"
+                                />
+                            ) : (
+                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center text-primary font-bold text-lg">
+                                    {(user.firstName?.[0] || user.email[0] || '?').toUpperCase()}
+                                </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                                <p className="text-white font-semibold text-sm truncate">
+                                    {user.firstName && user.lastName
+                                        ? `${user.firstName} ${user.lastName}`
+                                        : user.firstName || user.email.split('@')[0]}
+                                </p>
+                                <p className="text-gray-500 text-xs truncate">
+                                    {user.userType || 'Miembro'}
+                                </p>
+                            </div>
+                            <svg className="w-4 h-4 text-gray-500 group-hover:text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                             </svg>
-                            Salir
-                        </button>
+                        </Link>
+                    ) : (
+                        <Link href={`/${locale}/login`} className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors">
+                            <div className="w-12 h-12 rounded-full bg-neutral-800 flex items-center justify-center">
+                                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                            </div>
+                            <span className="text-sm">Iniciar Sesión</span>
+                        </Link>
                     )}
                 </div>
-            </div>
-        </aside>
+
+                {/* Navigation */}
+                <nav className="flex-1 p-4 overflow-y-auto">
+                    <p className="text-[0.65rem] text-gray-600 uppercase tracking-wider font-semibold mb-4 px-2">{t('memberPortal')}</p>
+                    <ul className="space-y-1">
+                        {navItems.map((item) => (
+                            <li key={item.href}>
+                                <Link
+                                    href={item.href}
+                                    onClick={() => setIsOpen(false)}
+                                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-sm font-medium ${isActive(item.href)
+                                        ? 'bg-primary/10 text-primary border-l-2 border-primary'
+                                        : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                                        }`}
+                                >
+                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        {getIcon(item.icon)}
+                                    </svg>
+                                    {item.label}
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
+                </nav>
+
+                {/* Footer with Language & Logout */}
+                <div className="p-4 border-t border-white/5 space-y-3">
+                    <div className="flex items-center justify-between">
+                        <LanguageSwitcher />
+                        {user && (
+                            <button
+                                onClick={handleLogout}
+                                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors text-sm"
+                            >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                </svg>
+                                Salir
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </aside>
+        </>
     );
 }

@@ -5,6 +5,7 @@ import { User } from '../../user/entities/user.entity';
 export enum CollaboratorRole {
     SONGWRITER = 'SONGWRITER',
     PRODUCER = 'PRODUCER',
+    PUBLISHER = 'PUBLISHER',
 }
 
 @Entity()

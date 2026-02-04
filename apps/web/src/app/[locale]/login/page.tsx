@@ -17,7 +17,6 @@ export default function LoginPage() {
 
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
-        // Placeholder logic for now - Real implementation connects to NestJS
         console.log("Login attempt", email, password);
         router.push(`/${locale}/dashboard`);
     };
@@ -35,17 +34,17 @@ export default function LoginPage() {
     }
 
     return (
-        <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-background">
-            <div className="w-full max-w-md p-8 glass-panel rounded-2xl shadow-2xl relative overflow-hidden">
+        <main className="flex min-h-screen flex-col items-center justify-center p-4 sm:p-6 bg-background">
+            <div className="w-full max-w-md p-6 sm:p-8 glass-panel rounded-2xl shadow-2xl relative overflow-hidden">
                 {/* Logo & Decorative Gold Glow */}
-                <Link href={`/${locale}`} className="flex flex-col items-center mb-8 hover:scale-105 transition-transform cursor-pointer">
-                    <img src="/logo.svg" alt="Saldaña Music Logo" className="h-16 w-auto drop-shadow-[0_0_10px_rgba(212,175,55,0.4)] mb-4" />
-                    <div className="w-24 h-1 bg-primary shadow-[0_0_30px_2px_rgba(212,175,55,0.6)]"></div>
+                <Link href={`/${locale}`} className="flex flex-col items-center mb-6 sm:mb-8 hover:scale-105 transition-transform cursor-pointer">
+                    <img src="/logo.svg" alt="Saldaña Music Logo" className="h-12 sm:h-16 w-auto drop-shadow-[0_0_10px_rgba(212,175,55,0.4)] mb-3 sm:mb-4" />
+                    <div className="w-20 sm:w-24 h-1 bg-primary shadow-[0_0_30px_2px_rgba(212,175,55,0.6)]"></div>
                 </Link>
 
-                <h2 className="text-3xl font-bold text-center text-primary mb-8 tracking-wider uppercase">{a('login.title')}</h2>
+                <h2 className="text-2xl sm:text-3xl font-bold text-center text-primary mb-6 sm:mb-8 tracking-wider uppercase">{a('login.title')}</h2>
 
-                <div className="mt-6 flex flex-col gap-3">
+                <div className="flex flex-col gap-3">
                     <button
                         onClick={() => {
                             const width = 500;
@@ -75,15 +74,19 @@ export default function LoginPage() {
                                 const cookieDomain = window.location.hostname.endsWith('saldanamusic.com')
                                     ? '; Domain=.saldanamusic.com'
                                     : '';
-                                document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax; Secure${cookieDomain}`;
-                                document.cookie = `saldana_is_new_user=${isNewUser ? '1' : '0'}; path=/; max-age=600; SameSite=Lax; Secure${cookieDomain}`;
+                                document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax${cookieDomain}`;
+                                document.cookie = `saldana_is_new_user=${isNewUser ? '1' : '0'}; path=/; max-age=600; SameSite=Lax${cookieDomain}`;
 
                                 // Also save to localStorage as fallback
                                 try {
                                     localStorage.setItem('saldana_auth', JSON.stringify({ token, isNewUser, ts: Date.now() }));
                                 } catch { }
 
-                                popup?.close();
+                                // Close popup safely
+                                try {
+                                    popup?.close();
+                                } catch { }
+
                                 let preAuthPath: string | null = null;
                                 try {
                                     preAuthPath = sessionStorage.getItem('saldana_pre_auth_path');
@@ -102,8 +105,12 @@ export default function LoginPage() {
                             };
 
                             const handleMessage = (event: MessageEvent) => {
-                                // Add security check for origin if needed
-                                if (!event.origin.endsWith('saldanamusic.com')) return;
+                                // Allow localhost for development + production domain
+                                const allowedOrigins = ['saldanamusic.com', 'localhost', '127.0.0.1'];
+                                const isAllowed = allowedOrigins.some(origin =>
+                                    event.origin.includes(origin)
+                                );
+                                if (!isAllowed) return;
                                 if (event.data?.token) finalizeOnce(event.data.token, !!event.data.isNewUser);
                             };
 
@@ -115,6 +122,9 @@ export default function LoginPage() {
                                 } catch { }
                             };
 
+                            let pollId: number | null = null;
+                            let finalized = false;
+
                             const cleanup = () => {
                                 window.removeEventListener('message', handleMessage);
                                 window.removeEventListener('storage', handleStorage);
@@ -122,6 +132,8 @@ export default function LoginPage() {
                             };
 
                             const finalizeOnce = (token: string, isNewUser: boolean) => {
+                                if (finalized) return;
+                                finalized = true;
                                 cleanup();
                                 finalizeAuth(token, isNewUser);
                             };
@@ -129,12 +141,37 @@ export default function LoginPage() {
                             window.addEventListener('message', handleMessage);
                             window.addEventListener('storage', handleStorage);
 
-                            const pollId = window.setInterval(() => {
+                            // Poll for cookie/localStorage changes
+                            pollId = window.setInterval(() => {
+                                // Check popup closed
+                                if (popup?.closed) {
+                                    // Give a moment for cookies to settle
+                                    setTimeout(() => {
+                                        const data = pollCookie();
+                                        if (data?.token) {
+                                            finalizeOnce(data.token, !!data.isNewUser);
+                                        } else {
+                                            // Check localStorage too
+                                            try {
+                                                const stored = localStorage.getItem('saldana_auth');
+                                                if (stored) {
+                                                    const parsed = JSON.parse(stored);
+                                                    if (parsed?.token && Date.now() - parsed.ts < 10000) {
+                                                        finalizeOnce(parsed.token, !!parsed.isNewUser);
+                                                    }
+                                                }
+                                            } catch { }
+                                        }
+                                        cleanup();
+                                    }, 500);
+                                    return;
+                                }
+
                                 const data = pollCookie();
                                 if (data?.token) finalizeOnce(data.token, !!data.isNewUser);
                             }, 300);
                         }}
-                        className="w-full flex items-center justify-center gap-3 px-6 py-3 rounded-xl bg-white text-black font-semibold hover:bg-gray-100 transition-colors"
+                        className="w-full flex items-center justify-center gap-3 px-4 sm:px-6 py-3 sm:py-4 rounded-xl bg-white text-black font-semibold hover:bg-gray-100 transition-colors text-sm sm:text-base"
                     >
                         <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
                         {a('login.continueWithGoogle')}
@@ -147,13 +184,13 @@ export default function LoginPage() {
                     </div>
                 </div>
 
-                <form onSubmit={handleLogin} className="space-y-6">
+                <form onSubmit={handleLogin} className="space-y-4 sm:space-y-6 mt-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-400 mb-2">{a('common.emailLabel')}</label>
                         <input
                             type="email"
                             required
-                            className="w-full px-4 py-3 bg-neutral-900 border border-neutral-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-white placeholder-gray-600 transition-all"
+                            className="w-full px-4 py-3 bg-neutral-900 border border-neutral-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-white placeholder-gray-600 transition-all text-sm sm:text-base"
                             placeholder={a('login.emailPlaceholder')}
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
@@ -165,14 +202,14 @@ export default function LoginPage() {
                         <input
                             type="password"
                             required
-                            className="w-full px-4 py-3 bg-neutral-900 border border-neutral-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-white placeholder-gray-600 transition-all"
+                            className="w-full px-4 py-3 bg-neutral-900 border border-neutral-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-white placeholder-gray-600 transition-all text-sm sm:text-base"
                             placeholder="••••••••"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                         />
                     </div>
 
-                    <div className="flex items-center justify-between text-sm">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between text-sm gap-2">
                         <label className="flex items-center text-gray-400 cursor-pointer">
                             <input type="checkbox" className="mr-2 accent-primary" />
                             {a('login.rememberMe')}
@@ -182,13 +219,13 @@ export default function LoginPage() {
 
                     <button
                         type="submit"
-                        className="w-full py-4 bg-primary text-black font-bold uppercase tracking-widest rounded-lg hover:bg-yellow-500 hover:shadow-[0_0_15px_rgba(212,175,55,0.4)] transition-all transform hover:-translate-y-1"
+                        className="w-full py-3 sm:py-4 bg-primary text-black font-bold uppercase tracking-widest rounded-lg hover:bg-yellow-500 hover:shadow-[0_0_15px_rgba(212,175,55,0.4)] transition-all transform hover:-translate-y-1 text-sm sm:text-base"
                     >
                         {a('login.submit')}
                     </button>
                 </form>
 
-                <p className="mt-8 text-center text-gray-500 text-sm">
+                <p className="mt-6 sm:mt-8 text-center text-gray-500 text-sm">
                     {a('login.noAccount')} <Link href={`/${locale}/register`} className="text-primary hover:underline">{a('login.applyForAccess')}</Link>
                 </p>
             </div>

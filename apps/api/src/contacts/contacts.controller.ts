@@ -1,6 +1,7 @@
-import { Controller, Post, Body, Get, Patch, Delete, Param, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Body, Get, Patch, Delete, Param, UseGuards, Req, Query } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ContactsService } from './contacts.service';
+import { ContactRole } from './entities/contact.entity';
 
 @Controller('contacts')
 export class ContactsController {
@@ -14,8 +15,23 @@ export class ContactsController {
 
     @Get('mine')
     @UseGuards(AuthGuard('jwt'))
-    findMine(@Req() req: any) {
-        return this.contactsService.findAll(req.user);
+    findMine(
+        @Req() req: any,
+        @Query('search') search?: string,
+        @Query('role') role?: ContactRole,
+        @Query('favorite') favorite?: string,
+    ) {
+        return this.contactsService.findAll(req.user, {
+            search,
+            role,
+            favorite: favorite === 'true' ? true : favorite === 'false' ? false : undefined,
+        });
+    }
+
+    @Get('stats')
+    @UseGuards(AuthGuard('jwt'))
+    getStats(@Req() req: any) {
+        return this.contactsService.getStats(req.user.id);
     }
 
     @Get(':id')
@@ -28,6 +44,12 @@ export class ContactsController {
     @UseGuards(AuthGuard('jwt'))
     update(@Param('id') id: string, @Req() req: any, @Body() body: any) {
         return this.contactsService.update(id, req.user.id, body);
+    }
+
+    @Patch(':id/favorite')
+    @UseGuards(AuthGuard('jwt'))
+    toggleFavorite(@Param('id') id: string, @Req() req: any) {
+        return this.contactsService.toggleFavorite(id, req.user.id);
     }
 
     @Delete(':id')
