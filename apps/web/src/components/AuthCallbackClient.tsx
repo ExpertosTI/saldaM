@@ -56,7 +56,7 @@ export default function AuthCallbackClient() {
             return;
         }
 
-        const nextPath = isNewUser ? `/${locale}/onboarding` : `/${locale}/dashboard/profile`;
+        const nextPath = isNewUser ? `/${locale}/onboarding` : `/${locale}/dashboard`;
         router.replace(nextPath);
     }, [searchParams, router, pathname, locale]);
 

@@ -77,6 +77,12 @@ export default function LoginPage() {
                                     : '';
                                 document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax; Secure${cookieDomain}`;
                                 document.cookie = `saldana_is_new_user=${isNewUser ? '1' : '0'}; path=/; max-age=600; SameSite=Lax; Secure${cookieDomain}`;
+
+                                // Also save to localStorage as fallback
+                                try {
+                                    localStorage.setItem('saldana_auth', JSON.stringify({ token, isNewUser, ts: Date.now() }));
+                                } catch { }
+
                                 popup?.close();
                                 let preAuthPath: string | null = null;
                                 try {
@@ -91,7 +97,7 @@ export default function LoginPage() {
                                 } else if (isNewUser) {
                                     router.push(`/${locale}/onboarding`);
                                 } else {
-                                    router.push(`/${locale}/dashboard/profile`);
+                                    router.push(`/${locale}/dashboard`);
                                 }
                             };
 

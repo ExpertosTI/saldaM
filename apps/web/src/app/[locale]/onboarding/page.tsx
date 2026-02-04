@@ -37,8 +37,26 @@ export default function OnboardingPage() {
             });
 
             if (res.ok) {
+                const updatedUser = await res.json();
+                console.log('Profile updated:', updatedUser);
+
+                // Update localStorage to mark user as no longer new
+                try {
+                    const stored = localStorage.getItem('saldana_auth');
+                    if (stored) {
+                        const parsed = JSON.parse(stored);
+                        parsed.isNewUser = false;
+                        localStorage.setItem('saldana_auth', JSON.stringify(parsed));
+                    }
+                } catch { }
+
+                // Clear the isNewUser cookie
+                document.cookie = 'saldana_is_new_user=0; path=/; max-age=0';
+
                 router.push(`/${params.locale}/dashboard`);
             } else {
+                const errorData = await res.json().catch(() => ({}));
+                console.error('Profile update failed:', errorData);
                 setMessage(t('System.onboardingUpdateFailed'));
             }
         } catch (error) {
@@ -61,8 +79,8 @@ export default function OnboardingPage() {
                             key={type}
                             onClick={() => setUserType(type)}
                             className={`p-4 rounded-xl border-2 transition-all font-bold tracking-widest ${userType === type
-                                    ? 'bg-primary text-black border-primary scale-105 shadow-[0_0_20px_rgba(212,175,55,0.4)]'
-                                    : 'bg-neutral-900 text-gray-400 border-neutral-700 hover:border-gray-500 hover:text-white'
+                                ? 'bg-primary text-black border-primary scale-105 shadow-[0_0_20px_rgba(212,175,55,0.4)]'
+                                : 'bg-neutral-900 text-gray-400 border-neutral-700 hover:border-gray-500 hover:text-white'
                                 }`}
                         >
                             {type}

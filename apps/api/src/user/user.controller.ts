@@ -13,8 +13,11 @@ export class UserController {
 
     @Get('me')
     @UseGuards(AuthGuard('jwt'))
-    getMe(@Req() req: any) {
-        return this.userService.findById(req.user.id);
+    async getMe(@Req() req: any) {
+        console.log('[Users] GET /me - User ID from token:', req.user?.id);
+        const user = await this.userService.findById(req.user.id);
+        console.log('[Users] User data:', { id: user.id, email: user.email, firstName: user.firstName, userType: user.userType });
+        return user;
     }
 
     @Get(':email')

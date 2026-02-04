@@ -1,21 +1,36 @@
 {
   "name": "Saldaña Music",
   "short_name": "Saldaña",
-  "description": "Gestión segura y colaborativa de derechos musicales",
+  "description": "Gestión profesional de derechos musicales y split sheets",
   "start_url": "/",
+  "id": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#000000",
+  "background_color": "#050505",
+  "theme_color": "#D4AF37",
   "orientation": "portrait",
+  "scope": "/",
+  "categories": [
+    "music",
+    "business",
+    "finance"
+  ],
+  "lang": "es",
   "icons": [
     {
       "src": "/icon-192x192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/icon-512x512.png",
       "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
       "type": "image/png"
     }
   ]

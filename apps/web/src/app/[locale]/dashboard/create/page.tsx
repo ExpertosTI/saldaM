@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useTranslations } from 'next-intl';
 import { API_BASE_URL, getToken } from '@/lib/auth';
 
-type Role = "Songwriter" | "Producer";
+type Role = "Songwriter" | "Producer" | "Publisher";
 
 type Collaborator = {
     name: string;
@@ -108,6 +108,7 @@ export default function CreateSplitSheet() {
                         >
                             <option>Songwriter</option>
                             <option>Producer</option>
+                            <option>Publisher</option>
                         </select>
                         <div className="w-24 relative">
                             <input

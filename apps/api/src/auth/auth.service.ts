@@ -11,22 +11,33 @@ export class AuthService {
     ) { }
 
     async validateGoogleUser(details: { email: string; firstName: string; lastName: string; picture: string | null }) {
+        console.log('[Auth] Google login attempt:', details.email);
+
         // Check if user exists
         const user = await this.userService.findOne(details.email);
         if (user) {
+            console.log('[Auth] Existing user found:', { id: user.id, email: user.email, userType: user.userType });
+
+            // Always update avatar if Google provides one (keeps it current)
+            // Only update name if user hasn't set their own
             const patch: any = {};
             if (!user.firstName && details.firstName) patch.firstName = details.firstName;
             if (!user.lastName && details.lastName) patch.lastName = details.lastName;
-            if (!user.avatarUrl && details.picture) patch.avatarUrl = details.picture;
+            if (details.picture) patch.avatarUrl = details.picture; // Always update avatar
+
             if (Object.keys(patch).length > 0) {
-                return this.userService.updateProfile(user.id, patch);
+                console.log('[Auth] Updating user with patch:', patch);
+                const updatedUser = await this.userService.updateProfile(user.id, patch);
+                console.log('[Auth] User updated:', { id: updatedUser.id, firstName: updatedUser.firstName, avatarUrl: !!updatedUser.avatarUrl });
+                return updatedUser;
             }
             return user; // Log in existing user
         }
 
+
         // Create new user (Auto-registration)
-        console.log('Creating new user from Google Login:', details.email);
-        return this.userService.create({
+        console.log('[Auth] Creating new user from Google Login:', details.email);
+        const newUser = await this.userService.create({
             email: details.email,
             firstName: details.firstName,
             lastName: details.lastName,
@@ -34,6 +45,8 @@ export class AuthService {
             passwordHash: null,
             isEmailVerified: true,
         });
+        console.log('[Auth] New user created:', { id: newUser.id, email: newUser.email, firstName: newUser.firstName });
+        return newUser;
     }
 
     async login(user: any) {

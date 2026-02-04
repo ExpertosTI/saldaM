@@ -8,11 +8,34 @@ export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://app.sald
 
 /**
  * Get authentication token from cookies (client-side)
+ * Falls back to localStorage if cookie is not accessible (e.g., Secure cookie on non-HTTPS)
  */
 export function getToken(): string | null {
-    if (typeof document === 'undefined') return null;
-    const match = document.cookie.match(/token=([^;]+)/);
-    return match?.[1] ?? null;
+    if (typeof window === 'undefined') return null;
+
+    // Try cookie first
+    if (typeof document !== 'undefined') {
+        const match = document.cookie.match(/token=([^;]+)/);
+        if (match?.[1]) return match[1];
+    }
+
+    // Fallback to localStorage
+    try {
+        const stored = localStorage.getItem('saldana_auth');
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            if (parsed?.token) {
+                // Verify token is not expired (basic check)
+                if (parsed.ts && Date.now() - parsed.ts < 86400000) { // 24 hours
+                    return parsed.token;
+                }
+            }
+        }
+    } catch (e) {
+        console.error('Error reading token from localStorage', e);
+    }
+
+    return null;
 }
 
 /**
@@ -27,8 +50,16 @@ export function setToken(token: string, maxAge: number = 86400): void {
  * Remove authentication token (logout)
  */
 export function removeToken(): void {
-    if (typeof document === 'undefined') return;
-    document.cookie = 'token=; path=/; max-age=0';
+    if (typeof document !== 'undefined') {
+        document.cookie = 'token=; path=/; max-age=0';
+        document.cookie = 'saldana_is_new_user=; path=/; max-age=0';
+    }
+    // Also clear localStorage
+    try {
+        localStorage.removeItem('saldana_auth');
+    } catch (e) {
+        console.error('Error clearing localStorage', e);
+    }
 }
 
 /**
@@ -82,7 +113,7 @@ export async function authFetch(
     options: RequestInit = {}
 ): Promise<Response> {
     const token = getToken();
-    
+
     const headers: HeadersInit = {
         ...options.headers,
     };

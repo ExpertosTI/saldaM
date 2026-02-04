@@ -1,150 +1,312 @@
-
 'use client';
 
-import { useState } from 'react';
-import { useTranslations } from 'next-intl';
-import { API_BASE_URL, getToken } from '@/lib/auth';
-import { User } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useLocale, useTranslations } from 'next-intl';
+import { getToken, API_BASE_URL } from '@/lib/auth';
+
+interface UserProfile {
+    id: string;
+    email: string;
+    firstName: string | null;
+    lastName: string | null;
+    bio: string | null;
+    phone: string | null;
+    avatarUrl: string | null;
+    userType: string | null;
+    proAffiliation: string | null;
+    ipiNumber: string | null;
+    publishingCompany: string | null;
+    createdAt: string;
+}
 
 export default function ProfilePage() {
-    const t = useTranslations();
-    const p = useTranslations('Profile');
-    const [formData, setFormData] = useState({
-        firstName: '',
-        lastName: '',
-        bio: '',
-        phone: '',
-        proAffiliation: '',
-        ipiNumber: ''
-    });
-    const [loading, setLoading] = useState(false);
-    const [fetched, setFetched] = useState(false);
-    const [message, setMessage] = useState<string>('');
+    const locale = useLocale();
+    const router = useRouter();
+    const t = useTranslations('Profile');
+    const s = useTranslations('System');
 
-    // Fetch user data on mount
-    // For simplicity in this edit, we'll skip the useEffect fetch for now or rely on user filling it out.
-    // Ideally we fetch from /api/auth/me if it existed or /api/users/profile if we made a GET.
-    // I'll assume standard form behavior: User enters data to update.
+    const [user, setUser] = useState<UserProfile | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-    const handleChange = (e: any) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
+    // Form state
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
+    const [bio, setBio] = useState('');
+    const [phone, setPhone] = useState('');
+    const [userType, setUserType] = useState<string>('');
+    const [proAffiliation, setProAffiliation] = useState('');
+    const [ipiNumber, setIpiNumber] = useState('');
+    const [publishingCompany, setPublishingCompany] = useState('');
 
-    const handleSubmit = async (e: any) => {
-        e.preventDefault();
-        setLoading(true);
-
-        setMessage('');
-        const token = getToken();
-
-        try {
+    useEffect(() => {
+        const fetchProfile = async () => {
+            const token = getToken();
             if (!token) {
-                setMessage(t('System.sessionExpired'));
+                router.push(`/${locale}/login`);
                 return;
             }
 
+            try {
+                const res = await fetch(`${API_BASE_URL}/users/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data: UserProfile = await res.json();
+                    setUser(data);
+                    // Populate form
+                    setFirstName(data.firstName || '');
+                    setLastName(data.lastName || '');
+                    setBio(data.bio || '');
+                    setPhone(data.phone || '');
+                    setUserType(data.userType || '');
+                    setProAffiliation(data.proAffiliation || '');
+                    setIpiNumber(data.ipiNumber || '');
+                    setPublishingCompany(data.publishingCompany || '');
+                } else if (res.status === 401) {
+                    router.push(`/${locale}/login`);
+                }
+            } catch (e) {
+                console.error('Failed to fetch profile', e);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProfile();
+    }, [locale, router]);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSaving(true);
+        setMessage(null);
+
+        const token = getToken();
+        if (!token) {
+            router.push(`/${locale}/login`);
+            return;
+        }
+
+        try {
             const res = await fetch(`${API_BASE_URL}/users/profile`, {
                 method: 'PATCH',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(formData)
+                body: JSON.stringify({
+                    firstName,
+                    lastName,
+                    bio,
+                    phone,
+                    userType: userType || undefined,
+                    proAffiliation: proAffiliation || undefined,
+                    ipiNumber: ipiNumber || undefined,
+                    publishingCompany: publishingCompany || undefined,
+                })
             });
 
             if (res.ok) {
-                setMessage(t('System.profileUpdated'));
+                const updated = await res.json();
+                setUser(updated);
+                setMessage({ type: 'success', text: s('profileUpdated') });
             } else {
-                setMessage(t('System.profileUpdateFailed'));
+                setMessage({ type: 'error', text: s('profileUpdateFailed') });
             }
-        } catch (err) {
-            setMessage(t('System.genericError'));
+        } catch (e) {
+            setMessage({ type: 'error', text: s('genericError') });
         } finally {
-            setLoading(false);
+            setSaving(false);
         }
     };
 
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-[60vh]">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                    <p className="text-gray-400 text-sm">{t('loading') || 'Cargando...'}</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div className="text-white">
-            <h1 className="text-3xl font-bold mb-8 flex items-center gap-3">
-                <User className="w-7 h-7 text-primary" />
-                {p('title')}
-            </h1>
-            <div className="glass-panel p-8 rounded-xl max-w-2xl">
+        <div className="max-w-3xl">
+            <header className="mb-8">
+                <h1 className="text-3xl font-bold text-white mb-2">{t('title')}</h1>
+                <p className="text-gray-400">Administra tu información personal y profesional.</p>
+            </header>
+
+            {/* Profile Card */}
+            <div className="glass-panel rounded-2xl p-8 mb-8">
+                <div className="flex items-start gap-6 mb-8">
+                    {/* Avatar */}
+                    <div className="relative group">
+                        {user?.avatarUrl ? (
+                            <img
+                                src={user.avatarUrl}
+                                alt={user.firstName || 'Usuario'}
+                                className="w-24 h-24 rounded-2xl object-cover ring-4 ring-primary/20"
+                            />
+                        ) : (
+                            <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-primary/40 to-primary/20 flex items-center justify-center text-3xl font-bold text-primary">
+                                {(user?.firstName?.[0] || user?.email[0] || '?').toUpperCase()}
+                            </div>
+                        )}
+                        <div className="absolute inset-0 bg-black/50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <span className="text-xs text-white">Google</span>
+                        </div>
+                    </div>
+
+                    {/* Basic Info */}
+                    <div className="flex-1">
+                        <h2 className="text-2xl font-bold text-white mb-1">
+                            {user?.firstName && user?.lastName
+                                ? `${user.firstName} ${user.lastName}`
+                                : user?.firstName || 'Nuevo Usuario'}
+                        </h2>
+                        <p className="text-gray-400 text-sm mb-3">{user?.email}</p>
+                        <div className="flex gap-2">
+                            {user?.userType && (
+                                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-primary/20 text-primary border border-primary/30">
+                                    {user.userType}
+                                </span>
+                            )}
+                            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white/5 text-gray-400 border border-white/10">
+                                Miembro desde {new Date(user?.createdAt || '').getFullYear()}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Form */}
                 <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="grid grid-cols-2 gap-6">
+                    {/* User Type Selection */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-400 mb-3">Tipo de Usuario</label>
+                        <div className="grid grid-cols-3 gap-3">
+                            {['ARTIST', 'PRODUCER', 'PUBLISHER'].map((type) => (
+                                <button
+                                    key={type}
+                                    type="button"
+                                    onClick={() => setUserType(type)}
+                                    className={`p-4 rounded-xl border-2 transition-all font-bold text-sm ${userType === type
+                                        ? 'bg-primary/20 text-primary border-primary'
+                                        : 'bg-neutral-900 text-gray-400 border-neutral-700 hover:border-gray-500 hover:text-white'
+                                        }`}
+                                >
+                                    {type === 'ARTIST' ? 'Artista' : type === 'PRODUCER' ? 'Productor' : 'Publisher'}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Name Fields */}
+                    <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm text-gray-400 mb-2">{p('firstNameLabel')}</label>
+                            <label className="block text-sm font-medium text-gray-400 mb-2">{t('firstNameLabel')}</label>
                             <input
-                                name="firstName"
-                                value={formData.firstName}
-                                onChange={handleChange}
-                                className="w-full bg-neutral-900 border border-neutral-700 rounded-lg p-3 text-white focus:border-primary focus:outline-none"
-                                placeholder={p('firstNamePlaceholder')}
+                                type="text"
+                                value={firstName}
+                                onChange={(e) => setFirstName(e.target.value)}
+                                placeholder={t('firstNamePlaceholder')}
+                                className="w-full px-4 py-3 bg-neutral-900 border border-neutral-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-white placeholder-gray-600 transition-all"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm text-gray-400 mb-2">{p('lastNameLabel')}</label>
+                            <label className="block text-sm font-medium text-gray-400 mb-2">{t('lastNameLabel')}</label>
                             <input
-                                name="lastName"
-                                value={formData.lastName}
-                                onChange={handleChange}
-                                className="w-full bg-neutral-900 border border-neutral-700 rounded-lg p-3 text-white focus:border-primary focus:outline-none"
-                                placeholder={p('lastNamePlaceholder')}
+                                type="text"
+                                value={lastName}
+                                onChange={(e) => setLastName(e.target.value)}
+                                placeholder={t('lastNamePlaceholder')}
+                                className="w-full px-4 py-3 bg-neutral-900 border border-neutral-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-white placeholder-gray-600 transition-all"
                             />
                         </div>
                     </div>
 
+                    {/* Bio */}
                     <div>
-                        <label className="block text-sm text-gray-400 mb-2">{p('bioLabel')}</label>
+                        <label className="block text-sm font-medium text-gray-400 mb-2">{t('bioLabel')}</label>
                         <textarea
-                            name="bio"
-                            value={formData.bio}
-                            onChange={handleChange}
-                            rows={4}
-                            className="w-full bg-neutral-900 border border-neutral-700 rounded-lg p-3 text-white focus:border-primary focus:outline-none"
-                            placeholder={p('bioPlaceholder')}
+                            value={bio}
+                            onChange={(e) => setBio(e.target.value)}
+                            placeholder={t('bioPlaceholder')}
+                            rows={3}
+                            className="w-full px-4 py-3 bg-neutral-900 border border-neutral-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-white placeholder-gray-600 transition-all resize-none"
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-6">
-                        <div>
-                            <label className="block text-sm text-gray-400 mb-2">{p('proAffiliationLabel')}</label>
-                            <select
-                                name="proAffiliation"
-                                value={formData.proAffiliation}
-                                onChange={handleChange}
-                                className="w-full bg-neutral-900 border border-neutral-700 rounded-lg p-3 text-white focus:border-primary focus:outline-none"
-                            >
-                                <option value="">{p('proAffiliationPlaceholder')}</option>
-                                <option value="ASCAP">ASCAP</option>
-                                <option value="BMI">BMI</option>
-                                <option value="SESAC">SESAC</option>
-                            </select>
+                    {/* Professional Info */}
+                    <div className="border-t border-neutral-800 pt-6">
+                        <h3 className="text-lg font-semibold text-white mb-4">Información Profesional</h3>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-400 mb-2">{t('proAffiliationLabel')}</label>
+                                <select
+                                    value={proAffiliation}
+                                    onChange={(e) => setProAffiliation(e.target.value)}
+                                    className="w-full px-4 py-3 bg-neutral-900 border border-neutral-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-white transition-all"
+                                >
+                                    <option value="">{t('proAffiliationPlaceholder')}</option>
+                                    <option value="ASCAP">ASCAP</option>
+                                    <option value="BMI">BMI</option>
+                                    <option value="SESAC">SESAC</option>
+                                    <option value="GMR">GMR</option>
+                                    <option value="SOCAN">SOCAN</option>
+                                    <option value="SGAE">SGAE</option>
+                                    <option value="PRS">PRS for Music</option>
+                                    <option value="SACEM">SACEM</option>
+                                    <option value="OTHER">Otra</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-400 mb-2">{t('ipiNumberLabel')}</label>
+                                <input
+                                    type="text"
+                                    value={ipiNumber}
+                                    onChange={(e) => setIpiNumber(e.target.value)}
+                                    placeholder={t('ipiNumberPlaceholder')}
+                                    className="w-full px-4 py-3 bg-neutral-900 border border-neutral-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-white placeholder-gray-600 transition-all"
+                                />
+                            </div>
                         </div>
-                        <div>
-                            <label className="block text-sm text-gray-400 mb-2">{p('ipiNumberLabel')}</label>
+
+                        <div className="mt-4">
+                            <label className="block text-sm font-medium text-gray-400 mb-2">Compañía Editorial</label>
                             <input
-                                name="ipiNumber"
-                                value={formData.ipiNumber}
-                                onChange={handleChange}
-                                className="w-full bg-neutral-900 border border-neutral-700 rounded-lg p-3 text-white focus:border-primary focus:outline-none"
-                                placeholder={p('ipiNumberPlaceholder')}
+                                type="text"
+                                value={publishingCompany}
+                                onChange={(e) => setPublishingCompany(e.target.value)}
+                                placeholder="Nombre de tu compañía editorial (si aplica)"
+                                className="w-full px-4 py-3 bg-neutral-900 border border-neutral-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-white placeholder-gray-600 transition-all"
                             />
                         </div>
                     </div>
 
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full py-4 bg-primary text-black font-bold rounded-lg hover:brightness-110 transition-all shadow-[0_0_20px_rgba(212,175,55,0.3)]"
-                    >
-                        {loading ? p('saving') : p('save')}
-                    </button>
-
+                    {/* Message */}
                     {message && (
-                        <div className="text-sm font-semibold text-gray-300">{message}</div>
+                        <div className={`p-4 rounded-lg ${message.type === 'success'
+                            ? 'bg-green-500/10 border border-green-500/20 text-green-400'
+                            : 'bg-red-500/10 border border-red-500/20 text-red-400'
+                            }`}>
+                            {message.text}
+                        </div>
                     )}
+
+                    {/* Submit */}
+                    <div className="flex justify-end gap-4 pt-4">
+                        <button
+                            type="submit"
+                            disabled={saving}
+                            className="px-8 py-3 bg-primary text-black font-bold rounded-lg hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(212,175,55,0.3)]"
+                        >
+                            {saving ? t('saving') : t('save')}
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
