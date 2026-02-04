@@ -30,8 +30,21 @@ export default function AuthCallbackClient() {
         const isNewUser = searchParams.get('isNewUser') === 'true';
         const payload = { token, isNewUser, ts: Date.now() };
 
-        // Detect if running in popup
-        const isPopup = !!(window.opener && !window.opener.closed);
+        // Detect if running in popup - use window.name (works cross-origin)
+        // The popup was opened with name 'Google_Auth' in login page
+        let isPopup = window.name === 'Google_Auth';
+
+        // Fallback: try window.opener (might work same-origin)
+        if (!isPopup) {
+            try {
+                isPopup = !!(window.opener && !window.opener.closed);
+            } catch {
+                // Cross-origin access blocked, check if opener exists at all
+                isPopup = !!window.opener;
+            }
+        }
+
+        console.log('[AuthCallback] isPopup:', isPopup, 'window.name:', window.name);
 
         // Set cookie with proper domain
         const cookieDomain = window.location.hostname.endsWith('saldanamusic.com')
