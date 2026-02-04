@@ -34,13 +34,13 @@ export default async function DashboardHome({
 
             const resStats = await fetch(`${apiUrl}/split-sheets/stats`, {
                 headers: { 'Authorization': `Bearer ${token}` },
-                next: { revalidate: 0 }
+                cache: 'no-store'
             });
             if (resStats.ok) stats = await resStats.json();
 
             const resList = await fetch(`${apiUrl}/split-sheets`, {
                 headers: { 'Authorization': `Bearer ${token}` },
-                next: { revalidate: 0 }
+                cache: 'no-store'
             });
             if (resList.ok) recentSheets = await resList.json();
         } catch (e) {

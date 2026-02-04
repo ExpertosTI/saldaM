@@ -30,7 +30,7 @@ import { Contact } from './contacts/entities/contact.entity';
     // Rate Limiting: 10 requests per 60 seconds per IP (Basic DDoS protection)
     ThrottlerModule.forRoot([{
       ttl: 60000,
-      limit: 10,
+      limit: 100, // Increased to prevent false positives with SPA
     }]),
     TypeOrmModule.forRoot({
       type: 'postgres',
