@@ -2,13 +2,45 @@ import { Injectable } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { User } from '../user/entities/user.entity';
 import { JwtService } from '@nestjs/jwt';
+import { OAuth2Client } from 'google-auth-library';
 
 @Injectable()
 export class AuthService {
+    private googleClient: OAuth2Client;
+
     constructor(
         private userService: UserService,
         private jwtService: JwtService
-    ) { }
+    ) {
+        // Initialize Google OAuth client for token verification
+        this.googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+    }
+
+    /**
+     * Verify Google JWT token from @react-oauth/google frontend library.
+     * Returns the user (existing or newly created).
+     */
+    async verifyGoogleToken(credential: string): Promise<User> {
+        const ticket = await this.googleClient.verifyIdToken({
+            idToken: credential,
+            audience: process.env.GOOGLE_CLIENT_ID,
+        });
+
+        const payload = ticket.getPayload();
+        if (!payload || !payload.email) {
+            throw new Error('Invalid Google token: no email found');
+        }
+
+        const email = payload.email;
+        const firstName = payload.given_name || payload.name?.split(' ')[0] || '';
+        const lastName = payload.family_name || payload.name?.split(' ').slice(1).join(' ') || '';
+        const picture = payload.picture || null;
+
+        console.log('[Auth] Google token verified for:', email);
+
+        // Use existing validateGoogleUser logic
+        return this.validateGoogleUser({ email, firstName, lastName, picture });
+    }
 
     async validateGoogleUser(details: { email: string; firstName: string; lastName: string; picture: string | null }) {
         console.log('[Auth] Google login attempt:', details.email);

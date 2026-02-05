@@ -2,35 +2,34 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from 'next-intl';
+import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
 
 /**
- * Google OAuth Login Flow - Best Practices Implementation
+ * Google OAuth Login - Using @react-oauth/google
  * 
- * Flow:
- * 1. User clicks "Continue with Google"
- * 2. Clear any existing auth cookies/storage (prevents stale token detection)
- * 3. Open popup with Google OAuth URL
- * 4. Listen for:
- *    - postMessage from popup (primary method)
- *    - localStorage change (fallback for cross-origin)
- *    - Cookie polling with delay (backup fallback)
- * 5. On auth success, redirect to dashboard/onboarding
+ * This approach uses Google's official library which handles all the OAuth complexity:
+ * - No manual popup management
+ * - No cross-origin issues
+ * - Token received directly via callback
+ * - Simple POST to backend to exchange for app JWT
  */
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://app.saldanamusic.com/api';
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState("");
     const router = useRouter();
     const locale = useLocale();
-    const pathname = usePathname();
     const a = useTranslations('Auth');
     const searchParams = useSearchParams();
     const handledRef = useRef(false);
 
-    // Handle OAuth callback when this page receives token (popup flow)
+    // Handle legacy OAuth callback (for backward compatibility with old flow)
     useEffect(() => {
         const token = searchParams.get('token');
         if (!token) return;
@@ -40,62 +39,14 @@ export default function LoginPage() {
         handledRef.current = true;
 
         const isNewUser = searchParams.get('isNewUser') === 'true';
-        const payload = { token, isNewUser, ts: Date.now() };
-
-        // Detect if running in popup - check cookie flag (set before opening popup)
-        // This cookie survives Google OAuth redirections unlike window.name
-        const popupCookie = document.cookie.match(/(?:^|; )saldana_popup=([^;]+)/);
-        let isPopup = popupCookie?.[1] === '1';
-
-        // Fallback: try window.name and window.opener
-        if (!isPopup) {
-            isPopup = window.name === 'Google_Auth';
-        }
-        if (!isPopup) {
-            try {
-                isPopup = !!(window.opener && !window.opener.closed);
-            } catch {
-                isPopup = !!window.opener;
-            }
-        }
-
-        console.log('[LoginPage OAuth Callback] isPopup:', isPopup, 'popupCookie:', popupCookie?.[1], 'window.name:', window.name);
 
         // Set cookies with proper domain
         const cookieDomain = window.location.hostname.endsWith('saldanamusic.com')
             ? '; Domain=.saldanamusic.com'
             : '';
         document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax${cookieDomain}`;
-        document.cookie = `saldana_is_new_user=${isNewUser ? '1' : '0'}; path=/; max-age=600; SameSite=Lax${cookieDomain}`;
 
-        // Save to localStorage (for cross-tab detection)
-        try {
-            localStorage.setItem('saldana_auth', JSON.stringify(payload));
-        } catch { }
-
-        // If popup, notify parent and close
-        if (isPopup) {
-            // Clear popup flag cookie
-            document.cookie = 'saldana_popup=; path=/; max-age=0';
-            document.cookie = `saldana_popup=; path=/; max-age=0${cookieDomain}`;
-
-            try {
-                // Send token to parent window - use * for cross-origin
-                window.opener?.postMessage(payload, '*');
-                console.log('[LoginPage] Sent postMessage to parent');
-            } catch (e) {
-                console.error('[LoginPage] Failed to notify parent:', e);
-            }
-
-            // Close popup after small delay
-            setTimeout(() => {
-                console.log('[LoginPage] Closing popup window');
-                window.close();
-            }, 500);
-            return;
-        }
-
-        // Not a popup - redirect directly
+        // Redirect based on user status
         if (isNewUser) {
             router.replace(`/${locale}/onboarding`);
         } else {
@@ -103,222 +54,67 @@ export default function LoginPage() {
         }
     }, [searchParams, router, locale]);
 
+    /**
+     * Handle successful Google login from @react-oauth/google
+     */
+    const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
+        if (!credentialResponse.credential) {
+            setError('No se recibió credencial de Google');
+            return;
+        }
+
+        setIsLoading(true);
+        setError("");
+
+        try {
+            // Send Google JWT to our backend for verification and app JWT generation
+            const response = await fetch(`${API_URL}/auth/google-token`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ credential: credentialResponse.credential })
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.token) {
+                // Set cookies with proper domain
+                const cookieDomain = window.location.hostname.endsWith('saldanamusic.com')
+                    ? '; Domain=.saldanamusic.com'
+                    : '';
+                document.cookie = `token=${data.token}; path=/; max-age=86400; SameSite=Lax${cookieDomain}`;
+
+                // Redirect based on user status
+                if (data.isNewUser) {
+                    router.push(`/${locale}/onboarding`);
+                } else {
+                    router.push(`/${locale}/dashboard`);
+                }
+            } else {
+                setError(data.message || data.error || 'Error al autenticar con Google');
+                setIsLoading(false);
+            }
+        } catch (err) {
+            console.error('[Login] Google auth error:', err);
+            setError('Error de conexión. Intenta de nuevo.');
+            setIsLoading(false);
+        }
+    };
+
+    /**
+     * Handle Google login error
+     */
+    const handleGoogleError = () => {
+        setError('Error al conectar con Google');
+        setIsLoading(false);
+    };
+
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
         console.log("Login attempt", email, password);
         router.push(`/${locale}/dashboard`);
     };
 
-    /**
-     * Clear all auth data before starting OAuth flow
-     * This prevents stale tokens from triggering premature popup close
-     */
-    const clearAuthData = () => {
-        // Clear cookies (both with and without domain)
-        document.cookie = 'token=; path=/; max-age=0';
-        document.cookie = 'saldana_is_new_user=; path=/; max-age=0';
-
-        const domain = window.location.hostname.endsWith('saldanamusic.com')
-            ? '; Domain=.saldanamusic.com'
-            : '';
-        document.cookie = `token=; path=/; max-age=0${domain}`;
-        document.cookie = `saldana_is_new_user=; path=/; max-age=0${domain}`;
-
-        // Clear localStorage
-        try {
-            localStorage.removeItem('saldana_auth');
-            localStorage.removeItem('token');
-        } catch { }
-
-        // Clear sessionStorage (except pre_auth_path which we'll set)
-        try {
-            sessionStorage.removeItem('sm_loaded');
-        } catch { }
-    };
-
-    /**
-     * Start Google OAuth flow with popup
-     */
-    const startGoogleAuth = () => {
-        if (isLoading) return;
-        setIsLoading(true);
-
-        // CRITICAL: Clear existing auth data first
-        clearAuthData();
-
-        // Calculate popup position (centered)
-        const width = 500;
-        const height = 600;
-        const left = window.screen.width / 2 - width / 2;
-        const top = window.screen.height / 2 - height / 2;
-
-        // Save current path for redirect after auth
-        try {
-            sessionStorage.setItem('saldana_pre_auth_path', `${pathname}${window.location.search}`);
-        } catch { }
-
-        // Set popup flag cookie BEFORE opening popup (survives Google OAuth redirections)
-        const cookieDomain = window.location.hostname.endsWith('saldanamusic.com')
-            ? '; Domain=.saldanamusic.com'
-            : '';
-        document.cookie = `saldana_popup=1; path=/; max-age=300; SameSite=Lax${cookieDomain}`;
-
-        // Open Google OAuth popup
-        const popup = window.open(
-            `${process.env.NEXT_PUBLIC_API_URL || 'https://app.saldanamusic.com/api'}/auth/google`,
-            'Google_Auth',
-            `width=${width},height=${height},top=${top},left=${left},toolbar=no,menubar=no,resizable=yes,scrollbars=yes`
-        );
-
-        if (!popup) {
-            setIsLoading(false);
-            alert('Por favor habilita las ventanas emergentes para iniciar sesión con Google');
-            return;
-        }
-
-        let finalized = false;
-        let pollId: number | null = null;
-        let closedCheckId: number | null = null;
-
-        /**
-         * Finalize authentication - redirect user
-         */
-        const finalizeAuth = (token: string, isNewUser: boolean) => {
-            // Set cookies with proper domain
-            const cookieDomain = window.location.hostname.endsWith('saldanamusic.com')
-                ? '; Domain=.saldanamusic.com'
-                : '';
-            document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax${cookieDomain}`;
-            document.cookie = `saldana_is_new_user=${isNewUser ? '1' : '0'}; path=/; max-age=600; SameSite=Lax${cookieDomain}`;
-
-            // Save to localStorage as backup
-            try {
-                localStorage.setItem('saldana_auth', JSON.stringify({ token, isNewUser, ts: Date.now() }));
-            } catch { }
-
-            // Close popup
-            try {
-                popup?.close();
-            } catch { }
-
-            // Get pre-auth path for redirect
-            let preAuthPath: string | null = null;
-            try {
-                preAuthPath = sessionStorage.getItem('saldana_pre_auth_path');
-                sessionStorage.removeItem('saldana_pre_auth_path');
-            } catch { }
-
-            setIsLoading(false);
-
-            // Redirect logic
-            const isLoop = typeof preAuthPath === 'string' &&
-                (preAuthPath.includes('/login') || preAuthPath.includes('/register'));
-
-            if (isNewUser) {
-                router.push(`/${locale}/onboarding`);
-            } else if (preAuthPath && !isLoop) {
-                router.replace(preAuthPath);
-            } else {
-                router.push(`/${locale}/dashboard`);
-            }
-        };
-
-        /**
-         * Ensure we only finalize once
-         */
-        const finalizeOnce = (token: string, isNewUser: boolean) => {
-            if (finalized) return;
-            finalized = true;
-            cleanup();
-            finalizeAuth(token, isNewUser);
-        };
-
-        /**
-         * Cleanup all listeners and intervals
-         */
-        const cleanup = () => {
-            window.removeEventListener('message', handleMessage);
-            window.removeEventListener('storage', handleStorage);
-            if (pollId) clearInterval(pollId);
-            if (closedCheckId) clearInterval(closedCheckId);
-        };
-
-        /**
-         * Handle postMessage from popup (primary auth method)
-         */
-        const handleMessage = (event: MessageEvent) => {
-            // Security: Verify origin (allow production and localhost)
-            const allowedOrigins = ['saldanamusic.com', 'localhost', '127.0.0.1'];
-            const isAllowed = allowedOrigins.some(origin => event.origin.includes(origin));
-            if (!isAllowed) return;
-
-            if (event.data?.token) {
-                finalizeOnce(event.data.token, !!event.data.isNewUser);
-            }
-        };
-
-        /**
-         * Handle localStorage change (fallback for cross-origin)
-         */
-        const handleStorage = (event: StorageEvent) => {
-            if (event.key !== 'saldana_auth' || !event.newValue) return;
-            try {
-                const data = JSON.parse(event.newValue);
-                // Only accept recent tokens (within last 60 seconds)
-                if (data?.token && data?.ts && (Date.now() - data.ts < 60000)) {
-                    finalizeOnce(data.token, !!data.isNewUser);
-                }
-            } catch { }
-        };
-
-        /**
-         * Poll for cookie (backup fallback - with delay)
-         */
-        const pollCookie = () => {
-            const tokenMatch = document.cookie.match(/(?:^|; )token=([^;]+)/);
-            if (!tokenMatch?.[1]) return null;
-            const newUserMatch = document.cookie.match(/(?:^|; )saldana_is_new_user=([^;]+)/);
-            return { token: tokenMatch[1], isNewUser: newUserMatch?.[1] === '1' };
-        };
-
-        // Register event listeners
-        window.addEventListener('message', handleMessage);
-        window.addEventListener('storage', handleStorage);
-
-        // Start cookie polling AFTER A DELAY (gives Google time to load)
-        // This prevents detecting stale cookies that might have been set incorrectly
-        setTimeout(() => {
-            if (finalized) return;
-            pollId = window.setInterval(() => {
-                const data = pollCookie();
-                if (data?.token) {
-                    finalizeOnce(data.token, data.isNewUser);
-                }
-            }, 500); // Poll every 500ms (not too aggressive)
-        }, 3000); // Wait 3 seconds before starting to poll
-
-        // Check if popup was closed without completing auth
-        closedCheckId = window.setInterval(() => {
-            if (popup?.closed) {
-                // Popup closed - check if we got auth data
-                setTimeout(() => {
-                    if (!finalized) {
-                        const data = pollCookie();
-                        if (data?.token) {
-                            finalizeOnce(data.token, data.isNewUser);
-                        } else {
-                            // User closed popup without completing - cleanup
-                            cleanup();
-                            setIsLoading(false);
-                        }
-                    }
-                }, 500);
-                if (closedCheckId) clearInterval(closedCheckId);
-            }
-        }, 1000);
-    };
-
-    // If handling token callback directly (non-popup flow), show loader
+    // If handling token callback directly (legacy flow), show loader
     if (searchParams.get('token')) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-black text-primary">
@@ -341,26 +137,36 @@ export default function LoginPage() {
 
                 <h2 className="text-2xl sm:text-3xl font-bold text-center text-primary mb-6 sm:mb-8 tracking-wider uppercase">{a('login.title')}</h2>
 
-                <div className="flex flex-col gap-3">
-                    <button
-                        onClick={startGoogleAuth}
-                        disabled={isLoading}
-                        className="w-full flex items-center justify-center gap-3 px-4 sm:px-6 py-3 sm:py-4 rounded-xl bg-white text-black font-semibold hover:bg-gray-100 active:bg-gray-200 transition-colors text-sm sm:text-base disabled:opacity-70 disabled:cursor-wait"
-                    >
-                        {isLoading ? (
-                            <>
-                                <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
-                                Conectando...
-                            </>
-                        ) : (
-                            <>
-                                <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
-                                {a('login.continueWithGoogle')}
-                            </>
-                        )}
-                    </button>
+                {/* Error message */}
+                {error && (
+                    <div className="mb-4 p-3 rounded-lg bg-red-500/20 border border-red-500/30 text-red-200 text-sm text-center">
+                        {error}
+                    </div>
+                )}
 
-                    <div className="relative flex py-2 items-center">
+                <div className="flex flex-col gap-4 items-center">
+                    {/* Google Login Button - Uses @react-oauth/google */}
+                    {isLoading ? (
+                        <div className="w-full flex items-center justify-center gap-3 px-4 sm:px-6 py-3 sm:py-4 rounded-xl bg-white/80 text-black font-semibold">
+                            <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+                            Conectando...
+                        </div>
+                    ) : (
+                        <div className="w-full flex justify-center">
+                            <GoogleLogin
+                                onSuccess={handleGoogleSuccess}
+                                onError={handleGoogleError}
+                                theme="filled_black"
+                                shape="pill"
+                                size="large"
+                                text="continue_with"
+                                width="320"
+                                logo_alignment="left"
+                            />
+                        </div>
+                    )}
+
+                    <div className="relative flex py-2 items-center w-full">
                         <div className="flex-grow border-t border-neutral-700"></div>
                         <span className="flex-shrink mx-4 text-gray-500 text-xs">{a('login.orLoginWithEmail')}</span>
                         <div className="flex-grow border-t border-neutral-700"></div>
