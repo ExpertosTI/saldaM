@@ -81,6 +81,7 @@ services:
     image: ghcr.io/expertosti/saldanamusic-web:latest
     environment:
       - NEXT_PUBLIC_API_URL=https://app.saldanamusic.com/api
+      - NEXT_PUBLIC_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
     networks:
       - saldana_internal
       - RenaceNet

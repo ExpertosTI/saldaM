@@ -3,10 +3,9 @@
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { ReactNode } from 'react';
 
-// Client ID should match what's configured in Google Cloud Console
-// Using env variable with fallback for local development
-const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
-    '609647959676-ujoqo6p8qe10ehu3cro2i26ci8nnks8j.apps.googleusercontent.com';
+// Client ID from environment variable (set in docker-stack.yml)
+// Both API and Web need the same GOOGLE_CLIENT_ID for token verification to work
+const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
 
 interface GoogleAuthProviderProps {
     children: ReactNode;
