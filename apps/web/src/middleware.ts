@@ -15,6 +15,9 @@ const intlMiddleware = createMiddleware(routing);
 export default function middleware(req: NextRequest) {
     const { pathname, searchParams } = req.nextUrl;
 
+    // DEBUG LOGS
+    console.log(`[Middleware] Processing request for: ${pathname}`);
+
     // 1. Skip Auth Check for Public Assets / API
     if (
         pathname.startsWith('/api') ||
@@ -27,6 +30,7 @@ export default function middleware(req: NextRequest) {
 
     // 2. Check for Auth Token (cookie)
     const token = req.cookies.get('token')?.value;
+    console.log(`[Middleware] Token present: ${!!token}`);
 
     // 3. Define Protected Routes pattern
     // Checks for /en/dashboard, /es/dashboard, or just /dashboard
