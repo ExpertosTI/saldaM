@@ -72,14 +72,16 @@ export default function Sidebar() {
     }, [isOpen]);
 
     const handleLogout = () => {
-        // Clear all auth data
+        // Clear all auth data using centralized function
         removeToken();
-        document.cookie = 'token=; path=/; max-age=0';
-        document.cookie = 'saldana_is_new_user=; path=/; max-age=0';
-        sessionStorage.clear();
-        localStorage.removeItem('token');
 
-        // Redirect to login
+        // Also clear cookies with domain (redundant but ensures complete cleanup)
+        const domain = window.location.hostname.endsWith('saldanamusic.com')
+            ? '; Domain=.saldanamusic.com' : '';
+        document.cookie = `token=; path=/; max-age=0${domain}`;
+        document.cookie = `saldana_is_new_user=; path=/; max-age=0${domain}`;
+
+        // Force full page reload to clear any cached state
         window.location.href = `/${locale}/login`;
     };
 
@@ -141,18 +143,16 @@ export default function Sidebar() {
                     <img src="/logo.svg" alt="Logo" className="h-7 w-auto" />
                     <span className="text-base font-bold tracking-wider text-white">SALDAÑA</span>
                 </Link>
-                {/* Logout button in header for mobile */}
-                {user && (
-                    <button
-                        onClick={handleLogout}
-                        className="p-2 -mr-2 rounded-lg text-red-400 hover:bg-red-500/10 active:bg-red-500/20 transition-colors"
-                        aria-label="Cerrar sesión"
-                    >
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                        </svg>
-                    </button>
-                )}
+                {/* Logout button in header for mobile - ALWAYS visible to prevent trapped states */}
+                <button
+                    onClick={handleLogout}
+                    className="p-2 -mr-2 rounded-lg text-red-400 hover:bg-red-500/10 active:bg-red-500/20 transition-colors"
+                    aria-label="Cerrar sesión"
+                >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                </button>
             </div>
 
             {/* Mobile Overlay */}

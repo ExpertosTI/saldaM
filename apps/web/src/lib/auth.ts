@@ -48,17 +48,38 @@ export function setToken(token: string, maxAge: number = 86400): void {
 
 /**
  * Remove authentication token (logout)
+ * Clears cookies both with and without domain for full cleanup
  */
 export function removeToken(): void {
     if (typeof document !== 'undefined') {
+        // Clear cookies without domain (local)
         document.cookie = 'token=; path=/; max-age=0';
         document.cookie = 'saldana_is_new_user=; path=/; max-age=0';
+        document.cookie = 'saldana_popup=; path=/; max-age=0';
+
+        // Clear cookies WITH domain (production - .saldanamusic.com)
+        if (window.location.hostname.endsWith('saldanamusic.com')) {
+            const domain = '; Domain=.saldanamusic.com';
+            document.cookie = `token=; path=/; max-age=0${domain}`;
+            document.cookie = `saldana_is_new_user=; path=/; max-age=0${domain}`;
+            document.cookie = `saldana_popup=; path=/; max-age=0${domain}`;
+        }
     }
+
     // Also clear localStorage
     try {
         localStorage.removeItem('saldana_auth');
+        localStorage.removeItem('token');
+        localStorage.removeItem('sm_loaded');
     } catch (e) {
         console.error('Error clearing localStorage', e);
+    }
+
+    // Clear sessionStorage
+    try {
+        sessionStorage.clear();
+    } catch (e) {
+        console.error('Error clearing sessionStorage', e);
     }
 }
 
