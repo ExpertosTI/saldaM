@@ -15,7 +15,11 @@ export class AuthController {
     async googleAuthRedirect(@Req() req, @Res() res) {
         const user = req.user;
         const { access_token, isNewUser } = await this.authService.login(user);
-        res.redirect(`https://app.saldanamusic.com/login?token=${access_token}&isNewUser=${isNewUser}`);
+
+        // Dynamic redirect based on environment or referer could be implemented here
+        // For now, using the production URL but parameterized
+        const frontendUrl = process.env.APP_WEB_URL || 'https://app.saldanamusic.com';
+        res.redirect(`${frontendUrl}/login?token=${access_token}&isNewUser=${isNewUser}`);
     }
 
     /**

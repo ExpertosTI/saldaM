@@ -30,6 +30,7 @@ export default function LoginPage() {
     const handledRef = useRef(false);
 
     // Handle legacy OAuth callback (for backward compatibility with old flow)
+    // Handle legacy OAuth callback (keep for backward compatibility if needed, but new flow doesn't use it)
     useEffect(() => {
         const token = searchParams.get('token');
         if (!token) return;
@@ -40,11 +41,17 @@ export default function LoginPage() {
 
         const isNewUser = searchParams.get('isNewUser') === 'true';
 
-        // Set cookies with proper domain
-        const cookieDomain = window.location.hostname.endsWith('saldanamusic.com')
-            ? '; Domain=.saldanamusic.com'
-            : '';
-        document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax${cookieDomain}`;
+        // Set cookies with proper domain for production
+        // In local development (localhost), cookie domain should be unset or localhost
+        const hostname = window.location.hostname;
+        const isProd = hostname.endsWith('saldanamusic.com');
+        const cookieDomain = isProd ? '; Domain=.saldanamusic.com' : '';
+        const secureFlag = isProd ? '; Secure' : '';
+
+        document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax${cookieDomain}${secureFlag}`;
+
+        // Put token in localStorage as backup/convenience
+        localStorage.setItem('token', token);
 
         // Redirect based on user status
         if (isNewUser) {
@@ -78,10 +85,15 @@ export default function LoginPage() {
 
             if (response.ok && data.token) {
                 // Set cookies with proper domain
-                const cookieDomain = window.location.hostname.endsWith('saldanamusic.com')
-                    ? '; Domain=.saldanamusic.com'
-                    : '';
-                document.cookie = `token=${data.token}; path=/; max-age=86400; SameSite=Lax${cookieDomain}`;
+                const hostname = window.location.hostname;
+                const isProd = hostname.endsWith('saldanamusic.com');
+                const cookieDomain = isProd ? '; Domain=.saldanamusic.com' : '';
+                const secureFlag = isProd ? '; Secure' : '';
+
+                document.cookie = `token=${data.token}; path=/; max-age=86400; SameSite=Lax${cookieDomain}${secureFlag}`;
+
+                // Also save to localStorage for API client usage if needed
+                localStorage.setItem('token', data.token);
 
                 // Redirect based on user status
                 if (data.isNewUser) {
