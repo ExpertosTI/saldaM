@@ -1,13 +1,15 @@
 import { getRequestConfig } from 'next-intl/server';
-import { routing } from './routing'; // Import shared routing config
+
+const locales = ['es', 'en'];
+const defaultLocale = 'es';
 
 export default getRequestConfig(async ({ requestLocale }) => {
     // This typically corresponds to the `[locale]` segment
     let locale = await requestLocale;
 
     // Ensure that a valid locale is used
-    if (!locale || !routing.locales.includes(locale as any)) {
-        locale = routing.defaultLocale;
+    if (!locale || !locales.includes(locale as any)) {
+        locale = defaultLocale;
     }
 
     // Use fs to read the file to potentially debug path issues and avoid webpack chunks issues in standalone
