@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Req, UseGuards, Res, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, Req, UseGuards, HttpException, HttpStatus } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 
@@ -6,21 +6,8 @@ import { AuthService } from './auth.service';
 export class AuthController {
     constructor(private authService: AuthService) { }
 
-    @Get('google')
-    @UseGuards(AuthGuard('google'))
-    async googleAuth(@Req() req) { }
+    // Legacy endpoints removed. Use /google-token.
 
-    @Get('google/callback')
-    @UseGuards(AuthGuard('google'))
-    async googleAuthRedirect(@Req() req, @Res() res) {
-        const user = req.user;
-        const { access_token, isNewUser } = await this.authService.login(user);
-
-        // Dynamic redirect based on environment or referer could be implemented here
-        // For now, using the production URL but parameterized
-        const frontendUrl = process.env.APP_WEB_URL || 'https://app.saldanamusic.com';
-        res.redirect(`${frontendUrl}/login?token=${access_token}&isNewUser=${isNewUser}`);
-    }
 
     /**
      * New endpoint for @react-oauth/google frontend.

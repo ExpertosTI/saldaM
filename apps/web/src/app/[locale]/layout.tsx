@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Montserrat } from "next/font/google";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
-import AuthCallbackClient from '@/components/AuthCallbackClient';
 import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
 import SplashScreen from '@/components/SplashScreen';
 import GoogleAuthProvider from '@/components/GoogleAuthProvider';
@@ -63,7 +62,6 @@ export default async function LocaleLayout({
             <body className={montserrat.className}>
                 <NextIntlClientProvider messages={messages}>
                     <GoogleAuthProvider>
-                        <AuthCallbackClient />
                         <ServiceWorkerRegister />
                         <SplashScreen>
                             {children}
