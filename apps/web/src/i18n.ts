@@ -1,5 +1,5 @@
 import { getRequestConfig } from 'next-intl/server';
-import { routing } from './middleware'; // Import routing to share locales
+import { routing } from './routing'; // Import shared routing config
 
 export default getRequestConfig(async ({ requestLocale }) => {
     // This typically corresponds to the `[locale]` segment
