@@ -13,6 +13,7 @@ COPY . .
 RUN rm -f apps/web/public/logo.png && \
     if [ -f apps/web/public/logo.svg ]; then \
         convert apps/web/public/logo.svg -resize 200x apps/web/public/logo.png; \
+        mkdir -p /app/assets && cp apps/web/public/logo.png /app/assets/logo.png; \
     fi
 
 # Bypass peer dependency strictness

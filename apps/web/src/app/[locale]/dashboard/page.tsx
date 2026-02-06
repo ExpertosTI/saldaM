@@ -137,16 +137,18 @@ export default async function DashboardHome({
                     </span>
                 </Link>
 
-                <div className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-neutral-900 to-black border border-neutral-800 hover:border-purple-500/50 transition-all p-5 sm:p-6 opacity-60 cursor-not-allowed">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-purple-500/20 flex items-center justify-center mb-3 sm:mb-4 text-purple-400">
+                <Link href={`/${locale}/dashboard/royalties`} className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-neutral-900 to-black border border-neutral-800 hover:border-purple-500/50 transition-all p-5 sm:p-6">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-purple-500/20 flex items-center justify-center mb-3 sm:mb-4 text-purple-400 group-hover:scale-110 transition-transform">
                         <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                         </svg>
                     </div>
                     <h3 className="text-base sm:text-lg font-bold text-white mb-2">{t('royaltyAnalytics')}</h3>
                     <p className="text-gray-400 text-xs sm:text-sm mb-3 sm:mb-4">{t('trackEarnings')}</p>
-                    <span className="text-purple-400/50 text-xs">Próximamente</span>
-                </div>
+                    <span className="text-purple-400 text-xs sm:text-sm font-semibold flex items-center gap-2">
+                        Ver Estadísticas <span className="group-hover:translate-x-1 transition-transform">→</span>
+                    </span>
+                </Link>
             </div>
 
             {/* Recent Activity List */}

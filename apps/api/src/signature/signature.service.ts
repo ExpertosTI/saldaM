@@ -18,6 +18,7 @@ export class SignatureService {
             path.resolve(process.cwd(), '../../apps/web/public/logo-small.png'),
             // Fallback a logo normal
             path.resolve(process.cwd(), 'apps/web/public/logo.png'),
+            '/app/assets/logo.png', // Fallback guaranteed by Dockerfile
             path.resolve(process.cwd(), '../web/public/logo.png'),
             path.resolve(process.cwd(), '../../web/public/logo.png'),
             path.resolve(process.cwd(), '../../apps/web/public/logo.png'),

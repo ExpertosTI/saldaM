@@ -35,7 +35,8 @@ export default function Sidebar() {
 
             try {
                 const res = await fetch(`${API_BASE_URL}/users/me`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    cache: 'no-store'
                 });
                 if (res.ok) {
                     const data = await res.json();
@@ -97,7 +98,7 @@ export default function Sidebar() {
         { href: `/${locale}/dashboard/split-sheets`, label: t('splitSheets'), icon: 'document' },
         { href: `/${locale}/dashboard/collaborators`, label: t('collaborators'), icon: 'users' },
         { href: `/${locale}/dashboard/profile`, label: t('profile'), icon: 'user' },
-        { href: `/${locale}/dashboard/royalties`, label: t('royalties'), icon: 'chart', disabled: true },
+        { href: `/${locale}/dashboard/royalties`, label: t('royalties'), icon: 'chart' },
         { href: `/${locale}/dashboard/settings`, label: t('settings'), icon: 'settings' },
     ];
 
