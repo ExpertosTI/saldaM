@@ -239,29 +239,19 @@ export default function Sidebar() {
                     <ul className="space-y-0.5">
                         {navItems.map((item) => (
                             <li key={item.href}>
-                                {item.disabled ? (
-                                    <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 text-sm cursor-not-allowed">
-                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            {getIcon(item.icon)}
-                                        </svg>
-                                        {item.label}
-                                        <span className="ml-auto text-[0.6rem] bg-neutral-800 px-1.5 py-0.5 rounded">Pronto</span>
-                                    </div>
-                                ) : (
-                                    <Link
-                                        href={item.href}
-                                        onClick={() => setIsOpen(false)}
-                                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-sm font-medium ${isActive(item.href)
-                                            ? 'bg-primary/10 text-primary border-l-2 border-primary'
-                                            : 'text-gray-400 hover:bg-white/5 hover:text-white active:bg-white/10'
-                                            }`}
-                                    >
-                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            {getIcon(item.icon)}
-                                        </svg>
-                                        {item.label}
-                                    </Link>
-                                )}
+                                <Link
+                                    href={item.href}
+                                    onClick={() => setIsOpen(false)}
+                                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-sm font-medium ${isActive(item.href)
+                                        ? 'bg-primary/10 text-primary border-l-2 border-primary'
+                                        : 'text-gray-400 hover:bg-white/5 hover:text-white active:bg-white/10'
+                                        }`}
+                                >
+                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        {getIcon(item.icon)}
+                                    </svg>
+                                    {item.label}
+                                </Link>
                             </li>
                         ))}
                     </ul>
