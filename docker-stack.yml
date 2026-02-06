@@ -43,8 +43,8 @@ services:
       # Google OAuth & Secrets
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-      - JWT_SECRET=${JWT_SECRET:-saldanamusic_secret_placeholder_2024}
-      - MASTER_PASSWORD=${MASTER_PASSWORD:-}
+      - JWT_SECRET=${JWT_SECRET}
+      - MASTER_PASSWORD=${MASTER_PASSWORD}
     networks:
       - saldana_internal
       - RenaceNet

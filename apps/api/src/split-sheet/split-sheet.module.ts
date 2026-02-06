@@ -7,6 +7,7 @@ import { Collaborator } from './entities/collaborator.entity';
 import { SignatureModule } from '../signature/signature.module';
 import { AuditLogModule } from '../audit-log/audit-log.module';
 import { MailModule } from '../mail/mail.module';
+import { ContactsModule } from '../contacts/contacts.module';
 
 @Module({
     imports: [
@@ -14,6 +15,7 @@ import { MailModule } from '../mail/mail.module';
         SignatureModule,
         AuditLogModule,
         MailModule,
+        ContactsModule,
     ],
     controllers: [SplitSheetController],
     providers: [SplitSheetService],

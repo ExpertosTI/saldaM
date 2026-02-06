@@ -7,6 +7,8 @@ import { User } from '../user/entities/user.entity';
 import { SignatureService } from '../signature/signature.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { MailService } from '../mail/mail.service';
+import { ContactsService } from '../contacts/contacts.service';
+import { ContactRole } from '../contacts/entities/contact.entity';
 import { Collaborator, CollaboratorRole } from './entities/collaborator.entity';
 import * as crypto from 'crypto';
 
@@ -18,6 +20,7 @@ export class SplitSheetService {
         private signatureService: SignatureService,
         private auditLogService: AuditLogService,
         private mailService: MailService,
+        private contactsService: ContactsService,
     ) { }
 
     async startSignatures(id: string, user: any) {
@@ -128,6 +131,17 @@ export class SplitSheetService {
         });
         const saved = await this.splitSheetRepository.save(splitSheet) as unknown as SplitSheet;
         await this.auditLogService.log('SPLIT_SHEET_CREATED', `User ${user.email} created split sheet ${saved.id}`);
+
+        // Auto-add collaborators to contacts
+        if (createSplitSheetDto.collaborators && Array.isArray(createSplitSheetDto.collaborators)) {
+            for (const collab of createSplitSheetDto.collaborators) {
+                // Skip adding self as contact
+                if (collab.email !== user.email) {
+                    await this.ensureContactExists(user, collab.email, collab.legalName, collab.role);
+                }
+            }
+        }
+
         return saved;
     }
 
@@ -230,6 +244,11 @@ export class SplitSheetService {
         splitSheet.collaborators.push(newCollab);
         await this.splitSheetRepository.save(splitSheet);
 
+        // Auto-add the NEW collaborator to the OWNER's contacts
+        if (splitSheet.owner) {
+            await this.ensureContactExists(splitSheet.owner, newCollab.email, newCollab.legalName, newCollab.role);
+        }
+
         return { message: 'Joined successfully', splitSheetId: splitSheet.id };
     }
 
@@ -279,6 +298,12 @@ export class SplitSheetService {
         splitSheet.collaborators.push(newCollab);
         await this.splitSheetRepository.save(splitSheet);
         await this.auditLogService.log('COLLABORATOR_ADDED', `Collaborator ${collaboratorData.email} added to split sheet ${id}`, user);
+
+        // Auto-add to contacts
+        if (collaboratorData.email !== user.email) {
+            await this.ensureContactExists(user, collaboratorData.email, collaboratorData.legalName, collaboratorData.role);
+        }
+
         return splitSheet;
     }
 
@@ -298,5 +323,33 @@ export class SplitSheetService {
         await this.splitSheetRepository.save(splitSheet);
         await this.auditLogService.log('COLLABORATOR_REMOVED', `Collaborator ${collaboratorEmail} removed from split sheet ${id}`, user);
         return { message: 'Collaborator removed successfully' };
+    }
+
+    private async ensureContactExists(user: any, collaboratorEmail: string, collaboratorName: string, role: string) {
+        // Find existing contact
+        const existing = await this.contactsService.findAll(user, { search: collaboratorEmail });
+        const exists = existing.find(c => c.email === collaboratorEmail);
+
+        if (!exists) {
+            try {
+                // Map collaborator role to contact role
+                let contactRole = ContactRole.OTHER;
+                switch (role) {
+                    case CollaboratorRole.SONGWRITER: contactRole = ContactRole.SONGWRITER; break;
+                    case CollaboratorRole.PRODUCER: contactRole = ContactRole.PRODUCER; break;
+                    case CollaboratorRole.PUBLISHER: contactRole = ContactRole.PUBLISHER; break;
+                }
+
+                await this.contactsService.create({
+                    name: collaboratorName,
+                    email: collaboratorEmail,
+                    role: contactRole,
+                    phone: '', // Optional
+                    notes: 'Automatically added from Split Sheet',
+                }, user);
+            } catch (error) {
+                console.error(`Failed to auto-create contact for ${collaboratorEmail}`, error);
+            }
+        }
     }
 }
