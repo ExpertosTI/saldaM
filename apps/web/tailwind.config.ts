@@ -16,9 +16,6 @@ const config: Config = {
                 textMain: "#FFFFFF",
                 textMuted: "#535353",
             },
-            boxShadow: {
-                glow: "0 0 20px rgba(212, 175, 55, 0.3)",
-            },
             fontFamily: {
                 sans: ["var(--font-montserrat)", "sans-serif"],
             },
