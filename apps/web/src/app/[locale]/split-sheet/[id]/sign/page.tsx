@@ -4,8 +4,11 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
-import SignatureCanvas from 'react-signature-canvas';
+import type SignatureCanvas from 'react-signature-canvas';
+import dynamic from 'next/dynamic';
 import { API_BASE_URL, getToken } from '@/lib/auth';
+
+const SignatureCanvasComponent = dynamic(() => import('react-signature-canvas'), { ssr: false });
 import { useToast } from '@/components/ToastProvider';
 
 export default function SignSplitSheetPage() {
@@ -215,7 +218,7 @@ export default function SignSplitSheetPage() {
                         {/* Input Area - Grows to fill space on mobile */}
                         <div className="bg-white rounded-xl mb-4 sm:mb-6 overflow-hidden flex-1 sm:flex-none sm:h-48 flex items-center justify-center relative group min-h-[200px]">
                             {signMode === 'draw' ? (
-                                <SignatureCanvas
+                                <SignatureCanvasComponent
                                     ref={sigPad}
                                     canvasProps={{ className: 'w-full h-full' }}
                                     backgroundColor="white"

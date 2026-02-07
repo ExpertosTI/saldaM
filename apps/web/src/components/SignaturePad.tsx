@@ -1,8 +1,11 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import SignatureCanvas from 'react-signature-canvas';
+import type SignatureCanvas from 'react-signature-canvas';
+import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
+
+const SignatureCanvasComponent = dynamic(() => import('react-signature-canvas'), { ssr: false });
 
 interface SignaturePadProps {
     onSave: (signatureDataUrl: string) => void;
@@ -40,7 +43,7 @@ export default function SignaturePad({ onSave, onCancel }: SignaturePadProps) {
             </div>
 
             <div className="border border-white/20 rounded-lg overflow-hidden bg-white/5 relative">
-                <SignatureCanvas
+                <SignatureCanvasComponent
                     ref={sigCanvas}
                     penColor="white"
                     canvasProps={{
