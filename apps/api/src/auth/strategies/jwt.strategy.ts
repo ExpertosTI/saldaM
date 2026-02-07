@@ -9,8 +9,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         super({
             jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
             ignoreExpiration: false,
-            secretOrKey: configService.getOrThrow<string>('JWT_SECRET'),
+            secretOrKey: configService.get<string>('JWT_SECRET') || 'saldana_music_fallback_secret_2026',
         });
+
+        if (!configService.get<string>('JWT_SECRET')) {
+            console.warn('⚠️ WARNING: Using fallback JWT_SECRET. Please configure JWT_SECRET in production!');
+        }
     }
 
     async validate(payload: any) {
