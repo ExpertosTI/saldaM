@@ -9,12 +9,15 @@ const config: Config = {
     theme: {
         extend: {
             colors: {
-                primary: "#D4AF37", // Gold
-                secondary: "#191414", // Card Dark
-                background: "#121212", // Deep Dark
-                surface: "#191414",
-                textMain: "#FFFFFF",
-                textMuted: "#535353",
+                primary: "var(--primary)",
+                "primary-foreground": "var(--primary-foreground)",
+                secondary: "var(--surface)", // Mapping 'secondary' to surface for card backgrounds
+                background: "var(--background)",
+                surface: "var(--surface)",
+                "surface-highlight": "var(--surface-highlight)",
+                textMain: "var(--foreground)",
+                textMuted: "var(--muted)",
+                border: "var(--border)",
             },
             fontFamily: {
                 sans: ["var(--font-montserrat)", "sans-serif"],

@@ -149,6 +149,21 @@ export class SplitSheetService {
                 // Skip adding self as contact
                 if (collab.email !== user.email) {
                     await this.ensureContactExists(user, collab.email, collab.legalName, collab.role);
+
+                    // Send Email Invite
+                    try {
+                        const inviteLink = `${process.env.APP_WEB_URL || 'https://app.saldanamusic.com'}/dashboard/split-sheets`;
+                        await this.mailService.sendCollaboratorInvite(
+                            collab.email,
+                            `${user.firstName} ${user.lastName || ''}`.trim(),
+                            saved.title,
+                            inviteLink,
+                            collab.legalName
+                        );
+                        console.log(`[SplitSheet] Sent invite to ${collab.email}`);
+                    } catch (err) {
+                        console.error(`[SplitSheet] Failed to send invite to ${collab.email}`, err);
+                    }
                 }
             }
         }
@@ -316,6 +331,20 @@ export class SplitSheetService {
         // Auto-add to contacts
         if (collaboratorData.email !== user.email) {
             await this.ensureContactExists(user, collaboratorData.email, collaboratorData.legalName, collaboratorData.role);
+
+            // Send Email Invite
+            try {
+                const inviteLink = `${process.env.APP_WEB_URL || 'https://app.saldanamusic.com'}/dashboard/split-sheets/${id}`;
+                await this.mailService.sendCollaboratorInvite(
+                    collaboratorData.email,
+                    `${user.firstName} ${user.lastName || ''}`.trim(),
+                    splitSheet.title,
+                    inviteLink,
+                    collaboratorData.legalName
+                );
+            } catch (err) {
+                console.error(`[SplitSheet] Failed to send invite to ${collaboratorData.email}`, err);
+            }
         }
 
         return splitSheet;

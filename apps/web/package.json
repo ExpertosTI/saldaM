@@ -22,7 +22,8 @@
     "autoprefixer": "^10.4.16",
     "@react-oauth/google": "^0.12.1",
     "react-signature-canvas": "^1.0.6",
-    "@simplewebauthn/browser": "^13.1.0"
+    "@simplewebauthn/browser": "^13.1.0",
+    "next-themes": "^0.2.1"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

@@ -5,6 +5,7 @@ import { getMessages } from 'next-intl/server';
 import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
 import SplashScreen from '@/components/SplashScreen';
 import GoogleAuthProvider from '@/components/GoogleAuthProvider';
+import { ThemeProvider } from '@/components/ThemeProvider';
 import "../globals.css";
 
 const montserrat = Montserrat({ subsets: ["latin"], variable: "--font-montserrat" });
@@ -63,9 +64,11 @@ export default async function LocaleLayout({
                 <NextIntlClientProvider messages={messages}>
                     <GoogleAuthProvider>
                         <ServiceWorkerRegister />
-                        <SplashScreen>
-                            {children}
-                        </SplashScreen>
+                        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+                            <SplashScreen>
+                                {children}
+                            </SplashScreen>
+                        </ThemeProvider>
                     </GoogleAuthProvider>
                 </NextIntlClientProvider>
             </body>

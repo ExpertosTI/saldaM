@@ -84,24 +84,24 @@ export default async function DashboardHome({
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-12">
-                <div className="glass-panel p-4 sm:p-6 rounded-xl">
-                    <p className="text-gray-400 text-xs sm:text-sm mb-1">{t('totalCatalog')}</p>
-                    <h3 className="text-2xl sm:text-3xl font-bold text-white">
+                <Link href={`/${locale}/dashboard/split-sheets`} className="glass-panel p-4 sm:p-6 rounded-xl hover:bg-white/5 transition-colors group cursor-pointer block">
+                    <p className="text-gray-400 text-xs sm:text-sm mb-1 group-hover:text-white transition-colors">{t('totalCatalog')}</p>
+                    <h3 className="text-2xl sm:text-3xl font-bold text-white group-hover:scale-105 transition-transform origin-left">
                         {stats.totalSongs} <span className="text-sm sm:text-base font-normal text-gray-500">{t('songs')}</span>
                     </h3>
-                </div>
-                <div className="glass-panel p-4 sm:p-6 rounded-xl border-l-4 border-primary">
-                    <p className="text-gray-400 text-xs sm:text-sm mb-1">{t('pendingSignatures')}</p>
-                    <h3 className="text-2xl sm:text-3xl font-bold text-primary">
+                </Link>
+                <Link href={`/${locale}/dashboard/split-sheets?status=PENDING_SIGNATURES`} className="glass-panel p-4 sm:p-6 rounded-xl border-l-4 border-primary hover:bg-white/5 transition-colors group cursor-pointer block">
+                    <p className="text-gray-400 text-xs sm:text-sm mb-1 group-hover:text-primary transition-colors">{t('pendingSignatures')}</p>
+                    <h3 className="text-2xl sm:text-3xl font-bold text-primary group-hover:scale-105 transition-transform origin-left">
                         {stats.pendingSignatures} <span className="text-sm sm:text-base font-normal text-gray-500">{t('actionRequired')}</span>
                     </h3>
-                </div>
-                <div className="glass-panel p-4 sm:p-6 rounded-xl">
-                    <p className="text-gray-400 text-xs sm:text-sm mb-1">{t('estRoyalties')}</p>
-                    <h3 className="text-2xl sm:text-3xl font-bold text-white">
+                </Link>
+                <Link href={`/${locale}/dashboard/royalties`} className="glass-panel p-4 sm:p-6 rounded-xl hover:bg-white/5 transition-colors group cursor-pointer block">
+                    <p className="text-gray-400 text-xs sm:text-sm mb-1 group-hover:text-white transition-colors">{t('estRoyalties')}</p>
+                    <h3 className="text-2xl sm:text-3xl font-bold text-white group-hover:scale-105 transition-transform origin-left">
                         ${stats.estimatedRoyalties.toFixed(2)} <span className="text-sm sm:text-base font-normal text-gray-500">USD</span>
                     </h3>
-                </div>
+                </Link>
             </div>
 
             {/* Quick Actions Grid */}
