@@ -192,12 +192,12 @@ export default function SignSplitSheetPage() {
 
             {/* Signature Modal */}
             {showSignModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-                    <div className="w-full max-w-lg bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-2xl">
+                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/80 backdrop-blur-sm">
+                    <div className="w-full h-full sm:h-auto sm:max-w-lg bg-neutral-900 border-0 sm:border border-neutral-800 sm:rounded-2xl p-6 shadow-2xl flex flex-col">
                         <h2 className="text-2xl font-bold text-white mb-6">Adoptar tu Firma</h2>
 
                         {/* Tabs */}
-                        <div className="flex gap-4 mb-6 border-b border-neutral-800 pb-2">
+                        <div className="flex gap-4 mb-4 sm:mb-6 border-b border-neutral-800 pb-2 flex-shrink-0">
                             <button
                                 onClick={() => setSignMode('draw')}
                                 className={`pb-2 text-sm font-bold transition-colors ${signMode === 'draw' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-white'}`}
@@ -212,8 +212,8 @@ export default function SignSplitSheetPage() {
                             </button>
                         </div>
 
-                        {/* Input Area */}
-                        <div className="bg-white rounded-xl mb-6 overflow-hidden h-40 flex items-center justify-center relative group">
+                        {/* Input Area - Grows to fill space on mobile */}
+                        <div className="bg-white rounded-xl mb-4 sm:mb-6 overflow-hidden flex-1 sm:flex-none sm:h-48 flex items-center justify-center relative group min-h-[200px]">
                             {signMode === 'draw' ? (
                                 <SignatureCanvas
                                     ref={sigPad}
@@ -242,7 +242,7 @@ export default function SignSplitSheetPage() {
                         </div>
 
                         {/* Legal */}
-                        <div className="mb-6">
+                        <div className="mb-6 flex-shrink-0">
                             <label className="flex items-start gap-3 cursor-pointer group">
                                 <input
                                     type="checkbox"
@@ -257,7 +257,7 @@ export default function SignSplitSheetPage() {
                         </div>
 
                         {/* Actions */}
-                        <div className="flex gap-3">
+                        <div className="flex gap-3 flex-shrink-0">
                             <button
                                 onClick={() => setShowSignModal(false)}
                                 className="flex-1 py-3 bg-neutral-800 text-white font-bold rounded-lg hover:bg-neutral-700 transition-colors"
