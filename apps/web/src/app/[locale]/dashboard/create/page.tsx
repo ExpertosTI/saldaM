@@ -209,8 +209,8 @@ export default function CreateSplitSheet() {
                 <h2 className="text-xl font-bold text-white flex justify-between items-center">
                     {t('collaborators')}
                     <span className={`text-sm py-1 px-3 rounded-full ${totalPercentage === 100
-                            ? 'bg-green-900/50 text-green-400 border border-green-500/30'
-                            : 'bg-red-900/50 text-red-400 border border-red-500/30'
+                        ? 'bg-green-900/50 text-green-400 border border-green-500/30'
+                        : 'bg-red-900/50 text-red-400 border border-red-500/30'
                         }`}>
                         {t('total')}: {totalPercentage}%
                     </span>
@@ -223,9 +223,17 @@ export default function CreateSplitSheet() {
                                 <input
                                     type="text"
                                     placeholder={t('collaboratorPlaceholder')}
-                                    className={`w-full bg-neutral-900/50 border border-neutral-700 rounded-lg p-2.5 text-white focus:border-primary outline-none ${c.isOwner ? 'opacity-75' : ''}`}
+                                    className={`w-full bg-neutral-900/50 border border-neutral-700 rounded-lg p-2.5 text-white focus:border-primary outline-none mb-2 ${c.isOwner ? 'opacity-75' : ''}`}
                                     value={c.name}
                                     onChange={(e) => updateCollaborator(i, 'name', e.target.value)}
+                                    readOnly={c.isOwner}
+                                />
+                                <input
+                                    type="email"
+                                    placeholder="Email"
+                                    className={`w-full bg-neutral-900/50 border border-neutral-700 rounded-lg p-2.5 text-white focus:border-primary outline-none ${c.isOwner ? 'opacity-75' : ''}`}
+                                    value={c.email}
+                                    onChange={(e) => updateCollaborator(i, 'email', e.target.value)}
                                     readOnly={c.isOwner}
                                 />
                             </div>
@@ -276,8 +284,8 @@ export default function CreateSplitSheet() {
 
             {message && (
                 <div className={`mb-6 p-4 rounded-lg ${message.type === 'success'
-                        ? 'bg-green-500/10 border border-green-500/20 text-green-400'
-                        : 'bg-red-500/10 border border-red-500/20 text-red-400'
+                    ? 'bg-green-500/10 border border-green-500/20 text-green-400'
+                    : 'bg-red-500/10 border border-red-500/20 text-red-400'
                     }`}>
                     {message.text}
                 </div>

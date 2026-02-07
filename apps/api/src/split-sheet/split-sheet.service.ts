@@ -125,19 +125,29 @@ export class SplitSheetService {
     }
 
     async create(createSplitSheetDto: any, user: any): Promise<SplitSheet> {
+        // Validation and Mapping
+        if (createSplitSheetDto.collaborators) {
+            createSplitSheetDto.collaborators.forEach(c => {
+                if (!c.email) throw new ConflictException('All collaborators must have an email address');
+                if (c.name && !c.legalName) c.legalName = c.name; // Polyfill for frontend 'name' property
+            });
+        }
+
         const splitSheet = this.splitSheetRepository.create({
             ...createSplitSheetDto,
             owner: user,
         });
+
         const saved = await this.splitSheetRepository.save(splitSheet) as unknown as SplitSheet;
-        await this.auditLogService.log('SPLIT_SHEET_CREATED', `User ${user.email} created split sheet ${saved.id}`);
+
+        await this.auditLogService.log('SPLIT_SHEET_CREATED', `User ${user.email} created split sheet ${saved.id}`, user);
 
         // Auto-add collaborators to contacts
         if (createSplitSheetDto.collaborators && Array.isArray(createSplitSheetDto.collaborators)) {
             for (const collab of createSplitSheetDto.collaborators) {
                 // Skip adding self as contact
-                if (collab.email !== user.email) {
-                    await this.ensureContactExists(user, collab.email, collab.legalName, collab.role);
+                if (collab.email && collab.email !== user.email) {
+                    await this.ensureContactExists(user, collab.email, collab.legalName || collab.name, collab.role);
                 }
             }
         }
@@ -255,9 +265,19 @@ export class SplitSheetService {
         return { message: 'Joined successfully', splitSheetId: splitSheet.id };
     }
 
-    async getStats() {
-        const total = await this.splitSheetRepository.count();
-        const pending = await this.splitSheetRepository.count({ where: { status: SplitSheetStatus.PENDING_SIGNATURES } });
+    async getStats(user: any) {
+        const total = await this.splitSheetRepository.count({
+            where: [
+                { owner: { id: user.id } },
+                { collaborators: { email: user.email } }
+            ]
+        });
+        const pending = await this.splitSheetRepository.count({
+            where: [
+                { owner: { id: user.id }, status: SplitSheetStatus.PENDING_SIGNATURES },
+                { collaborators: { email: user.email }, status: SplitSheetStatus.PENDING_SIGNATURES }
+            ]
+        });
         return {
             totalSongs: total,
             pendingSignatures: pending,
