@@ -1,5 +1,5 @@
-import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { NestFactory, Reflector } from '@nestjs/core';
+import { ValidationPipe, ClassSerializerInterceptor } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 import compression from 'compression';
@@ -43,11 +43,16 @@ async function bootstrap() {
   app.use(compression());
 
   // 4. Global Validation Pipes (DTO Validation)
+  // 4. Global Validation Pipes & Interceptors
   app.useGlobalPipes(new ValidationPipe({
-    whitelist: true, // Strip properties not in DTO
-    forbidNonWhitelisted: true, // Error if extra properties sent
-    transform: true, // Transform payloads to DTO instances
+    whitelist: true,
+    forbidNonWhitelisted: true,
+    transform: true,
   }));
+
+  // Enable Global Serialization (for @Exclude)
+  const reflector = app.get(Reflector);
+  app.useGlobalInterceptors(new ClassSerializerInterceptor(reflector));
 
   // 5. API Prefix
   app.setGlobalPrefix('api');

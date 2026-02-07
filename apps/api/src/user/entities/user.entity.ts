@@ -1,4 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from 'typeorm';
+import { Exclude } from 'class-transformer';
 import { SplitSheet } from '../../split-sheet/entities/split-sheet.entity';
 
 export enum UserRole {
@@ -48,15 +49,18 @@ export class User {
   })
   kycStatus: KycStatus;
 
+  @Exclude()
   @Column({ nullable: true })
   kycDocumentPath: string;
 
+  @Exclude()
   @Column({ nullable: true })
   kycVideoPath: string;
 
   @Column({ unique: true })
   email: string;
 
+  @Exclude()
   @Column({ nullable: true })
   passwordHash: string;
 
@@ -84,9 +88,11 @@ export class User {
   @Column({ nullable: true })
   publishingCompany: string;
 
+  @Exclude()
   @Column({ nullable: true })
   signatureEncryptedPath: string;
 
+  @Exclude()
   @Column({ nullable: true })
   encryptionKeyId: string;
 
