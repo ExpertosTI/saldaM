@@ -141,8 +141,7 @@ export default function Sidebar() {
                     </svg>
                 </button>
                 <Link href={`/${locale}/dashboard`} className="flex items-center gap-2">
-                    <img src="/logo.svg" alt="Logo" className="h-7 w-auto" />
-                    <span className="text-base font-bold tracking-wider text-white">SALDAÑA</span>
+                    <img src="/logo.svg" alt="Saldaña Music" className="h-8 w-auto" />
                 </Link>
                 {/* Logout button in header for mobile - ALWAYS visible to prevent trapped states */}
                 <button
