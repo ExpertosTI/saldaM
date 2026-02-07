@@ -134,8 +134,22 @@ export class SplitSheetService {
         // Validation and Mapping
         if (createSplitSheetDto.collaborators) {
             createSplitSheetDto.collaborators.forEach(c => {
-                if (!c.email) throw new ConflictException('All collaborators must have an email address');
-                if (c.name && !c.legalName) c.legalName = c.name; // Polyfill
+                // If legalName missing, use name
+                if (c.name && !c.legalName) c.legalName = c.name;
+
+                // Email Handling Strategy (DB requires email):
+                // 1. If email provided, use it.
+                // 2. If name looks like email, use it.
+                // 3. Else, generate placeholder.
+                if (!c.email) {
+                    const nameIsEmail = c.name && c.name.includes('@');
+                    if (nameIsEmail) {
+                        c.email = c.name;
+                    } else {
+                        // Generate placeholder to satisfy DB constraint
+                        c.email = `no-email-${crypto.randomUUID()}@placeholder.saldanamusic.com`;
+                    }
+                }
             });
         }
 
