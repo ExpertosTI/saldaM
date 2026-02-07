@@ -74,6 +74,11 @@ export default function CollaboratorsPage() {
     });
     const [saving, setSaving] = useState(false);
 
+    // Confirm Dialog State
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [contactToDeleteId, setContactToDeleteId] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+
     const fetchContacts = async () => {
         const token = getToken();
         if (!token) return;
