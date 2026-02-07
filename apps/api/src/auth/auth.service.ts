@@ -12,8 +12,9 @@ export class AuthService {
         private userService: UserService,
         private jwtService: JwtService
     ) {
+        const clientId = process.env.GOOGLE_CLIENT_ID || '609647959676-acjcpqrq4oghnanp2288f1e9jkf7fnp4.apps.googleusercontent.com';
         // Initialize Google OAuth client for token verification
-        this.googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+        this.googleClient = new OAuth2Client(clientId);
     }
 
     /**
@@ -21,9 +22,11 @@ export class AuthService {
      * Returns the user (existing or newly created).
      */
     async verifyGoogleToken(credential: string): Promise<User> {
+        const clientId = process.env.GOOGLE_CLIENT_ID || '609647959676-acjcpqrq4oghnanp2288f1e9jkf7fnp4.apps.googleusercontent.com';
+
         const ticket = await this.googleClient.verifyIdToken({
             idToken: credential,
-            audience: process.env.GOOGLE_CLIENT_ID,
+            audience: clientId,
         });
 
         const payload = ticket.getPayload();
