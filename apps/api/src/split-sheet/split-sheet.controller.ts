@@ -16,7 +16,7 @@ export class SplitSheetController {
     @Get()
     @UseGuards(AuthGuard('jwt'))
     findAll(@Req() req: any) {
-        return this.splitSheetService.findAllByUser(req.user.id);
+        return this.splitSheetService.findAllByUser(req.user.id, req.user.email);
     }
 
     @Get('stats')

@@ -84,8 +84,8 @@ export class SignatureService {
         if (logoPath) {
             try {
                 const logoBytes = readFileSync(logoPath);
-                // Limitar tamaño máximo a 500KB para evitar cuelgues
-                if (logoBytes.length > 500 * 1024) {
+                // Allow up to 5MB logo (existing one is ~2.1MB)
+                if (logoBytes.length > 5 * 1024 * 1024) {
                     console.warn(`Logo too large (${logoBytes.length} bytes), skipping to prevent PDF hang`);
                 } else {
                     const logo = await pdfDoc.embedPng(logoBytes);
@@ -209,8 +209,8 @@ export class SignatureService {
         if (logoPath) {
             try {
                 const logoBytes = readFileSync(logoPath);
-                // Limitar tamaño máximo a 500KB para evitar cuelgues
-                if (logoBytes.length > 500 * 1024) {
+                // Allow up to 5MB logo
+                if (logoBytes.length > 5 * 1024 * 1024) {
                     console.warn(`Logo too large (${logoBytes.length} bytes), skipping to prevent PDF hang`);
                 } else {
                     const logo = await pdfDoc.embedPng(logoBytes);

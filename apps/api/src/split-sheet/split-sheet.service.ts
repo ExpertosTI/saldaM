@@ -145,10 +145,13 @@ export class SplitSheetService {
         return saved;
     }
 
-    async findAllByUser(userId: string) {
+    async findAllByUser(userId: string, email: string) {
         return this.splitSheetRepository.find({
-            where: { owner: { id: userId } },
-            relations: ['collaborators'],
+            where: [
+                { owner: { id: userId } },
+                { collaborators: { email: email } }
+            ],
+            relations: ['collaborators', 'owner'],
             order: { createdAt: 'DESC' },
         });
     }
