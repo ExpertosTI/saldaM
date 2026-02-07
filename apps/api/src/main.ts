@@ -9,7 +9,12 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // 1. Security Headers (Helmet)
-  app.use(helmet());
+  // 1. Security Headers (Helmet)
+  app.use(helmet({
+    crossOriginOpenerPolicy: { policy: "unsafe-none" },
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    contentSecurityPolicy: false, // temporarily disable CSP if it conflicts with Google Scripts
+  }));
 
   // Enable Trust Proxy for Load Balancers (Traefik/Nginx)
   try {
@@ -23,9 +28,12 @@ async function bootstrap() {
 
   // 2. CORS (Restricted to specific domains)
   app.enableCors({
-    origin: process.env.NODE_ENV === 'production'
-      ? ['https://app.saldanamusic.com', 'https://saldanamusic.com', 'https://www.saldanamusic.com']
-      : true, // Allow all in development
+    origin: [
+      'https://app.saldanamusic.com',
+      'https://saldanamusic.com',
+      'https://www.saldanamusic.com',
+      'http://localhost:3000',
+    ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
