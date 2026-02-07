@@ -1,7 +1,6 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import type SignatureCanvas from 'react-signature-canvas';
 import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 
@@ -13,7 +12,7 @@ interface SignaturePadProps {
 }
 
 export default function SignaturePad({ onSave, onCancel }: SignaturePadProps) {
-    const sigCanvas = useRef<SignatureCanvas>(null);
+    const sigCanvas = useRef<any>(null);
     const [isEmpty, setIsEmpty] = useState(true);
     const t = useTranslations('Signature'); // Assuming you'll add translations
 
@@ -44,7 +43,7 @@ export default function SignaturePad({ onSave, onCancel }: SignaturePadProps) {
 
             <div className="border border-white/20 rounded-lg overflow-hidden bg-white/5 relative">
                 <SignatureCanvasComponent
-                    ref={sigCanvas as any}
+                    ref={sigCanvas}
                     penColor="white"
                     canvasProps={{
                         className: 'w-full h-64 cursor-crosshair active:cursor-crosshair',

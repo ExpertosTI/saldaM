@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
-import type SignatureCanvas from 'react-signature-canvas';
 import dynamic from 'next/dynamic';
 import { API_BASE_URL, getToken } from '@/lib/auth';
 
@@ -16,7 +15,7 @@ export default function SignSplitSheetPage() {
     const router = useRouter();
     const t = useTranslations();
     const { toast } = useToast();
-    const sigPad = useRef<SignatureCanvas>(null);
+    const sigPad = useRef<any>(null);
 
     const [loading, setLoading] = useState(true);
     const [splitSheet, setSplitSheet] = useState<any>(null);
@@ -219,7 +218,7 @@ export default function SignSplitSheetPage() {
                         <div className="bg-white rounded-xl mb-4 sm:mb-6 overflow-hidden flex-1 sm:flex-none sm:h-48 flex items-center justify-center relative group min-h-[200px]">
                             {signMode === 'draw' ? (
                                 <SignatureCanvasComponent
-                                    ref={sigPad as any}
+                                    ref={sigPad}
                                     canvasProps={{ className: 'w-full h-full' }}
                                     backgroundColor="white"
                                 />
