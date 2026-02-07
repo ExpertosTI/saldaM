@@ -219,7 +219,7 @@ export default function SignSplitSheetPage() {
                         <div className="bg-white rounded-xl mb-4 sm:mb-6 overflow-hidden flex-1 sm:flex-none sm:h-48 flex items-center justify-center relative group min-h-[200px]">
                             {signMode === 'draw' ? (
                                 <SignatureCanvasComponent
-                                    ref={sigPad}
+                                    ref={sigPad as any}
                                     canvasProps={{ className: 'w-full h-full' }}
                                     backgroundColor="white"
                                 />

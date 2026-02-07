@@ -44,7 +44,7 @@ export default function SignaturePad({ onSave, onCancel }: SignaturePadProps) {
 
             <div className="border border-white/20 rounded-lg overflow-hidden bg-white/5 relative">
                 <SignatureCanvasComponent
-                    ref={sigCanvas}
+                    ref={sigCanvas as any}
                     penColor="white"
                     canvasProps={{
                         className: 'w-full h-64 cursor-crosshair active:cursor-crosshair',
