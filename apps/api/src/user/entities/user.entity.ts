@@ -90,6 +90,13 @@ export class User {
   @Column({ nullable: true })
   encryptionKeyId: string;
 
+  // New fields for Signature Module 2.0
+  @Column({ nullable: true, type: 'text' })
+  signatureUrl: string; // Base64 or URL of the signature image
+
+  @Column({ default: false })
+  hasRegisteredSignature: boolean;
+
   @Column({ default: true })
   isActive: boolean;
 

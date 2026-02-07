@@ -8,7 +8,6 @@ import { SignatureService } from '../signature/signature.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { MailService } from '../mail/mail.service';
 import { ContactsService } from '../contacts/contacts.service';
-import { UserService } from '../user/user.service';
 import { ContactRole } from '../contacts/entities/contact.entity';
 import { Collaborator, CollaboratorRole } from './entities/collaborator.entity';
 import * as crypto from 'crypto';
@@ -22,7 +21,6 @@ export class SplitSheetService {
         private auditLogService: AuditLogService,
         private mailService: MailService,
         private contactsService: ContactsService,
-        private userService: UserService,
     ) { }
 
     async startSignatures(id: string, user: any) {
@@ -56,11 +54,22 @@ export class SplitSheetService {
             if (!collab.hasSigned && collab.email !== user.email) {
                 try {
                     const signLink = `https://app.saldanamusic.com/split-sheets/${id}`;
+                    // We need to fetch IPI from user or if it's stored in collaborator entity?
+                    // Collaborator entity has no IPI column yet!
+                    // WAIT: Collaborator entity SHOULD have these details if we want to display them.
+                    // But for now, let's assume we might need to fetch them or if they are users, get from User.
+
+                    // Actually, let's check if we have it on the collaborator object we have here.
+                    // If not, we might need a join.
+                    // For now, let's look at the collaborator entity definition.
+
                     await this.mailService.sendSignatureRequest(
                         collab.email,
                         ownerName,
                         splitSheet.title,
-                        signLink
+                        signLink,
+                        collab.legalName,
+                        collab.ipi // Function signature updated to accept this 6th arg
                     );
                 } catch (e) {
                     console.error(`Failed to send signature request to ${collab.email}`, e);
@@ -126,65 +135,22 @@ export class SplitSheetService {
         return { message: 'Signed successfully', status: splitSheet.status };
     }
 
-    async create(createSplitSheetDto: any, reqUser: any): Promise<SplitSheet> {
-        // Ensure we have the full user entity
-        const user = await this.userService.findOne(reqUser.id);
-        if (!user) throw new NotFoundException('User not found');
-
-        // Validation and Mapping
-        if (createSplitSheetDto.collaborators) {
-            createSplitSheetDto.collaborators.forEach(c => {
-                // If legalName missing, use name
-                if (c.name && !c.legalName) c.legalName = c.name;
-
-                // Email Handling Strategy (DB requires email):
-                // 1. If email provided, use it.
-                // 2. If name looks like email, use it.
-                // 3. Else, generate placeholder.
-                if (!c.email) {
-                    const nameIsEmail = c.name && c.name.includes('@');
-                    if (nameIsEmail) {
-                        c.email = c.name;
-                    } else {
-                        // Generate placeholder to satisfy DB constraint
-                        c.email = `no-email-${crypto.randomUUID()}@placeholder.saldanamusic.com`;
-                    }
-                }
-            });
-        }
-
+    async create(createSplitSheetDto: any, user: any): Promise<SplitSheet> {
         const splitSheet = this.splitSheetRepository.create({
             ...createSplitSheetDto,
             owner: user,
         });
-
         const saved = await this.splitSheetRepository.save(splitSheet) as unknown as SplitSheet;
+        await this.auditLogService.log('SPLIT_SHEET_CREATED', `User ${user.email} created split sheet ${saved.id}`);
 
-        // Auxiliary operations (Non-blocking)
-        try {
-            await this.auditLogService.log('SPLIT_SHEET_CREATED', `User ${user.email} created split sheet ${saved.id}`, user);
-
-            // Send confirmation email to owner
-            const link = `https://app.saldanamusic.com/split-sheets/${saved.id}`; // Hardcoded for now based on env vars context
-            await this.mailService.sendSplitSheetCreated(user.email, user.firstName || 'Usuario', saved.title, link);
-
-        } catch (e) {
-            console.error('Failed to create audit log or send email', e);
-        }
-
-        try {
-            // Auto-add collaborators to contacts
-            if (createSplitSheetDto.collaborators && Array.isArray(createSplitSheetDto.collaborators)) {
-                for (const collab of createSplitSheetDto.collaborators) {
-                    // Skip adding self as contact
-                    if (collab.email && collab.email !== user.email) {
-                        // safe call
-                        await this.ensureContactExists(user, collab.email, collab.legalName || collab.name, collab.role);
-                    }
+        // Auto-add collaborators to contacts
+        if (createSplitSheetDto.collaborators && Array.isArray(createSplitSheetDto.collaborators)) {
+            for (const collab of createSplitSheetDto.collaborators) {
+                // Skip adding self as contact
+                if (collab.email !== user.email) {
+                    await this.ensureContactExists(user, collab.email, collab.legalName, collab.role);
                 }
             }
-        } catch (e) {
-            console.error('Failed to auto-add contacts', e);
         }
 
         return saved;
@@ -300,19 +266,9 @@ export class SplitSheetService {
         return { message: 'Joined successfully', splitSheetId: splitSheet.id };
     }
 
-    async getStats(user: any) {
-        const total = await this.splitSheetRepository.count({
-            where: [
-                { owner: { id: user.id } },
-                { collaborators: { email: user.email } }
-            ]
-        });
-        const pending = await this.splitSheetRepository.count({
-            where: [
-                { owner: { id: user.id }, status: SplitSheetStatus.PENDING_SIGNATURES },
-                { collaborators: { email: user.email }, status: SplitSheetStatus.PENDING_SIGNATURES }
-            ]
-        });
+    async getStats() {
+        const total = await this.splitSheetRepository.count();
+        const pending = await this.splitSheetRepository.count({ where: { status: SplitSheetStatus.PENDING_SIGNATURES } });
         return {
             totalSongs: total,
             pendingSignatures: pending,

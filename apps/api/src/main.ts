@@ -9,11 +9,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // 1. Security Headers (Helmet)
-  // 1. Security Headers (Helmet)
-  app.use(helmet({
-    crossOriginOpenerPolicy: { policy: 'unsafe-none' },
-    crossOriginResourcePolicy: { policy: 'cross-origin' }, // Allow resources to be loaded from other origins
-  }));
+  app.use(helmet());
 
   // Enable Trust Proxy for Load Balancers (Traefik/Nginx)
   try {

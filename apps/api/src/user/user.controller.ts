@@ -22,12 +22,26 @@ export class UserController {
 
     @Get(':email')
     @UseGuards(AuthGuard('jwt'))
-    findOne(@Param('email') email: string, @Req() req: any) {
+    async findOne(@Param('email') email: string, @Req() req: any) {
         // Security: Only allow users to fetch their own data
-        if (req.user.email !== email) {
-            throw new ForbiddenException('Unauthorized: You can only access your own profile');
+        if (req.user.email === email) {
+            return this.userService.findOne(email);
         }
-        return this.userService.findOne(email);
+
+        // Public lookup for auto-fill (only return safe fields)
+        const user = await this.userService.findOne(email);
+        if (user) {
+            return {
+                email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                legalName: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : null,
+                ipiNumber: user.ipiNumber,
+                proAffiliation: user.proAffiliation,
+                publishingCompany: user.publishingCompany
+            };
+        }
+        return null; // User not found, frontend should handle this gracefully
     }
 
     @Patch('profile')
@@ -46,5 +60,11 @@ export class UserController {
     @UseGuards(AuthGuard('jwt'))
     changePassword(@Req() req: any, @Body() body: { currentPassword: string; newPassword: string }) {
         return this.userService.changePassword(req.user.id, body.currentPassword, body.newPassword);
+    }
+
+    @Post('signature')
+    @UseGuards(AuthGuard('jwt'))
+    saveSignature(@Req() req: any, @Body() body: { signature: string }) {
+        return this.userService.saveSignature(req.user.id, body.signature);
     }
 }

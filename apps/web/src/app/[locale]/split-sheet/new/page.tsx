@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2, Save, FileText } from "lucide-react";
 
@@ -24,6 +24,69 @@ export default function NewSplitSheetPage() {
             },
         ],
     });
+    const [contacts, setContacts] = useState<any[]>([]);
+    const [loadingContacts, setLoadingContacts] = useState(true);
+
+    useEffect(() => {
+        fetchContacts();
+    }, []);
+
+    const fetchContacts = async () => {
+        try {
+            // Get token helper ideally, but for now assuming we have a way or just direct fetch if relying on cookie proxy? 
+            // Wait, this is client side. We need the token.
+            // Let's assume a helper or just localStorage for now as established in other files (getToken()).
+            // Accessing localStorage directly for simplicity or importing the helper.
+            const token = localStorage.getItem('token');
+            if (!token) return;
+
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://app.saldanamusic.com/api'}/contacts/mine`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setContacts(data);
+            }
+        } catch (e) {
+            console.error("Error fetching contacts", e);
+        } finally {
+            setLoadingContacts(false);
+        }
+    };
+
+    const handleQuickAdd = (contact: any) => {
+        // Check if already added
+        if (formData.collaborators.some(c => c.email === contact.email)) {
+            alert("Este colaborador ya está en la lista.");
+            return;
+        }
+
+        setFormData({
+            ...formData,
+            collaborators: [
+                ...formData.collaborators,
+                {
+                    legalName: contact.name,
+                    email: contact.email,
+                    role: contact.role || "SONGWRITER", // Default or map from contact role
+                    percentage: 0,
+                    ipi: contact.notes?.includes('IPI:') ? contact.notes.split('IPI:')[1].trim() : "", // Naive parsing or just empty
+                    proAffiliation: "", // Add to contact entity later if needed
+                    phone: contact.phone || "",
+                },
+            ],
+        });
+    };
+
+    // Helper for Avatar Initials
+    const getInitials = (name: string) => {
+        return name
+            .split(' ')
+            .map(n => n[0])
+            .join('')
+            .toUpperCase()
+            .substring(0, 2);
+    };
 
     const addCollaborator = () => {
         setFormData({
@@ -63,18 +126,19 @@ export default function NewSplitSheetPage() {
         setLoading(true);
 
         try {
-            // Note: This logic assumes an API endpoint exists.
-            // For MVP, we might mock or ensure the backend is ready.
+            const token = localStorage.getItem('token');
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://app.saldanamusic.com/api'}/split-sheets`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
                 body: JSON.stringify(formData)
             });
 
             if (response.ok) {
                 alert("Documento Creado Exitosamente!");
-                // Redirect to dashboard or view page
-                router.push('/dashboard');
+                router.push(`/${window.location.pathname.split('/')[1]}/dashboard`);
             } else {
                 alert("Error al guardar. Verifica los datos.");
             }
@@ -146,12 +210,34 @@ export default function NewSplitSheetPage() {
 
                     {/* SECTION 2: COLLABORATORS */}
                     <div className="bg-neutral-900/50 border border-neutral-800 rounded-2xl p-6 backdrop-blur-sm">
-                        <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center justify-between mb-6">
                             <h2 className="text-xl font-semibold text-primary">2. Colaboradores</h2>
                             <div className={`text-sm font-bold px-3 py-1 rounded-full ${totalPercentage === 100 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
                                 Total: {totalPercentage}%
                             </div>
                         </div>
+
+                        {/* Recent Collaborators Quick Select */}
+                        {contacts.length > 0 && (
+                            <div className="mb-8">
+                                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Recientes / Contactos</h3>
+                                <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-neutral-700 scrollbar-track-transparent">
+                                    {contacts.map((contact) => (
+                                        <button
+                                            key={contact.id}
+                                            type="button"
+                                            onClick={() => handleQuickAdd(contact)}
+                                            className="flex flex-col items-center min-w-[80px] group"
+                                        >
+                                            <div className="w-12 h-12 rounded-full bg-neutral-800 border border-neutral-700 group-hover:border-primary flex items-center justify-center text-sm font-bold text-gray-400 group-hover:text-primary transition-all shadow-lg mb-2">
+                                                {getInitials(contact.name)}
+                                            </div>
+                                            <span className="text-xs text-center text-gray-400 group-hover:text-white truncate w-20">{contact.name.split(' ')[0]}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         <div className="space-y-4">
                             {formData.collaborators.map((collab, index) => (

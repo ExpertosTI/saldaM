@@ -127,14 +127,25 @@ export class MailService {
     await this.send({ to: email, subject, text, html });
   }
 
-  async sendSignatureRequest(email: string, inviterName: string, splitSheetTitle: string, link: string) {
+  async sendSignatureRequest(email: string, inviterName: string, splitSheetTitle: string, link: string, collaboratorName?: string, collaboratorIpi?: string) {
     const subject = `Solicitud de Firma: ${splitSheetTitle}`;
     const text = `${inviterName} te invitó a firmar el split sheet "${splitSheetTitle}".\n\nRevisa y firma aquí: ${link}`;
+
+    let personalInfoHtml = '';
+    if (collaboratorName) {
+      personalInfoHtml += `<br/><strong>Nombre Legal:</strong> ${this.escapeHtml(collaboratorName)}`;
+    }
+    if (collaboratorIpi) {
+      personalInfoHtml += `<br/><strong>IPI:</strong> ${this.escapeHtml(collaboratorIpi)}`;
+    }
+
     const html = this.renderTemplate({
       title: subject,
       preheader: `Firma requerida: ${splitSheetTitle}`,
-      bodyHtml: `${this.escapeHtml(inviterName)} te añadió como colaborador en <strong>${this.escapeHtml(splitSheetTitle)}</strong>.<br /><br />
-              Revisa los porcentajes y firma el acuerdo cuando estés listo.`,
+      bodyHtml: `${this.escapeHtml(inviterName)} solicita tu firma en <strong>${this.escapeHtml(splitSheetTitle)}</strong>.
+              ${personalInfoHtml}
+              <br /><br />
+              Por favor revisa que tus datos sean correctos y firma el documento.`,
       cta: { label: 'Revisar y Firmar', url: link },
     });
     await this.send({ to: email, subject, text, html });
@@ -165,28 +176,20 @@ export class MailService {
     await this.send({ to: email, subject, text, html });
   }
 
-  async sendCollaboratorInvite(email: string, inviterName: string, splitSheetTitle: string, inviteLink: string) {
+  async sendCollaboratorInvite(email: string, inviterName: string, splitSheetTitle: string, inviteLink: string, collaboratorName?: string) {
     const subject = `Invitación a Colaborar: ${splitSheetTitle}`;
     const text = `${inviterName} te invitó a colaborar en "${splitSheetTitle}".\n\nAcepta la invitación aquí: ${inviteLink}`;
+
+    let greeting = collaboratorName ? `Hola ${this.escapeHtml(collaboratorName)},` : 'Hola,';
+
     const html = this.renderTemplate({
       title: subject,
       preheader: `Invitación: ${splitSheetTitle}`,
-      bodyHtml: `${this.escapeHtml(inviterName)} te invitó a unirte como colaborador en <strong>${this.escapeHtml(splitSheetTitle)}</strong>.`,
+      bodyHtml: `${greeting}<br/><br/>
+              ${this.escapeHtml(inviterName)} te invitó a unirte como colaborador en <strong>${this.escapeHtml(splitSheetTitle)}</strong>.
+              <br/><br/>
+              Si tienes una cuenta, estos datos se vincularán automáticamente.`,
       cta: { label: 'Aceptar Invitación', url: inviteLink },
-    });
-    await this.send({ to: email, subject, text, html });
-  }
-
-  async sendSplitSheetCreated(email: string, userName: string, splitSheetTitle: string, link: string) {
-    const subject = `Split Sheet Creado: ${splitSheetTitle}`;
-    const text = `Has creado exitosamente el split sheet "${splitSheetTitle}".\n\nPuedes verlo aquí: ${link}`;
-    const html = this.renderTemplate({
-      title: subject,
-      preheader: `Creado: ${splitSheetTitle}`,
-      bodyHtml: `Hola <strong>${this.escapeHtml(userName)}</strong>,<br /><br />
-            Has creado exitosamente el split sheet <strong>${this.escapeHtml(splitSheetTitle)}</strong>.<br />
-            Ahora puedes invitar colaboradores o iniciar el proceso de firmas.`,
-      cta: { label: 'Ver Split Sheet', url: link },
     });
     await this.send({ to: email, subject, text, html });
   }

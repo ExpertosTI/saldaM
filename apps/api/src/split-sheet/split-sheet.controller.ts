@@ -20,9 +20,8 @@ export class SplitSheetController {
     }
 
     @Get('stats')
-    @UseGuards(AuthGuard('jwt'))
-    getStats(@Req() req: any) {
-        return this.splitSheetService.getStats(req.user);
+    getStats() {
+        return this.splitSheetService.getStats();
     }
 
     @Get(':id')

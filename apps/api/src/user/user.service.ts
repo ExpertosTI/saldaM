@@ -102,4 +102,16 @@ export class UserService {
         await this.auditLogService.log('PASSWORD_CHANGED', `User ${user.email} changed their password.`, user);
         return { message: 'Password changed successfully' };
     }
+
+    async saveSignature(id: string, signatureDataUrl: string) {
+        const user = await this.userRepository.findOne({ where: { id } });
+        if (!user) throw new Error('User not found');
+
+        user.signatureUrl = signatureDataUrl;
+        user.hasRegisteredSignature = true;
+        await this.userRepository.save(user);
+
+        await this.auditLogService.log('SIGNATURE_REGISTERED', `User ${user.email} registered a new signature.`, user);
+        return { message: 'Signature saved successfully' };
+    }
 }

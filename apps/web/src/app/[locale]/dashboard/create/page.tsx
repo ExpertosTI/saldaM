@@ -147,7 +147,6 @@ export default function CreateSplitSheet() {
                 collaborators: collaborators.map(c => ({
                     name: c.name.replace(` ${t('ownerLabel')}`, ''),
                     email: c.email || undefined,
-                    ipi: c.ipi,
                     role: c.role.toUpperCase(),
                     percentage: c.percentage
                 })),
@@ -224,17 +223,9 @@ export default function CreateSplitSheet() {
                                 <input
                                     type="text"
                                     placeholder={t('collaboratorPlaceholder')}
-                                    className={`w-full bg-neutral-900/50 border border-neutral-700 rounded-lg p-2.5 text-white focus:border-primary outline-none mb-2 ${c.isOwner ? 'opacity-75' : ''}`}
+                                    className={`w-full bg-neutral-900/50 border border-neutral-700 rounded-lg p-2.5 text-white focus:border-primary outline-none ${c.isOwner ? 'opacity-75' : ''}`}
                                     value={c.name}
                                     onChange={(e) => updateCollaborator(i, 'name', e.target.value)}
-                                    readOnly={c.isOwner}
-                                />
-                                <input
-                                    type="text"
-                                    placeholder="IPI / CAE"
-                                    className={`w-full bg-neutral-900/50 border border-neutral-700 rounded-lg p-2.5 text-white focus:border-primary outline-none ${c.isOwner ? 'opacity-75' : ''}`}
-                                    value={c.ipi || ''}
-                                    onChange={(e) => updateCollaborator(i, 'ipi', e.target.value)}
                                     readOnly={c.isOwner}
                                 />
                             </div>
