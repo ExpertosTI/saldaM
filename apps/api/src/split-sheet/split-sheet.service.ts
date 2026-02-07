@@ -281,9 +281,23 @@ export class SplitSheetService {
         return { message: 'Joined successfully', splitSheetId: splitSheet.id };
     }
 
-    async getStats() {
-        const total = await this.splitSheetRepository.count();
-        const pending = await this.splitSheetRepository.count({ where: { status: SplitSheetStatus.PENDING_SIGNATURES } });
+    async getStats(user: any) {
+        const total = await this.splitSheetRepository.count({
+            where: [
+                { owner: { id: user.id } },
+                { collaborators: { email: user.email } }
+            ]
+        });
+        const pending = await this.splitSheetRepository.count({
+            where: [
+                { owner: { id: user.id }, status: SplitSheetStatus.PENDING_SIGNATURES },
+                { collaborators: { email: user.email }, status: SplitSheetStatus.PENDING_SIGNATURES }
+            ]
+        });
+
+        // Calculate estimated royalties (mock for now, but scoped to user)
+        // In a real scenario, we would sum up royalties from a Royalty report related to these sheets
+
         return {
             totalSongs: total,
             pendingSignatures: pending,

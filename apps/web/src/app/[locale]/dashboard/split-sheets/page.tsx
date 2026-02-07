@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { getToken, API_BASE_URL } from '@/lib/auth';
+import ConfirmDialog from '@/components/ConfirmDialog';
+import { useToast } from '@/components/ToastProvider';
 
 interface SplitSheet {
     id: string;
@@ -16,12 +18,18 @@ interface SplitSheet {
 export default function SplitSheetsPage() {
     const locale = useLocale();
     const t = useTranslations('SplitSheet');
+    const { toast, success, error } = useToast();
 
     const [sheets, setSheets] = useState<SplitSheet[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('');
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+
+    // Confirm Dialog State
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [sheetToDelete, setSheetToDelete] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     // Stats
     const [stats, setStats] = useState({ draft: 0, pending: 0, completed: 0, total: 0 });
@@ -48,6 +56,7 @@ export default function SplitSheetsPage() {
             }
         } catch (e) {
             console.error('Error fetching sheets:', e);
+            error('Error al cargar los documentos.');
         } finally {
             setLoading(false);
         }
@@ -82,28 +91,44 @@ export default function SplitSheetsPage() {
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('¿Estás seguro de eliminar este Split Sheet?')) return;
+    const confirmDelete = (id: string) => {
+        setSheetToDelete(id);
+        setShowDeleteConfirm(true);
+    };
 
+    const handleDelete = async () => {
+        if (!sheetToDelete) return;
+
+        setIsDeleting(true);
         const token = getToken();
         if (!token) return;
 
         try {
-            const res = await fetch(`${API_BASE_URL}/split-sheets/${id}`, {
+            const res = await fetch(`${API_BASE_URL}/split-sheets/${sheetToDelete}`, {
                 method: 'DELETE',
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) {
-                setSheets(sheets.filter(s => s.id !== id));
+                setSheets(sheets.filter(s => s.id !== sheetToDelete));
+                success('Split Sheet eliminado correctamente.');
+            } else {
+                error('No se pudo eliminar el Split Sheet.');
             }
         } catch (e) {
             console.error('Error deleting sheet:', e);
+            error('Ocurrió un error al intentar eliminar.');
+        } finally {
+            setIsDeleting(false);
+            setShowDeleteConfirm(false);
+            setSheetToDelete(null);
         }
     };
 
     const handleDownloadPdf = async (id: string, title: string) => {
         const token = getToken();
         if (!token) return;
+
+        toast('Generando PDF...', 'info');
 
         try {
             const res = await fetch(`${API_BASE_URL}/split-sheets/${id}/full-pdf`, {
@@ -117,9 +142,13 @@ export default function SplitSheetsPage() {
                 a.download = `${title.replace(/[^a-zA-Z0-9]/g, '_')}_split_sheet.pdf`;
                 a.click();
                 window.URL.revokeObjectURL(url);
+                success('PDF descargado correctamente.');
+            } else {
+                error('Error al generar el PDF.');
             }
         } catch (e) {
             console.error('Error downloading PDF:', e);
+            error('Error de conexión al descargar PDF.');
         }
     };
 
@@ -176,8 +205,8 @@ export default function SplitSheetsPage() {
                     <button
                         onClick={() => setStatusFilter('')}
                         className={`px-4 py-2 rounded-lg border text-xs font-medium transition-colors ${!statusFilter
-                                ? 'bg-primary/20 border-primary text-primary'
-                                : 'bg-neutral-900/50 border-neutral-700 text-gray-400 hover:text-white'
+                            ? 'bg-primary/20 border-primary text-primary'
+                            : 'bg-neutral-900/50 border-neutral-700 text-gray-400 hover:text-white'
                             }`}
                     >
                         {t('filterAll')}
@@ -185,8 +214,8 @@ export default function SplitSheetsPage() {
                     <button
                         onClick={() => setStatusFilter('DRAFT')}
                         className={`px-4 py-2 rounded-lg border text-xs font-medium transition-colors ${statusFilter === 'DRAFT'
-                                ? 'bg-yellow-500/20 border-yellow-500 text-yellow-400'
-                                : 'bg-neutral-900/50 border-neutral-700 text-gray-400 hover:text-white'
+                            ? 'bg-yellow-500/20 border-yellow-500 text-yellow-400'
+                            : 'bg-neutral-900/50 border-neutral-700 text-gray-400 hover:text-white'
                             }`}
                     >
                         {t('filterDraft')}
@@ -194,8 +223,8 @@ export default function SplitSheetsPage() {
                     <button
                         onClick={() => setStatusFilter('PENDING_SIGNATURES')}
                         className={`px-4 py-2 rounded-lg border text-xs font-medium transition-colors ${statusFilter === 'PENDING_SIGNATURES'
-                                ? 'bg-blue-500/20 border-blue-500 text-blue-400'
-                                : 'bg-neutral-900/50 border-neutral-700 text-gray-400 hover:text-white'
+                            ? 'bg-blue-500/20 border-blue-500 text-blue-400'
+                            : 'bg-neutral-900/50 border-neutral-700 text-gray-400 hover:text-white'
                             }`}
                     >
                         {t('filterPending')}
@@ -203,8 +232,8 @@ export default function SplitSheetsPage() {
                     <button
                         onClick={() => setStatusFilter('COMPLETED')}
                         className={`px-4 py-2 rounded-lg border text-xs font-medium transition-colors ${statusFilter === 'COMPLETED'
-                                ? 'bg-green-500/20 border-green-500 text-green-400'
-                                : 'bg-neutral-900/50 border-neutral-700 text-gray-400 hover:text-white'
+                            ? 'bg-green-500/20 border-green-500 text-green-400'
+                            : 'bg-neutral-900/50 border-neutral-700 text-gray-400 hover:text-white'
                             }`}
                     >
                         {t('filterCompleted')}
@@ -275,7 +304,7 @@ export default function SplitSheetsPage() {
                                             </svg>
                                         </button>
                                         <button
-                                            onClick={() => handleDelete(sheet.id)}
+                                            onClick={() => confirmDelete(sheet.id)}
                                             className="p-2 hover:bg-red-500/10 rounded transition-colors text-gray-400 hover:text-red-400"
                                             title="Eliminar"
                                         >
@@ -290,6 +319,18 @@ export default function SplitSheetsPage() {
                     ))}
                 </div>
             )}
+
+            <ConfirmDialog
+                isOpen={showDeleteConfirm}
+                onClose={() => setShowDeleteConfirm(false)}
+                onConfirm={handleDelete}
+                title="Eliminar Split Sheet"
+                message="¿Estás seguro de que deseas eliminar este Split Sheet? Esta acción no se puede deshacer y se perderán todos los datos asociados."
+                confirmText="Sí, Eliminar"
+                cancelText="Cancelar"
+                isDestructive={true}
+                isLoading={isDeleting}
+            />
         </div>
     );
 }

@@ -6,6 +6,7 @@ import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
 import SplashScreen from '@/components/SplashScreen';
 import GoogleAuthProvider from '@/components/GoogleAuthProvider';
 import { ThemeProvider } from '@/components/ThemeProvider';
+import { ToastProvider } from '@/components/ToastProvider';
 import "../globals.css";
 
 const montserrat = Montserrat({ subsets: ["latin"], variable: "--font-montserrat" });
@@ -65,9 +66,11 @@ export default async function LocaleLayout({
                     <GoogleAuthProvider>
                         <ServiceWorkerRegister />
                         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-                            <SplashScreen>
-                                {children}
-                            </SplashScreen>
+                            <ToastProvider>
+                                <SplashScreen>
+                                    {children}
+                                </SplashScreen>
+                            </ToastProvider>
                         </ThemeProvider>
                     </GoogleAuthProvider>
                 </NextIntlClientProvider>

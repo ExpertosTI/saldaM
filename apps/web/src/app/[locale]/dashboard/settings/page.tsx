@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { getToken, removeToken, API_BASE_URL } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
+import ConfirmDialog from '@/components/ConfirmDialog';
 
 interface UserData {
     id: string;
@@ -41,7 +42,8 @@ export default function SettingsPage() {
     });
 
     const [theme, setTheme] = useState('dark');
-    const [deleteConfirm, setDeleteConfirm] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -106,11 +108,7 @@ export default function SettingsPage() {
     };
 
     const handleDeleteAccount = async () => {
-        if (!deleteConfirm) {
-            setDeleteConfirm(true);
-            return;
-        }
-
+        setIsDeleting(true);
         const token = getToken();
         if (!token) return;
 
@@ -126,6 +124,9 @@ export default function SettingsPage() {
             }
         } catch {
             setMessage({ type: 'error', text: 'Error al eliminar cuenta.' });
+        } finally {
+            setIsDeleting(false);
+            setShowDeleteConfirm(false);
         }
     };
 
@@ -171,8 +172,8 @@ export default function SettingsPage() {
 
             {message && (
                 <div className={`mb-6 p-4 rounded-lg text-sm ${message.type === 'success'
-                        ? 'bg-green-500/10 border border-green-500/20 text-green-400'
-                        : 'bg-red-500/10 border border-red-500/20 text-red-400'
+                    ? 'bg-green-500/10 border border-green-500/20 text-green-400'
+                    : 'bg-red-500/10 border border-red-500/20 text-red-400'
                     }`}>
                     {message.text}
                 </div>
@@ -248,8 +249,8 @@ export default function SettingsPage() {
                         <button
                             onClick={() => setTheme('dark')}
                             className={`flex-1 p-4 rounded-lg border transition-all ${theme === 'dark'
-                                    ? 'border-primary bg-primary/10'
-                                    : 'border-neutral-700 bg-neutral-800/50 hover:border-neutral-600'
+                                ? 'border-primary bg-primary/10'
+                                : 'border-neutral-700 bg-neutral-800/50 hover:border-neutral-600'
                                 }`}
                         >
                             <div className="w-8 h-8 mx-auto mb-2 rounded-full bg-neutral-900 border border-white/20" />
@@ -258,8 +259,8 @@ export default function SettingsPage() {
                         <button
                             onClick={() => setTheme('light')}
                             className={`flex-1 p-4 rounded-lg border transition-all opacity-50 cursor-not-allowed ${theme === 'light'
-                                    ? 'border-primary bg-primary/10'
-                                    : 'border-neutral-700 bg-neutral-800/50'
+                                ? 'border-primary bg-primary/10'
+                                : 'border-neutral-700 bg-neutral-800/50'
                                 }`}
                             disabled
                         >
@@ -334,15 +335,14 @@ export default function SettingsPage() {
                     <p className="text-sm text-gray-400 mb-4">
                         Esta acción es permanente e irreversible. Se eliminarán todos tus Split Sheets, colaboradores y datos de cuenta.
                     </p>
-                    <button
-                        onClick={handleDeleteAccount}
-                        className={`px-5 py-2.5 rounded-lg font-semibold transition-all ${deleteConfirm
-                                ? 'bg-red-500 text-white hover:bg-red-600'
-                                : 'border border-red-500/50 text-red-400 hover:bg-red-500/10'
-                            }`}
-                    >
-                        {deleteConfirm ? '¿Estás seguro? Haz clic para confirmar' : 'Eliminar mi cuenta'}
-                    </button>
+                    <div className="flex justify-start">
+                        <button
+                            onClick={() => setShowDeleteConfirm(true)}
+                            className="px-5 py-2.5 rounded-lg border border-red-500/50 text-red-400 hover:bg-red-500/10 font-semibold transition-all"
+                        >
+                            Eliminar mi cuenta
+                        </button>
+                    </div>
                 </section>
 
                 {/* Save Button */}
@@ -356,6 +356,18 @@ export default function SettingsPage() {
                     </button>
                 </div>
             </div>
+
+            <ConfirmDialog
+                isOpen={showDeleteConfirm}
+                onClose={() => setShowDeleteConfirm(false)}
+                onConfirm={handleDeleteAccount}
+                title="Eliminar Cuenta"
+                message="¿Estás seguro de que deseas eliminar tu cuenta? Esta acción es irreversible y perderás todos tus datos."
+                confirmText="Sí, Eliminar Cuenta"
+                cancelText="Cancelar"
+                isDestructive={true}
+                isLoading={isDeleting}
+            />
         </div>
     );
 }

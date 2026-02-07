@@ -1,8 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { getToken, API_BASE_URL } from '@/lib/auth';
+import { useToast } from '@/components/ToastProvider';
+import ConfirmDialog from '@/components/ConfirmDialog';
+import Modal from '@/components/Modal';
 
 interface Contact {
     id: string;
@@ -86,9 +90,12 @@ export default function CollaboratorsPage() {
             if (res.ok) {
                 const data = await res.json();
                 setContacts(data);
+            } else {
+                error('Error al cargar contactos.');
             }
         } catch (e) {
             console.error('Error fetching contacts:', e);
+            error('Error de conexión al cargar contactos.');
         }
     };
 
@@ -103,9 +110,12 @@ export default function CollaboratorsPage() {
             if (res.ok) {
                 const data = await res.json();
                 setStats(data);
+            } else {
+                error('Error al cargar estadísticas.');
             }
         } catch (e) {
             console.error('Error fetching stats:', e);
+            error('Error de conexión al cargar estadísticas.');
         }
     };
 
@@ -174,30 +184,50 @@ export default function CollaboratorsPage() {
             if (res.ok) {
                 setShowModal(false);
                 await Promise.all([fetchContacts(), fetchStats()]);
+                success(editingContact ? 'Contacto actualizado.' : 'Contacto creado exitosamente.');
+            } else {
+                const errorData = await res.json();
+                error(errorData.message || 'Error al guardar el contacto.');
             }
         } catch (e) {
             console.error('Error saving contact:', e);
+            error('Error de conexión al guardar el contacto.');
         } finally {
             setSaving(false);
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('¿Estás seguro de eliminar este contacto?')) return;
+    const confirmDelete = (id: string) => {
+        setContactToDeleteId(id);
+        setShowDeleteConfirm(true);
+    };
 
+    const handleDelete = async () => {
+        if (!contactToDeleteId) return;
+
+        setIsDeleting(true);
         const token = getToken();
         if (!token) return;
 
         try {
-            const res = await fetch(`${API_BASE_URL}/contacts/${id}`, {
+            const res = await fetch(`${API_BASE_URL}/contacts/${contactToDeleteId}`, {
                 method: 'DELETE',
                 headers: { Authorization: `Bearer ${token}` },
             });
             if (res.ok) {
                 await Promise.all([fetchContacts(), fetchStats()]);
+                success('Contacto eliminado.');
+            } else {
+                const errorData = await res.json();
+                error(errorData.message || 'Error al eliminar el contacto.');
             }
         } catch (e) {
             console.error('Error deleting contact:', e);
+            error('Error de conexión al eliminar el contacto.');
+        } finally {
+            setIsDeleting(false);
+            setShowDeleteConfirm(false);
+            setContactToDeleteId(null);
         }
     };
 
@@ -212,9 +242,14 @@ export default function CollaboratorsPage() {
             });
             if (res.ok) {
                 await fetchContacts();
+                success('Favorito actualizado.');
+            } else {
+                const errorData = await res.json();
+                error(errorData.message || 'Error al actualizar favorito.');
             }
         } catch (e) {
             console.error('Error toggling favorite:', e);
+            error('Error de conexión al actualizar favorito.');
         }
     };
 
@@ -276,8 +311,8 @@ export default function CollaboratorsPage() {
                 <button
                     onClick={() => setShowFavorites(!showFavorites)}
                     className={`px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors ${showFavorites
-                            ? 'bg-primary/20 border-primary text-primary'
-                            : 'bg-neutral-900/50 border-neutral-700 text-gray-400 hover:text-white'
+                        ? 'bg-primary/20 border-primary text-primary'
+                        : 'bg-neutral-900/50 border-neutral-700 text-gray-400 hover:text-white'
                         }`}
                 >
                     ★ Favoritos
@@ -378,7 +413,7 @@ export default function CollaboratorsPage() {
                                     Editar
                                 </button>
                                 <button
-                                    onClick={() => handleDelete(contact.id)}
+                                    onClick={() => confirmDelete(contact.id)}
                                     className="px-3 py-1.5 text-xs bg-red-500/10 hover:bg-red-500/20 rounded text-red-400 transition-colors"
                                 >
                                     Eliminar
@@ -390,125 +425,133 @@ export default function CollaboratorsPage() {
             )}
 
             {/* Modal */}
-            {showModal && (
-                <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-neutral-900 border border-neutral-800 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-                        <div className="p-6 border-b border-neutral-800">
-                            <h2 className="text-xl font-bold text-white">
-                                {editingContact ? 'Editar Contacto' : 'Nuevo Contacto'}
-                            </h2>
+            <Modal
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                title={editingContact ? 'Editar Contacto' : 'Nuevo Contacto'}
+            >
+                <form className="space-y-4">
+                    <div>
+                        <label className="block text-sm text-gray-400 mb-1">Nombre *</label>
+                        <input
+                            type="text"
+                            required
+                            className="w-full px-4 py-2.5 bg-neutral-900 border border-neutral-700 rounded-lg text-white focus:border-primary outline-none"
+                            value={formData.name}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm text-gray-400 mb-1">Email</label>
+                            <input
+                                type="email"
+                                className="w-full px-4 py-2.5 bg-neutral-900 border border-neutral-700 rounded-lg text-white focus:border-primary outline-none"
+                                value={formData.email}
+                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                            />
                         </div>
-
-                        <div className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-sm text-gray-400 mb-1">Nombre *</label>
-                                <input
-                                    type="text"
-                                    required
-                                    className="w-full px-4 py-2.5 bg-neutral-800 border border-neutral-700 rounded-lg text-white focus:border-primary outline-none"
-                                    value={formData.name}
-                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm text-gray-400 mb-1">Email</label>
-                                    <input
-                                        type="email"
-                                        className="w-full px-4 py-2.5 bg-neutral-800 border border-neutral-700 rounded-lg text-white focus:border-primary outline-none"
-                                        value={formData.email}
-                                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm text-gray-400 mb-1">Teléfono</label>
-                                    <input
-                                        type="tel"
-                                        className="w-full px-4 py-2.5 bg-neutral-800 border border-neutral-700 rounded-lg text-white focus:border-primary outline-none"
-                                        value={formData.phone}
-                                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm text-gray-400 mb-1">Rol</label>
-                                <select
-                                    className="w-full px-4 py-2.5 bg-neutral-800 border border-neutral-700 rounded-lg text-white focus:border-primary outline-none"
-                                    value={formData.role}
-                                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                                >
-                                    <option value="SONGWRITER">Compositor</option>
-                                    <option value="PRODUCER">Productor</option>
-                                    <option value="PUBLISHER">Editorial</option>
-                                    <option value="ARTIST">Artista</option>
-                                    <option value="OTHER">Otro</option>
-                                </select>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm text-gray-400 mb-1">PRO (Sociedad)</label>
-                                    <input
-                                        type="text"
-                                        placeholder="ASCAP, BMI, SGACEDOM..."
-                                        className="w-full px-4 py-2.5 bg-neutral-800 border border-neutral-700 rounded-lg text-white focus:border-primary outline-none placeholder-gray-600"
-                                        value={formData.pro}
-                                        onChange={(e) => setFormData({ ...formData, pro: e.target.value })}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm text-gray-400 mb-1">CAE/IPI</label>
-                                    <input
-                                        type="text"
-                                        placeholder="Número IPI"
-                                        className="w-full px-4 py-2.5 bg-neutral-800 border border-neutral-700 rounded-lg text-white focus:border-primary outline-none placeholder-gray-600"
-                                        value={formData.ipiNumber}
-                                        onChange={(e) => setFormData({ ...formData, ipiNumber: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm text-gray-400 mb-1">Editorial / Publishing</label>
-                                <input
-                                    type="text"
-                                    className="w-full px-4 py-2.5 bg-neutral-800 border border-neutral-700 rounded-lg text-white focus:border-primary outline-none"
-                                    value={formData.publishingCompany}
-                                    onChange={(e) => setFormData({ ...formData, publishingCompany: e.target.value })}
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm text-gray-400 mb-1">Notas</label>
-                                <textarea
-                                    rows={3}
-                                    className="w-full px-4 py-2.5 bg-neutral-800 border border-neutral-700 rounded-lg text-white focus:border-primary outline-none resize-none"
-                                    value={formData.notes}
-                                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="p-6 border-t border-neutral-800 flex gap-3 justify-end">
-                            <button
-                                onClick={() => setShowModal(false)}
-                                className="px-6 py-2 text-gray-400 hover:text-white transition-colors"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={handleSave}
-                                disabled={saving || !formData.name}
-                                className="px-6 py-2 bg-primary text-black font-semibold rounded-lg hover:bg-yellow-400 transition-colors disabled:opacity-50"
-                            >
-                                {saving ? 'Guardando...' : editingContact ? 'Guardar Cambios' : 'Crear Contacto'}
-                            </button>
+                        <div>
+                            <label className="block text-sm text-gray-400 mb-1">Teléfono</label>
+                            <input
+                                type="tel"
+                                className="w-full px-4 py-2.5 bg-neutral-900 border border-neutral-700 rounded-lg text-white focus:border-primary outline-none"
+                                value={formData.phone}
+                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                            />
                         </div>
                     </div>
-                </div>
-            )}
+
+                    <div>
+                        <label className="block text-sm text-gray-400 mb-1">Rol</label>
+                        <select
+                            className="w-full px-4 py-2.5 bg-neutral-900 border border-neutral-700 rounded-lg text-white focus:border-primary outline-none"
+                            value={formData.role}
+                            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                        >
+                            <option value="SONGWRITER">Compositor</option>
+                            <option value="PRODUCER">Productor</option>
+                            <option value="PUBLISHER">Editorial</option>
+                            <option value="ARTIST">Artista</option>
+                            <option value="OTHER">Otro</option>
+                        </select>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm text-gray-400 mb-1">PRO (Sociedad)</label>
+                            <input
+                                type="text"
+                                placeholder="ASCAP, BMI, SGACEDOM..."
+                                className="w-full px-4 py-2.5 bg-neutral-900 border border-neutral-700 rounded-lg text-white focus:border-primary outline-none placeholder-gray-600"
+                                value={formData.pro}
+                                onChange={(e) => setFormData({ ...formData, pro: e.target.value })}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm text-gray-400 mb-1">CAE/IPI</label>
+                            <input
+                                type="text"
+                                placeholder="Número IPI"
+                                className="w-full px-4 py-2.5 bg-neutral-900 border border-neutral-700 rounded-lg text-white focus:border-primary outline-none placeholder-gray-600"
+                                value={formData.ipiNumber}
+                                onChange={(e) => setFormData({ ...formData, ipiNumber: e.target.value })}
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm text-gray-400 mb-1">Editorial / Publishing</label>
+                        <input
+                            type="text"
+                            className="w-full px-4 py-2.5 bg-neutral-900 border border-neutral-700 rounded-lg text-white focus:border-primary outline-none"
+                            value={formData.publishingCompany}
+                            onChange={(e) => setFormData({ ...formData, publishingCompany: e.target.value })}
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm text-gray-400 mb-1">Notas</label>
+                        <textarea
+                            rows={3}
+                            className="w-full px-4 py-2.5 bg-neutral-900 border border-neutral-700 rounded-lg text-white focus:border-primary outline-none resize-none"
+                            value={formData.notes}
+                            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                        />
+                    </div>
+
+                    <div className="pt-4 border-t border-white/10 flex gap-3 justify-end">
+                        <button
+                            type="button"
+                            onClick={() => setShowModal(false)}
+                            className="px-6 py-2 text-gray-400 hover:text-white transition-colors"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleSave}
+                            disabled={saving || !formData.name}
+                            className="px-6 py-2 bg-primary text-black font-semibold rounded-lg hover:bg-yellow-400 transition-colors disabled:opacity-50"
+                        >
+                            {saving ? 'Guardando...' : editingContact ? 'Guardar Cambios' : 'Crear Contacto'}
+                        </button>
+                    </div>
+                </form>
+            </Modal>
+
+            <ConfirmDialog
+                isOpen={showDeleteConfirm}
+                onClose={() => setShowDeleteConfirm(false)}
+                onConfirm={handleDelete}
+                title="Eliminar Colaborador"
+                message="¿Estás seguro de que deseas eliminar este colaborador? Esta acción no se puede deshacer."
+                confirmText="Sí, Eliminar"
+                cancelText="Cancelar"
+                isDestructive={true}
+                isLoading={isDeleting}
+            />
         </div>
     );
 }

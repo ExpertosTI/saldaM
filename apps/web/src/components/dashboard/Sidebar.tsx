@@ -99,8 +99,8 @@ export default function Sidebar() {
         { href: `/${locale}/dashboard/split-sheets`, label: t('splitSheets'), icon: 'document' },
         { href: `/${locale}/dashboard/collaborators`, label: t('collaborators'), icon: 'users' },
         { href: `/${locale}/dashboard/profile`, label: t('profile'), icon: 'user' },
-        { href: `/${locale}/dashboard/royalties`, label: t('royalties'), icon: 'chart' },
-        { href: `/${locale}/dashboard/settings/signature`, label: 'Firma Digital', icon: 'signature' },
+        // { href: `/${locale}/dashboard/royalties`, label: t('royalties'), icon: 'chart' }, // Demo Feature Removed
+        // { href: `/${locale}/dashboard/settings/signature`, label: 'Firma Digital', icon: 'signature' }, // Not ready yet
         { href: `/${locale}/dashboard/settings`, label: t('settings'), icon: 'settings' },
     ];
 
@@ -265,7 +265,7 @@ export default function Sidebar() {
                     {/* Quick Actions Row */}
                     <div className="flex items-center gap-2 mb-3">
                         <LanguageSwitcher />
-                        <ThemeToggle />
+                        {/* ThemeToggle Removed */}
                         <div className="flex-grow" /> {/* Spacer */}
                         <Link
                             href={`/${locale}/dashboard/create`}

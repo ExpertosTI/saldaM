@@ -6,11 +6,13 @@ import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import SignatureCanvas from 'react-signature-canvas';
 import { API_BASE_URL, getToken } from '@/lib/auth';
+import { useToast } from '@/components/ToastProvider';
 
 export default function SignSplitSheetPage() {
     const params = useParams<{ locale: string; id: string }>();
     const router = useRouter();
     const t = useTranslations();
+    const { toast } = useToast();
     const sigPad = useRef<SignatureCanvas>(null);
 
     const [loading, setLoading] = useState(true);
@@ -60,21 +62,21 @@ export default function SignSplitSheetPage() {
 
         } catch (e) {
             console.error(e);
-            alert('Error loading document');
+            toast('Error loading document', 'error');
         } finally {
             setLoading(false);
         }
     };
 
     const handleAdoptSignature = async () => {
-        if (!acceptedTerms) return alert('Debes aceptar los términos y condiciones.');
+        if (!acceptedTerms) return toast('Debes aceptar los términos y condiciones.', 'warning');
 
         let signatureData = '';
         if (signMode === 'draw') {
-            if (sigPad.current?.isEmpty()) return alert('Por favor firma el documento.');
+            if (sigPad.current?.isEmpty()) return toast('Por favor firma el documento.', 'warning');
             signatureData = sigPad.current?.getTrimmedCanvas().toDataURL('image/png') || '';
         } else {
-            if (!typedSignature.trim()) return alert('Por favor escribe tu nombre.');
+            if (!typedSignature.trim()) return toast('Por favor escribe tu nombre.', 'warning');
             // Convert text to image (simulated for now, backend could handle text->image)
             const canvas = document.createElement('canvas');
             canvas.width = 400;
@@ -124,7 +126,7 @@ export default function SignSplitSheetPage() {
             }
         } catch (e) {
             console.error(e);
-            alert('Falló el proceso de firma. Intenta nuevamente.');
+            toast('Falló el proceso de firma. Intenta nuevamente.', 'error');
             setIsSubmitting(false);
         }
     };

@@ -21,16 +21,15 @@
   --safe-area-inset-right: env(safe-area-inset-right, 0px);
 }
 
+/* Light Theme Enabled by default for reference but overruled by ThemeProvider forcing dark 
+   Keeping variables just in case, but ensuring defaults are dark-aligned if variables fail */
+
 [data-theme='light'] {
   --background: #ffffff;
   --foreground: #000000;
+  /* Override surface for light mode to be slightly darker than white if forced */
   --surface: #f3f4f6;
   --surface-highlight: #e5e7eb;
-  --primary: #B5952F;
-  /* Slightly darker gold for contrast on white */
-  --primary-foreground: #ffffff;
-  --muted: #6b7280;
-  --border: #e5e7eb;
 }
 
 * {

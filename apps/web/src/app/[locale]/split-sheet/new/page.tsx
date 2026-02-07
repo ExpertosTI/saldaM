@@ -3,9 +3,11 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2, Save, FileText } from "lucide-react";
+import { useToast } from "@/components/ToastProvider";
 
 export default function NewSplitSheetPage() {
     const router = useRouter();
+    const { toast } = useToast();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         title: "",
@@ -57,7 +59,7 @@ export default function NewSplitSheetPage() {
     const handleQuickAdd = (contact: any) => {
         // Check if already added
         if (formData.collaborators.some(c => c.email === contact.email)) {
-            alert("Este colaborador ya está en la lista.");
+            toast("Este colaborador ya está en la lista.", "warning");
             return;
         }
 
@@ -137,14 +139,14 @@ export default function NewSplitSheetPage() {
             });
 
             if (response.ok) {
-                alert("Documento Creado Exitosamente!");
+                toast("Documento Creado Exitosamente!", "success");
                 router.push(`/${window.location.pathname.split('/')[1]}/dashboard`);
             } else {
-                alert("Error al guardar. Verifica los datos.");
+                toast("Error al guardar. Verifica los datos.", "error");
             }
         } catch (error) {
             console.error(error);
-            alert("Error de conexión.");
+            toast("Error de conexión.", "error");
         } finally {
             setLoading(false);
         }

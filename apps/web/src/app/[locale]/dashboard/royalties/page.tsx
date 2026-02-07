@@ -4,9 +4,12 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useLocale } from 'next-intl';
+import { useToast } from '@/components/ToastProvider';
 
 export default function RoyaltiesPage() {
     const locale = useLocale();
+    const t = useTranslations('Royalties');
+    const { toast } = useToast();
     const [period, setPeriod] = useState('30d');
 
     // Placeholder data - would come from API
@@ -183,16 +186,16 @@ export default function RoyaltiesPage() {
                     Selecciona tu distribuidor principal para comenzar la importación de datos.
                 </p>
                 <div className="flex flex-wrap justify-center gap-3">
-                    <button onClick={() => alert('Iniciando conexión segura con Spotify...')} className="px-6 py-2.5 bg-[#1DB954] hover:bg-[#1ed760] text-white text-sm font-bold rounded-full transition-all transform hover:scale-105 shadow-lg shadow-green-900/20">
+                    <button onClick={() => toast('Iniciando conexión segura con Spotify...', 'info')} className="px-6 py-2.5 bg-[#1DB954] hover:bg-[#1ed760] text-white text-sm font-bold rounded-full transition-all transform hover:scale-105 shadow-lg shadow-green-900/20">
                         Spotify for Artists
                     </button>
-                    <button onClick={() => alert('Iniciando conexión segura con Apple Music...')} className="px-6 py-2.5 bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-400 hover:to-red-400 text-white text-sm font-bold rounded-full transition-all transform hover:scale-105 shadow-lg shadow-pink-900/20">
+                    <button onClick={() => toast('Iniciando conexión segura con Apple Music...', 'info')} className="px-6 py-2.5 bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-400 hover:to-red-400 text-white text-sm font-bold rounded-full transition-all transform hover:scale-105 shadow-lg shadow-pink-900/20">
                         Apple Music
                     </button>
-                    <button onClick={() => alert('Iniciando conexión segura con DistroKid...')} className="px-6 py-2.5 bg-neutral-700 hover:bg-neutral-600 text-white text-sm font-bold rounded-full transition-all transform hover:scale-105">
+                    <button onClick={() => toast('Iniciando conexión segura con DistroKid...', 'info')} className="px-6 py-2.5 bg-neutral-700 hover:bg-neutral-600 text-white text-sm font-bold rounded-full transition-all transform hover:scale-105">
                         DistroKid
                     </button>
-                    <button onClick={() => alert('Funcionalidad para CD Baby en mantenimiento.')} className="px-6 py-2.5 bg-[#3c3c3c] hover:bg-[#4a4a4a] text-white text-sm font-bold rounded-full transition-all transform hover:scale-105 border border-white/10">
+                    <button onClick={() => toast('Funcionalidad para CD Baby en mantenimiento.', 'error')} className="px-6 py-2.5 bg-[#3c3c3c] hover:bg-[#4a4a4a] text-white text-sm font-bold rounded-full transition-all transform hover:scale-105 border border-white/10">
                         CD Baby
                     </button>
                 </div>
