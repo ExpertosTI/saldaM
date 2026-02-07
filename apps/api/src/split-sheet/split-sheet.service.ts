@@ -8,6 +8,7 @@ import { SignatureService } from '../signature/signature.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { MailService } from '../mail/mail.service';
 import { ContactsService } from '../contacts/contacts.service';
+import { UserService } from '../user/user.service';
 import { ContactRole } from '../contacts/entities/contact.entity';
 import { Collaborator, CollaboratorRole } from './entities/collaborator.entity';
 import * as crypto from 'crypto';
@@ -21,6 +22,7 @@ export class SplitSheetService {
         private auditLogService: AuditLogService,
         private mailService: MailService,
         private contactsService: ContactsService,
+        private userService: UserService,
     ) { }
 
     async startSignatures(id: string, user: any) {
@@ -124,12 +126,16 @@ export class SplitSheetService {
         return { message: 'Signed successfully', status: splitSheet.status };
     }
 
-    async create(createSplitSheetDto: any, user: any): Promise<SplitSheet> {
+    async create(createSplitSheetDto: any, reqUser: any): Promise<SplitSheet> {
+        // Ensure we have the full user entity
+        const user = await this.userService.findOne(reqUser.id);
+        if (!user) throw new NotFoundException('User not found');
+
         // Validation and Mapping
         if (createSplitSheetDto.collaborators) {
             createSplitSheetDto.collaborators.forEach(c => {
                 if (!c.email) throw new ConflictException('All collaborators must have an email address');
-                if (c.name && !c.legalName) c.legalName = c.name; // Polyfill for frontend 'name' property
+                if (c.name && !c.legalName) c.legalName = c.name; // Polyfill
             });
         }
 
@@ -140,16 +146,31 @@ export class SplitSheetService {
 
         const saved = await this.splitSheetRepository.save(splitSheet) as unknown as SplitSheet;
 
-        await this.auditLogService.log('SPLIT_SHEET_CREATED', `User ${user.email} created split sheet ${saved.id}`, user);
+        // Auxiliary operations (Non-blocking)
+        try {
+            await this.auditLogService.log('SPLIT_SHEET_CREATED', `User ${user.email} created split sheet ${saved.id}`, user);
 
-        // Auto-add collaborators to contacts
-        if (createSplitSheetDto.collaborators && Array.isArray(createSplitSheetDto.collaborators)) {
-            for (const collab of createSplitSheetDto.collaborators) {
-                // Skip adding self as contact
-                if (collab.email && collab.email !== user.email) {
-                    await this.ensureContactExists(user, collab.email, collab.legalName || collab.name, collab.role);
+            // Send confirmation email to owner
+            const link = `https://app.saldanamusic.com/split-sheets/${saved.id}`; // Hardcoded for now based on env vars context
+            await this.mailService.sendSplitSheetCreated(user.email, user.firstName || 'Usuario', saved.title, link);
+
+        } catch (e) {
+            console.error('Failed to create audit log or send email', e);
+        }
+
+        try {
+            // Auto-add collaborators to contacts
+            if (createSplitSheetDto.collaborators && Array.isArray(createSplitSheetDto.collaborators)) {
+                for (const collab of createSplitSheetDto.collaborators) {
+                    // Skip adding self as contact
+                    if (collab.email && collab.email !== user.email) {
+                        // safe call
+                        await this.ensureContactExists(user, collab.email, collab.legalName || collab.name, collab.role);
+                    }
                 }
             }
+        } catch (e) {
+            console.error('Failed to auto-add contacts', e);
         }
 
         return saved;

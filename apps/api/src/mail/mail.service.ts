@@ -3,58 +3,58 @@ import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class MailService {
-    private transporter: nodemailer.Transporter;
+  private transporter: nodemailer.Transporter;
 
-    private readonly from: string;
-    private readonly replyTo?: string;
-    private readonly bcc?: string;
-    private readonly webUrl: string;
+  private readonly from: string;
+  private readonly replyTo?: string;
+  private readonly bcc?: string;
+  private readonly webUrl: string;
 
-    constructor() {
-        const host = process.env.SMTP_HOST || 'smtp.hostinger.com';
-        this.transporter = nodemailer.createTransport({
-            host,
-            port: parseInt(process.env.SMTP_PORT || '465', 10),
-            secure: process.env.SMTP_SECURE !== 'false',
-            auth: {
-                user: process.env.SMTP_USER,
-                pass: process.env.SMTP_PASS,
-            },
-        });
+  constructor() {
+    const host = process.env.SMTP_HOST || 'smtp.hostinger.com';
+    this.transporter = nodemailer.createTransport({
+      host,
+      port: parseInt(process.env.SMTP_PORT || '465', 10),
+      secure: process.env.SMTP_SECURE !== 'false',
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
 
-        const brandName = process.env.MAIL_BRAND_NAME || 'Saldaña Music';
-        const fromEmail = process.env.MAIL_FROM_EMAIL || 'info@renace.space';
-        this.from = process.env.MAIL_FROM || `"${brandName}" <${fromEmail}>`;
-        this.replyTo = process.env.MAIL_REPLY_TO || undefined;
-        this.bcc = process.env.MAIL_BCC || undefined;
-        this.webUrl = process.env.APP_WEB_URL || 'https://app.saldanamusic.com';
+    const brandName = process.env.MAIL_BRAND_NAME || 'Saldaña Music';
+    const fromEmail = process.env.MAIL_FROM_EMAIL || 'info@renace.space';
+    this.from = process.env.MAIL_FROM || `"${brandName}" <${fromEmail}>`;
+    this.replyTo = process.env.MAIL_REPLY_TO || undefined;
+    this.bcc = process.env.MAIL_BCC || undefined;
+    this.webUrl = process.env.APP_WEB_URL || 'https://app.saldanamusic.com';
 
-        if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-            console.warn('⚠️ SMTP credentials not configured. Email sending will fail.');
-        }
+    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+      console.warn('⚠️ SMTP credentials not configured. Email sending will fail.');
     }
+  }
 
-    private escapeHtml(input: string) {
-        return input
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-    }
+  private escapeHtml(input: string) {
+    return input
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
 
-    private renderTemplate(params: { title: string; preheader: string; bodyHtml: string; cta?: { label: string; url: string } }) {
-        const title = this.escapeHtml(params.title);
-        const preheader = this.escapeHtml(params.preheader);
-        const cta = params.cta
-            ? `
+  private renderTemplate(params: { title: string; preheader: string; bodyHtml: string; cta?: { label: string; url: string } }) {
+    const title = this.escapeHtml(params.title);
+    const preheader = this.escapeHtml(params.preheader);
+    const cta = params.cta
+      ? `
               <div style="margin:28px 0 10px; text-align:center;">
                 <a href="${params.cta.url}" style="display:inline-block; background:#D4AF37; color:#000; padding:12px 18px; border-radius:10px; font-weight:700; letter-spacing:0.02em; text-decoration:none;">${this.escapeHtml(params.cta.label)}</a>
               </div>
             `
-            : '';
+      : '';
 
-        return `
+    return `
 <!doctype html>
 <html>
   <head>
@@ -95,85 +95,99 @@ export class MailService {
     </table>
   </body>
 </html>`;
-    }
+  }
 
-    private async send(params: { to: string; subject: string; text: string; html: string }) {
-        const mailOptions: nodemailer.SendMailOptions = {
-            from: this.from,
-            to: params.to,
-            subject: params.subject,
-            text: params.text,
-            html: params.html,
-        };
-        if (this.replyTo) mailOptions.replyTo = this.replyTo;
-        if (this.bcc) mailOptions.bcc = this.bcc;
+  private async send(params: { to: string; subject: string; text: string; html: string }) {
+    const mailOptions: nodemailer.SendMailOptions = {
+      from: this.from,
+      to: params.to,
+      subject: params.subject,
+      text: params.text,
+      html: params.html,
+    };
+    if (this.replyTo) mailOptions.replyTo = this.replyTo;
+    if (this.bcc) mailOptions.bcc = this.bcc;
 
-        const info = await this.transporter.sendMail(mailOptions);
-        console.log(`Mail sent to=${params.to} subject="${params.subject}" messageId=${info.messageId}`);
-        return info;
-    }
+    const info = await this.transporter.sendMail(mailOptions);
+    console.log(`Mail sent to=${params.to} subject="${params.subject}" messageId=${info.messageId}`);
+    return info;
+  }
 
-    async sendUserWelcome(email: string, name: string) {
-        const safeName = name || 'Usuario';
-        const subject = 'Bienvenido a Saldaña Music';
-        const text = `Hola ${safeName},\n\nBienvenido a Saldaña Music. Ya puedes gestionar tus split sheets y colaboraciones desde: ${this.webUrl}`;
-        const html = this.renderTemplate({
-            title: subject,
-            preheader: `Bienvenido, ${safeName}. Tu cuenta está lista.`,
-            bodyHtml: `Hola <strong>${this.escapeHtml(safeName)}</strong>,<br /><br />
+  async sendUserWelcome(email: string, name: string) {
+    const safeName = name || 'Usuario';
+    const subject = 'Bienvenido a Saldaña Music';
+    const text = `Hola ${safeName},\n\nBienvenido a Saldaña Music. Ya puedes gestionar tus split sheets y colaboraciones desde: ${this.webUrl}`;
+    const html = this.renderTemplate({
+      title: subject,
+      preheader: `Bienvenido, ${safeName}. Tu cuenta está lista.`,
+      bodyHtml: `Hola <strong>${this.escapeHtml(safeName)}</strong>,<br /><br />
               Bienvenido a Saldaña Music. Ya puedes gestionar tus split sheets, colaboraciones y firmas desde tu panel.`,
-            cta: { label: 'Ir al Panel', url: `${this.webUrl}/dashboard` },
-        });
-        await this.send({ to: email, subject, text, html });
-    }
+      cta: { label: 'Ir al Panel', url: `${this.webUrl}/dashboard` },
+    });
+    await this.send({ to: email, subject, text, html });
+  }
 
-    async sendSignatureRequest(email: string, inviterName: string, splitSheetTitle: string, link: string) {
-        const subject = `Solicitud de Firma: ${splitSheetTitle}`;
-        const text = `${inviterName} te invitó a firmar el split sheet "${splitSheetTitle}".\n\nRevisa y firma aquí: ${link}`;
-        const html = this.renderTemplate({
-            title: subject,
-            preheader: `Firma requerida: ${splitSheetTitle}`,
-            bodyHtml: `${this.escapeHtml(inviterName)} te añadió como colaborador en <strong>${this.escapeHtml(splitSheetTitle)}</strong>.<br /><br />
+  async sendSignatureRequest(email: string, inviterName: string, splitSheetTitle: string, link: string) {
+    const subject = `Solicitud de Firma: ${splitSheetTitle}`;
+    const text = `${inviterName} te invitó a firmar el split sheet "${splitSheetTitle}".\n\nRevisa y firma aquí: ${link}`;
+    const html = this.renderTemplate({
+      title: subject,
+      preheader: `Firma requerida: ${splitSheetTitle}`,
+      bodyHtml: `${this.escapeHtml(inviterName)} te añadió como colaborador en <strong>${this.escapeHtml(splitSheetTitle)}</strong>.<br /><br />
               Revisa los porcentajes y firma el acuerdo cuando estés listo.`,
-            cta: { label: 'Revisar y Firmar', url: link },
-        });
-        await this.send({ to: email, subject, text, html });
-    }
+      cta: { label: 'Revisar y Firmar', url: link },
+    });
+    await this.send({ to: email, subject, text, html });
+  }
 
-    async sendPasswordReset(email: string, resetLink: string) {
-        const subject = 'Restablecer Contraseña - Saldaña Music';
-        const text = `Solicitaste restablecer tu contraseña.\n\nUsa este enlace: ${resetLink}\n\nSi no fuiste tú, ignora este correo.`;
-        const html = this.renderTemplate({
-            title: subject,
-            preheader: 'Solicitud de restablecimiento de contraseña',
-            bodyHtml: `Recibimos una solicitud para restablecer tu contraseña.<br /><br />
+  async sendPasswordReset(email: string, resetLink: string) {
+    const subject = 'Restablecer Contraseña - Saldaña Music';
+    const text = `Solicitaste restablecer tu contraseña.\n\nUsa este enlace: ${resetLink}\n\nSi no fuiste tú, ignora este correo.`;
+    const html = this.renderTemplate({
+      title: subject,
+      preheader: 'Solicitud de restablecimiento de contraseña',
+      bodyHtml: `Recibimos una solicitud para restablecer tu contraseña.<br /><br />
               Si fuiste tú, continúa con el enlace. Si no, puedes ignorar este correo.`,
-            cta: { label: 'Restablecer Contraseña', url: resetLink },
-        });
-        await this.send({ to: email, subject, text, html });
-    }
+      cta: { label: 'Restablecer Contraseña', url: resetLink },
+    });
+    await this.send({ to: email, subject, text, html });
+  }
 
-    async sendSplitSheetCompleted(email: string, splitSheetTitle: string, downloadLink: string) {
-        const subject = `Split Sheet Completado: ${splitSheetTitle}`;
-        const text = `¡Split Sheet completado!\n\nTodos los colaboradores han firmado "${splitSheetTitle}".\n\nAccede aquí: ${downloadLink}`;
-        const html = this.renderTemplate({
-            title: subject,
-            preheader: `Completado: ${splitSheetTitle}`,
-            bodyHtml: `Todos los colaboradores han firmado <strong>${this.escapeHtml(splitSheetTitle)}</strong>.`,
-            cta: { label: 'Ver Documento', url: downloadLink },
-        });
-        await this.send({ to: email, subject, text, html });
-    }
+  async sendSplitSheetCompleted(email: string, splitSheetTitle: string, downloadLink: string) {
+    const subject = `Split Sheet Completado: ${splitSheetTitle}`;
+    const text = `¡Split Sheet completado!\n\nTodos los colaboradores han firmado "${splitSheetTitle}".\n\nAccede aquí: ${downloadLink}`;
+    const html = this.renderTemplate({
+      title: subject,
+      preheader: `Completado: ${splitSheetTitle}`,
+      bodyHtml: `Todos los colaboradores han firmado <strong>${this.escapeHtml(splitSheetTitle)}</strong>.`,
+      cta: { label: 'Ver Documento', url: downloadLink },
+    });
+    await this.send({ to: email, subject, text, html });
+  }
 
-    async sendCollaboratorInvite(email: string, inviterName: string, splitSheetTitle: string, inviteLink: string) {
-        const subject = `Invitación a Colaborar: ${splitSheetTitle}`;
-        const text = `${inviterName} te invitó a colaborar en "${splitSheetTitle}".\n\nAcepta la invitación aquí: ${inviteLink}`;
-        const html = this.renderTemplate({
-            title: subject,
-            preheader: `Invitación: ${splitSheetTitle}`,
-            bodyHtml: `${this.escapeHtml(inviterName)} te invitó a unirte como colaborador en <strong>${this.escapeHtml(splitSheetTitle)}</strong>.`,
-            cta: { label: 'Aceptar Invitación', url: inviteLink },
-        });
-        await this.send({ to: email, subject, text, html });
-    }
+  async sendCollaboratorInvite(email: string, inviterName: string, splitSheetTitle: string, inviteLink: string) {
+    const subject = `Invitación a Colaborar: ${splitSheetTitle}`;
+    const text = `${inviterName} te invitó a colaborar en "${splitSheetTitle}".\n\nAcepta la invitación aquí: ${inviteLink}`;
+    const html = this.renderTemplate({
+      title: subject,
+      preheader: `Invitación: ${splitSheetTitle}`,
+      bodyHtml: `${this.escapeHtml(inviterName)} te invitó a unirte como colaborador en <strong>${this.escapeHtml(splitSheetTitle)}</strong>.`,
+      cta: { label: 'Aceptar Invitación', url: inviteLink },
+    });
+    await this.send({ to: email, subject, text, html });
+  }
+
+  async sendSplitSheetCreated(email: string, userName: string, splitSheetTitle: string, link: string) {
+    const subject = `Split Sheet Creado: ${splitSheetTitle}`;
+    const text = `Has creado exitosamente el split sheet "${splitSheetTitle}".\n\nPuedes verlo aquí: ${link}`;
+    const html = this.renderTemplate({
+      title: subject,
+      preheader: `Creado: ${splitSheetTitle}`,
+      bodyHtml: `Hola <strong>${this.escapeHtml(userName)}</strong>,<br /><br />
+            Has creado exitosamente el split sheet <strong>${this.escapeHtml(splitSheetTitle)}</strong>.<br />
+            Ahora puedes invitar colaboradores o iniciar el proceso de firmas.`,
+      cta: { label: 'Ver Split Sheet', url: link },
+    });
+    await this.send({ to: email, subject, text, html });
+  }
 }
