@@ -172,11 +172,14 @@ export class SplitSheetService {
     }
 
     async findAllByUser(userId: string, email: string) {
+        // Prevent data mixing if email is empty
+        const conditions: any[] = [{ owner: { id: userId } }];
+        if (email && email.trim().length > 0) {
+            conditions.push({ collaborators: { email: email } });
+        }
+
         return this.splitSheetRepository.find({
-            where: [
-                { owner: { id: userId } },
-                { collaborators: { email: email } }
-            ],
+            where: conditions,
             relations: ['collaborators', 'owner'],
             order: { createdAt: 'DESC' },
         });

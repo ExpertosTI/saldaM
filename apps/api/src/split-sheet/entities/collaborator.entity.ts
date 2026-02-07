@@ -59,7 +59,7 @@ export class Collaborator {
     @Column({ nullable: true })
     signatureSnapshotPath: string;
 
-    @ManyToOne(() => SplitSheet, (sheet) => sheet.collaborators)
+    @ManyToOne(() => SplitSheet, (sheet) => sheet.collaborators, { onDelete: 'CASCADE' })
     splitSheet: SplitSheet;
 
     @ManyToOne(() => User, { nullable: true })

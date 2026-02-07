@@ -152,28 +152,33 @@ export default async function DashboardHome({
             </div>
 
             {/* Recent Activity List */}
-            <h2 className="text-lg sm:text-xl font-bold text-white mb-4 sm:mb-6 border-b border-gray-800 pb-2">{t('recentAgreements')}</h2>
+            <h2 className="text-lg sm:text-xl font-bold text-white mb-4 sm:mb-6 border-b border-primary/20 pb-2">{t('recentAgreements')}</h2>
             <div className="space-y-3 sm:space-y-4">
                 {recentSheets.length === 0 ? (
-                    <div className="text-gray-500 text-center py-8 text-sm sm:text-base">{t('noSheetsFound')}</div>
+                    <div className="text-gray-500 text-center py-8 text-sm sm:text-base glass-panel rounded-xl">
+                        <div className="text-xl mb-2">📄</div>
+                        {t('noSheetsFound')}
+                    </div>
                 ) : (
                     recentSheets.slice(0, 5).map((sheet: any) => (
-                        <div key={sheet.id} className="bg-neutral-900/50 border border-neutral-800 rounded-lg p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 hover:bg-neutral-800/50 transition-colors">
+                        <div key={sheet.id} className="glass-panel p-3 sm:p-4 rounded-xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 hover:border-primary/40 transition-all group">
                             <div className="flex items-center gap-3 sm:gap-4">
-                                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded bg-neutral-800 flex items-center justify-center text-lg">🎵</div>
+                                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-lg shadow-inner shadow-primary/10">🎵</div>
                                 <div>
-                                    <h4 className="font-bold text-white text-sm">{sheet.title}</h4>
-                                    <p className="text-xs text-gray-500">{t('created')}: {new Date(sheet.createdAt).toLocaleDateString()}</p>
+                                    <h4 className="font-bold text-white text-sm group-hover:text-primary transition-colors">{sheet.title}</h4>
+                                    <p className="text-xs text-gray-400">{t('created')}: {new Date(sheet.createdAt).toLocaleDateString()}</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3 sm:gap-4 ml-12 sm:ml-0">
                                 <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${getStatusStyle(sheet.status)}`}>
                                     {getStatusLabel(sheet.status)}
                                 </span>
-                                <ActionsRow
-                                    sheet={sheet}
-                                    currentUserId={currentUserId}
-                                />
+                                <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <ActionsRow
+                                        sheet={sheet}
+                                        currentUserId={currentUserId}
+                                    />
+                                </div>
                             </div>
                         </div>
                     ))
