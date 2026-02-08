@@ -84,6 +84,11 @@ const SignatureCanvas = forwardRef<SignatureCanvasRef, SignatureCanvasProps>(
         }, []);
 
         const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
+            // Prevent scrolling on touch devices
+            if ('touches' in e && e.cancelable) {
+                e.preventDefault();
+            }
+
             setIsDrawing(true);
             const canvas = canvasRef.current;
             if (!canvas) return;
@@ -91,9 +96,10 @@ const SignatureCanvas = forwardRef<SignatureCanvasRef, SignatureCanvasProps>(
             const ctx = canvas.getContext('2d');
             if (!ctx) return;
 
-            // Responsive line width
+            // Ensure context props are set correctly every time we start
             ctx.lineWidth = 3;
             ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
             ctx.strokeStyle = 'black';
 
             const { x, y } = getCoordinates(e, canvas);
@@ -102,6 +108,11 @@ const SignatureCanvas = forwardRef<SignatureCanvasRef, SignatureCanvasProps>(
         };
 
         const draw = (e: React.MouseEvent | React.TouchEvent) => {
+            // Prevent scrolling on touch devices
+            if ('touches' in e && e.cancelable) {
+                e.preventDefault();
+            }
+
             if (!isDrawing) return;
             const canvas = canvasRef.current;
             if (!canvas) return;
@@ -116,29 +127,15 @@ const SignatureCanvas = forwardRef<SignatureCanvasRef, SignatureCanvasProps>(
             if (!hasDrawn) setHasDrawn(true);
         };
 
-        const stopDrawing = () => {
+        const stopDrawing = (e?: React.MouseEvent | React.TouchEvent) => {
+            // Prevent default if needed, though usually not for end
             if (isDrawing) {
                 setIsDrawing(false);
                 if (onEnd) onEnd();
             }
         };
 
-        const getCoordinates = (e: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) => {
-            let clientX, clientY;
-            if ('touches' in e && e.touches.length > 0) {
-                clientX = e.touches[0]!.clientX;
-                clientY = e.touches[0]!.clientY;
-            } else {
-                clientX = (e as React.MouseEvent).clientX;
-                clientY = (e as React.MouseEvent).clientY;
-            }
-
-            const rect = canvas.getBoundingClientRect();
-            return {
-                x: clientX - rect.left,
-                y: clientY - rect.top
-            };
-        };
+        // ... getCoordinates ...
 
         return (
             <canvas

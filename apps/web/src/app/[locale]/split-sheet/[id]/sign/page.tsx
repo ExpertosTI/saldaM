@@ -15,11 +15,12 @@ export default function SignSplitSheetPage() {
     const { toast } = useToast();
     const sigPad = useRef<SignatureCanvasRef>(null);
 
+    const [user, setUser] = useState<any>(null); // Add user state
     const [loading, setLoading] = useState(true);
     const [splitSheet, setSplitSheet] = useState<any>(null);
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
     const [showSignModal, setShowSignModal] = useState(false);
-    const [signMode, setSignMode] = useState<'draw' | 'type'>('draw');
+    const [signMode, setSignMode] = useState<'draw' | 'type' | 'saved'>('draw'); // Add 'saved'
     const [typedSignature, setTypedSignature] = useState('');
     const [acceptedTerms, setAcceptedTerms] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -39,8 +40,9 @@ export default function SignSplitSheetPage() {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (userRes.ok) {
-                const user = await userRes.json();
-                setCurrentUserEmail(user.email);
+                const userData = await userRes.json();
+                setUser(userData);
+                setCurrentUserEmail(userData.email);
             }
 
             // Get Sheet Details
@@ -75,7 +77,7 @@ export default function SignSplitSheetPage() {
         if (signMode === 'draw') {
             if (sigPad.current?.isEmpty()) return toast('Por favor firma el documento.', 'warning');
             signatureData = sigPad.current?.getTrimmedCanvas().toDataURL('image/png') || '';
-        } else {
+        } else if (signMode === 'type') {
             if (!typedSignature.trim()) return toast('Por favor escribe tu nombre.', 'warning');
             // Convert text to image (simulated for now, backend could handle text->image)
             const canvas = document.createElement('canvas');
@@ -87,21 +89,26 @@ export default function SignSplitSheetPage() {
                 ctx.fillText(typedSignature, 20, 60);
                 signatureData = canvas.toDataURL('image/png');
             }
+        } else if (signMode === 'saved') {
+            if (!user?.signatureUrl) return toast('No tienes una firma guardada.', 'error');
+            signatureData = user.signatureUrl;
         }
 
         setIsSubmitting(true);
         const token = getToken();
 
         try {
-            // 1. Save Signature to User Profile (Adoption)
-            await fetch(`${API_BASE_URL}/users/signature`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`
-                },
-                body: JSON.stringify({ signature: signatureData })
-            });
+            // 1. Save Signature to User Profile (Adoption) - Only if not using saved and it's a new one
+            if (signMode !== 'saved') {
+                await fetch(`${API_BASE_URL}/users/signature`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ signature: signatureData })
+                });
+            }
 
             // 2. Biometric Verification (FaceID/TouchID)
             // Ideally we use @simplewebauthn/browser here. 
@@ -209,30 +216,40 @@ export default function SignSplitSheetPage() {
                         </div>
 
                         {/* Tabs */}
-                        <div className="flex gap-4 mb-4 border-b border-border pb-2 flex-shrink-0">
+                        <div className="flex gap-2 sm:gap-4 mb-4 border-b border-border pb-2 flex-shrink-0 overflow-x-auto">
                             <button
                                 onClick={() => setSignMode('draw')}
-                                className={`pb-2 text-sm font-bold transition-colors flex-1 text-center ${signMode === 'draw' ? 'text-primary border-b-2 border-primary' : 'text-textMuted hover:text-textMain'}`}
+                                className={`pb-2 text-xs sm:text-sm font-bold transition-colors flex-1 text-center whitespace-nowrap ${signMode === 'draw' ? 'text-primary border-b-2 border-primary' : 'text-textMuted hover:text-textMain'}`}
                             >
                                 DIBUJAR
                             </button>
                             <button
                                 onClick={() => setSignMode('type')}
-                                className={`pb-2 text-sm font-bold transition-colors flex-1 text-center ${signMode === 'type' ? 'text-primary border-b-2 border-primary' : 'text-textMuted hover:text-textMain'}`}
+                                className={`pb-2 text-xs sm:text-sm font-bold transition-colors flex-1 text-center whitespace-nowrap ${signMode === 'type' ? 'text-primary border-b-2 border-primary' : 'text-textMuted hover:text-textMain'}`}
                             >
                                 ESCRIBIR
                             </button>
+                            {user?.signatureUrl && (
+                                <button
+                                    onClick={() => setSignMode('saved')}
+                                    className={`pb-2 text-xs sm:text-sm font-bold transition-colors flex-1 text-center whitespace-nowrap ${signMode === 'saved' ? 'text-primary border-b-2 border-primary' : 'text-textMuted hover:text-textMain'}`}
+                                >
+                                    USAR GUARDADA
+                                </button>
+                            )}
                         </div>
 
                         {/* Input Area - Grows to fill space on mobile */}
-                        <div className="bg-white rounded-xl mb-4 overflow-hidden flex-1 flex items-center justify-center relative group min-h-[300px] border border-gray-200">
-                            {signMode === 'draw' ? (
+                        <div className="bg-white rounded-xl mb-4 overflow-hidden flex-1 flex items-center justify-center relative group min-h-[250px] border border-gray-200">
+                            {signMode === 'draw' && (
                                 <SignatureCanvas
                                     ref={sigPad}
                                     canvasProps={{ className: 'w-full h-full touch-none' }}
                                     backgroundColor="white"
                                 />
-                            ) : (
+                            )}
+
+                            {signMode === 'type' && (
                                 <input
                                     type="text"
                                     placeholder="Escribe tu nombre completo"
@@ -241,6 +258,17 @@ export default function SignSplitSheetPage() {
                                     value={typedSignature}
                                     onChange={(e) => setTypedSignature(e.target.value)}
                                 />
+                            )}
+
+                            {signMode === 'saved' && user?.signatureUrl && (
+                                <div className="w-full h-full flex items-center justify-center bg-white p-4">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img
+                                        src={user.signatureUrl}
+                                        alt="Tu firma guardada"
+                                        className="max-w-full max-h-full object-contain"
+                                    />
+                                </div>
                             )}
 
                             {signMode === 'draw' && (
@@ -254,15 +282,15 @@ export default function SignSplitSheetPage() {
                         </div>
 
                         {/* Legal */}
-                        <div className="mb-4 sm:mb-6 flex-shrink-0">
-                            <label className="flex items-start gap-3 cursor-pointer group p-3 rounded-lg hover:bg-surface-highlight transition-colors">
+                        <div className="mb-4 flex-shrink-0">
+                            <label className="flex items-start gap-3 cursor-pointer group p-3 rounded-lg hover:bg-surface-highlight transition-colors bg-surface-highlight/30 border border-border/50">
                                 <input
                                     type="checkbox"
                                     className="mt-1 w-5 h-5 rounded border-border bg-surface-highlight text-primary focus:ring-primary"
                                     checked={acceptedTerms}
                                     onChange={(e) => setAcceptedTerms(e.target.checked)}
                                 />
-                                <span className="text-xs sm:text-sm text-textMuted group-hover:text-textMain transition-colors">
+                                <span className="text-xs sm:text-sm text-textMuted group-hover:text-textMain transition-colors leading-relaxed">
                                     Acepto usar esta firma electrónica como mi representación legal vinculante para este acuerdo de Split Sheet. Entiendo que esta acción es final e irrevocable.
                                 </span>
                             </label>
