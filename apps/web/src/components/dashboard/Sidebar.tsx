@@ -265,7 +265,7 @@ export default function Sidebar() {
                     {/* Quick Actions Row */}
                     <div className="flex items-center gap-2 mb-3">
                         <LanguageSwitcher />
-                        {/* ThemeToggle Removed */}
+                        <ThemeToggle />
                         <div className="flex-grow" /> {/* Spacer */}
                         <Link
                             href={`/${locale}/dashboard/create`}

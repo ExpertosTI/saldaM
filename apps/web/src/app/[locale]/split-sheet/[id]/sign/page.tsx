@@ -141,26 +141,26 @@ export default function SignSplitSheetPage() {
     const alreadySigned = myCollaboratorStatus?.hasSigned;
 
     return (
-        <div className="min-h-screen bg-neutral-950 text-white flex flex-col md:flex-row">
+        <div className="min-h-screen bg-background text-textMain flex flex-col md:flex-row">
             {/* Sidebar Details */}
-            <div className="w-full md:w-80 border-r border-neutral-800 p-6 flex-shrink-0 bg-black/50 backdrop-blur-sm">
+            <div className="w-full md:w-80 border-r border-border p-6 flex-shrink-0 bg-surface/50 backdrop-blur-sm">
                 <div className="mb-8">
-                    <Link href={`/${params.locale}/dashboard`} className="text-gray-500 hover:text-white text-sm flex items-center gap-2 mb-6">
+                    <Link href={`/${params.locale}/dashboard`} className="text-textMuted hover:text-textMain text-sm flex items-center gap-2 mb-6 transition-colors">
                         ← Volver al Dashboard
                     </Link>
-                    <h1 className="text-xl font-bold text-white mb-2">{splitSheet?.title}</h1>
-                    <p className="text-sm text-gray-400">Creado el {new Date(splitSheet?.createdAt).toLocaleDateString()}</p>
+                    <h1 className="text-xl font-bold text-textMain mb-2">{splitSheet?.title}</h1>
+                    <p className="text-sm text-textMuted">Creado el {new Date(splitSheet?.createdAt).toLocaleDateString()}</p>
                 </div>
 
-                <div className="mb-8 p-4 bg-white/5 rounded-xl border border-white/5">
-                    <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4 border-b border-white/5 pb-2">Estado de Firmas</h3>
+                <div className="mb-8 p-4 bg-surface-highlight rounded-xl border border-border">
+                    <h3 className="text-xs font-bold text-textMuted uppercase tracking-wider mb-4 border-b border-border pb-2">Estado de Firmas</h3>
                     <div className="space-y-4">
                         {splitSheet?.collaborators.map((c: any) => (
                             <div key={c.id} className="flex items-center gap-3">
                                 <div className={`w-2.5 h-2.5 rounded-full shadow-lg ${c.hasSigned ? 'bg-green-500 shadow-green-500/50' : 'bg-yellow-500 shadow-yellow-500/50 animate-pulse'}`} />
                                 <div>
-                                    <div className="text-sm font-bold text-white leading-tight">{c.legalName || c.email}</div>
-                                    <div className="text-xs text-gray-400 mt-0.5">{c.role} • <span className="text-primary">{c.percentage}%</span></div>
+                                    <div className="text-sm font-bold text-textMain leading-tight">{c.legalName || c.email}</div>
+                                    <div className="text-xs text-textMuted mt-0.5">{c.role} • <span className="text-primary">{c.percentage}%</span></div>
                                 </div>
                             </div>
                         ))}
@@ -175,49 +175,49 @@ export default function SignSplitSheetPage() {
                         <span className="text-xl">✍️</span> FIRMAR AHORA
                     </button>
                 ) : (
-                    <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-xl text-green-400 text-center font-bold">
+                    <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-xl text-green-500 text-center font-bold">
                         ✓ Ya has firmado este documento
                     </div>
                 )}
             </div>
 
             {/* PDF Viewer */}
-            <div className="flex-1 bg-neutral-900 p-4 md:p-8 flex items-center justify-center overflow-auto">
+            <div className="flex-1 bg-surface p-4 md:p-8 flex items-center justify-center overflow-auto">
                 {pdfUrl ? (
                     <iframe
                         src={pdfUrl}
-                        className="w-full h-full min-h-[600px] rounded-lg shadow-2xl border border-neutral-800"
+                        className="w-full h-full min-h-[600px] rounded-lg shadow-2xl border border-border"
                         title="Document Preview"
                     />
                 ) : (
-                    <div className="text-gray-500">No se pudo cargar la vista previa del PDF.</div>
+                    <div className="text-textMuted">No se pudo cargar la vista previa del PDF.</div>
                 )}
             </div>
 
             {/* Signature Modal */}
             {showSignModal && (
                 <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/80 backdrop-blur-sm">
-                    <div className="w-full h-full sm:h-auto sm:max-w-lg bg-neutral-900 border-0 sm:border border-neutral-800 sm:rounded-2xl p-6 shadow-2xl flex flex-col">
-                        <h2 className="text-2xl font-bold text-white mb-6">Adoptar tu Firma</h2>
+                    <div className="w-full h-full sm:h-auto sm:max-w-lg bg-surface border-0 sm:border border-border sm:rounded-2xl p-6 shadow-2xl flex flex-col">
+                        <h2 className="text-2xl font-bold text-textMain mb-6">Adoptar tu Firma</h2>
 
                         {/* Tabs */}
-                        <div className="flex gap-4 mb-4 sm:mb-6 border-b border-neutral-800 pb-2 flex-shrink-0">
+                        <div className="flex gap-4 mb-4 sm:mb-6 border-b border-border pb-2 flex-shrink-0">
                             <button
                                 onClick={() => setSignMode('draw')}
-                                className={`pb-2 text-sm font-bold transition-colors ${signMode === 'draw' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-white'}`}
+                                className={`pb-2 text-sm font-bold transition-colors ${signMode === 'draw' ? 'text-primary border-b-2 border-primary' : 'text-textMuted hover:text-textMain'}`}
                             >
                                 DIBUJAR
                             </button>
                             <button
                                 onClick={() => setSignMode('type')}
-                                className={`pb-2 text-sm font-bold transition-colors ${signMode === 'type' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-white'}`}
+                                className={`pb-2 text-sm font-bold transition-colors ${signMode === 'type' ? 'text-primary border-b-2 border-primary' : 'text-textMuted hover:text-textMain'}`}
                             >
                                 ESCRIBIR
                             </button>
                         </div>
 
                         {/* Input Area - Grows to fill space on mobile */}
-                        <div className="bg-white rounded-xl mb-4 sm:mb-6 overflow-hidden flex-1 sm:flex-none sm:h-48 flex items-center justify-center relative group min-h-[200px]">
+                        <div className="bg-white rounded-xl mb-4 sm:mb-6 overflow-hidden flex-1 sm:flex-none sm:h-48 flex items-center justify-center relative group min-h-[200px] border border-gray-200">
                             {signMode === 'draw' ? (
                                 <SignatureCanvas
                                     ref={sigPad}
@@ -250,11 +250,11 @@ export default function SignSplitSheetPage() {
                             <label className="flex items-start gap-3 cursor-pointer group">
                                 <input
                                     type="checkbox"
-                                    className="mt-1 w-4 h-4 rounded border-neutral-700 bg-neutral-800 text-primary focus:ring-primary"
+                                    className="mt-1 w-4 h-4 rounded border-border bg-surface-highlight text-primary focus:ring-primary"
                                     checked={acceptedTerms}
                                     onChange={(e) => setAcceptedTerms(e.target.checked)}
                                 />
-                                <span className="text-sm text-gray-400 group-hover:text-gray-300 transition-colors">
+                                <span className="text-sm text-textMuted group-hover:text-textMain transition-colors">
                                     Acepto usar esta firma electrónica como mi representación legal vinculante para este acuerdo de Split Sheet. Entiendo que esta acción es final e irrevocable.
                                 </span>
                             </label>
@@ -264,7 +264,7 @@ export default function SignSplitSheetPage() {
                         <div className="flex gap-3 flex-shrink-0">
                             <button
                                 onClick={() => setShowSignModal(false)}
-                                className="flex-1 py-3 bg-neutral-800 text-white font-bold rounded-lg hover:bg-neutral-700 transition-colors"
+                                className="flex-1 py-3 bg-surface-highlight text-textMain font-bold rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-700 hover:bg-gray-200 transition-colors"
                             >
                                 Cancelar
                             </button>
