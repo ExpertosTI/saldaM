@@ -52,6 +52,7 @@ const roleLabels: Record<string, string> = {
 
 export default function CollaboratorsPage() {
     const t = useTranslations('Dashboard');
+    const { success, error } = useToast();
     const [contacts, setContacts] = useState<Contact[]>([]);
     const [stats, setStats] = useState<ContactStats | null>(null);
     const [loading, setLoading] = useState(true);
