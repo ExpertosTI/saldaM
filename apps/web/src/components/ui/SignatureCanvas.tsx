@@ -20,96 +20,114 @@ const SignatureCanvas = forwardRef<SignatureCanvasRef, SignatureCanvasProps>(
         const canvasRef = useRef<HTMLCanvasElement>(null);
         const [isDrawing, setIsDrawing] = useState(false);
         const [hasDrawn, setHasDrawn] = useState(false);
-        const [debugInfo, setDebugInfo] = useState('');
 
-        useImperativeHandle(ref, () => ({
-            clear: () => {
-                const canvas = canvasRef.current;
-                if (canvas) {
-                    const ctx = canvas.getContext('2d');
-                    ctx?.clearRect(0, 0, canvas.width, canvas.height);
-                    setHasDrawn(false);
-                    setDebugInfo('Cleared');
+        // Resize handler that preserves content
+        const handleResize = () => {
+            const canvas = canvasRef.current;
+            if (!canvas) return;
+
+            const parent = canvas.parentElement;
+            if (!parent) return;
+
+            const rect = parent.getBoundingClientRect();
+
+            // Only resize if dimensions changed significantly
+            if (Math.abs(canvas.width - rect.width) > 1 || Math.abs(canvas.height - rect.height) > 1) {
+                const ctx = canvas.getContext('2d');
+                if (!ctx) return;
+
+                // Save content
+                let savedData: ImageData | null = null;
+                try {
+                    savedData = hasDrawn ? ctx.getImageData(0, 0, canvas.width, canvas.height) : null;
+                } catch (e) {
+                    console.warn('Could not save canvas data', e);
                 }
-            },
-            isEmpty: () => !hasDrawn,
-            getTrimmedCanvas: () => {
-                return canvasRef.current!;
-            },
-            toDataURL: (type?: string, encoderOptions?: number) => {
-                return canvasRef.current?.toDataURL(type, encoderOptions) || '';
+
+                // Resize
+                canvas.width = rect.width;
+                canvas.height = rect.height;
+
+                // Restore content
+                if (savedData) {
+                    ctx.putImageData(savedData, 0, 0);
+                }
+
+                // Reset context styles
+                ctx.lineWidth = 3;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.strokeStyle = '#000000';
             }
-        }));
+        };
 
         useEffect(() => {
             const canvas = canvasRef.current;
             if (!canvas) return;
 
-            const ctx = canvas.getContext('2d');
-            if (!ctx) return;
+            // Initial setup
+            handleResize();
 
-            const resizeCanvas = () => {
-                const parent = canvas.parentElement;
-                if (parent) {
-                    const rect = parent.getBoundingClientRect();
-                    if (canvas.width !== rect.width || canvas.height !== rect.height) {
-                        // Save current content
-                        const savedData = hasDrawn ? ctx.getImageData(0, 0, canvas.width, canvas.height) : null;
-
-                        canvas.width = rect.width;
-                        canvas.height = rect.height;
-
-                        // Restore content if exists
-                        if (savedData) {
-                            ctx.putImageData(savedData, 0, 0);
-                        }
-
-                        // Reset context props
-                        ctx.lineCap = 'round';
-                        ctx.lineJoin = 'round';
-                        ctx.strokeStyle = 'black';
-                        ctx.lineWidth = 3;
-                    }
-                }
-            };
-
+            // Resize observer
             const resizeObserver = new ResizeObserver(() => {
-                resizeCanvas();
+                requestAnimationFrame(handleResize);
             });
 
             if (canvas.parentElement) {
                 resizeObserver.observe(canvas.parentElement);
             }
 
-            resizeCanvas();
+            // Also listen to window resize as fallback
+            window.addEventListener('resize', handleResize);
 
             return () => {
                 resizeObserver.disconnect();
+                window.removeEventListener('resize', handleResize);
             };
-        }, [hasDrawn]); // Add hasDrawn dependency to capture correct state for saving
+        }, [hasDrawn]);
+
+        // Helpers
+        const getPoint = (e: React.MouseEvent | React.TouchEvent | TouchEvent | MouseEvent) => {
+            const canvas = canvasRef.current;
+            if (!canvas) return { x: 0, y: 0 };
+
+            const rect = canvas.getBoundingClientRect();
+            let clientX = 0;
+            let clientY = 0;
+
+            if ('touches' in e) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = (e as React.MouseEvent).clientX;
+                clientY = (e as React.MouseEvent).clientY;
+            }
+
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
+        };
 
         const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
+            // CRITICAL: Prevent default to stop scrolling
+            // We only prevent default if it's a touch event to avoid blocking mouse clicks elsewhere if needed
             if ('touches' in e && e.cancelable) {
                 e.preventDefault();
             }
 
             setIsDrawing(true);
-            const canvas = canvasRef.current;
-            if (!canvas) return;
-
-            const ctx = canvas.getContext('2d');
+            const ctx = canvasRef.current?.getContext('2d');
             if (!ctx) return;
 
             ctx.lineWidth = 3;
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
-            ctx.strokeStyle = 'black';
+            ctx.strokeStyle = '#000000';
 
-            const { x, y } = getCoordinates(e, canvas);
+            const { x, y } = getPoint(e);
             ctx.beginPath();
             ctx.moveTo(x, y);
-
-            setDebugInfo(`Start: ${Math.round(x)},${Math.round(y)}`);
         };
 
         const draw = (e: React.MouseEvent | React.TouchEvent) => {
@@ -118,64 +136,61 @@ const SignatureCanvas = forwardRef<SignatureCanvasRef, SignatureCanvasProps>(
             }
 
             if (!isDrawing) return;
-            const canvas = canvasRef.current;
-            if (!canvas) return;
-
-            const ctx = canvas.getContext('2d');
+            const ctx = canvasRef.current?.getContext('2d');
             if (!ctx) return;
 
-            const { x, y } = getCoordinates(e, canvas);
+            const { x, y } = getPoint(e);
             ctx.lineTo(x, y);
             ctx.stroke();
 
             if (!hasDrawn) setHasDrawn(true);
-            setDebugInfo(`Move: ${Math.round(x)},${Math.round(y)}`);
         };
 
-        const stopDrawing = (e?: React.MouseEvent | React.TouchEvent) => {
+        const stopDrawing = () => {
             if (isDrawing) {
                 setIsDrawing(false);
                 if (onEnd) onEnd();
-                setDebugInfo('End');
             }
         };
 
-        const getCoordinates = (e: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) => {
-            let clientX, clientY;
-            if ('touches' in e && e.touches.length > 0) {
-                clientX = e.touches[0]!.clientX;
-                clientY = e.touches[0]!.clientY;
-            } else {
-                clientX = (e as React.MouseEvent).clientX;
-                clientY = (e as React.MouseEvent).clientY;
-            }
-
-            const rect = canvas.getBoundingClientRect();
-            return {
-                x: clientX - rect.left,
-                y: clientY - rect.top
-            };
-        };
+        useImperativeHandle(ref, () => ({
+            clear: () => {
+                const canvas = canvasRef.current;
+                if (canvas) {
+                    const ctx = canvas.getContext('2d');
+                    ctx?.clearRect(0, 0, canvas.width, canvas.height);
+                    setHasDrawn(false);
+                }
+            },
+            isEmpty: () => !hasDrawn,
+            getTrimmedCanvas: () => {
+                if (!canvasRef.current) throw new Error("Canvas is not initialized");
+                return canvasRef.current;
+            },
+            toDataURL: (type, options) => canvasRef.current?.toDataURL(type, options) || ''
+        }));
 
         return (
-            <div className="relative w-full h-full">
-                <canvas
-                    ref={canvasRef}
-                    {...canvasProps}
-                    style={{ ...canvasProps?.style, backgroundColor, touchAction: 'none' }}
-                    onMouseDown={startDrawing}
-                    onMouseMove={draw}
-                    onMouseUp={stopDrawing}
-                    onMouseLeave={stopDrawing}
-                    onTouchStart={startDrawing}
-                    onTouchMove={draw}
-                    onTouchEnd={stopDrawing}
-                />
-                {/* Debug element - temporary */}
-                <div className="absolute top-0 left-0 text-[10px] text-gray-300 pointer-events-none p-1">
-                    {debugInfo}
-                </div>
-            </div>
+            <canvas
+                ref={canvasRef}
+                {...canvasProps}
+                className={canvasProps?.className}
+                style={{
+                    ...canvasProps?.style,
+                    backgroundColor,
+                    touchAction: 'none', // CSS property to disable browser handling of gestures
+                    display: 'block',    // Removes bottom spacing
+                    width: '100%',
+                    height: '100%'
+                }}
+                onMouseDown={startDrawing}
+                onMouseMove={draw}
+                onMouseUp={stopDrawing}
+                onMouseLeave={stopDrawing}
+                onTouchStart={startDrawing}
+                onTouchMove={draw}
+                onTouchEnd={stopDrawing}
+            />
         );
     }
 );
