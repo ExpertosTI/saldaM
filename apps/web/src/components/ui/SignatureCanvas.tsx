@@ -33,7 +33,7 @@ const SignatureCanvas = forwardRef<SignatureCanvasRef, SignatureCanvasProps>(
 
             // Only resize if dimensions changed significantly
             if (Math.abs(canvas.width - rect.width) > 1 || Math.abs(canvas.height - rect.height) > 1) {
-                const ctx = canvas.getContext('2d');
+                const ctx = canvas.getContext('2d', { willReadFrequently: true });
                 if (!ctx) return;
 
                 // Save content
@@ -117,7 +117,7 @@ const SignatureCanvas = forwardRef<SignatureCanvasRef, SignatureCanvasProps>(
             }
 
             setIsDrawing(true);
-            const ctx = canvasRef.current?.getContext('2d');
+            const ctx = canvasRef.current?.getContext('2d', { willReadFrequently: true });
             if (!ctx) return;
 
             ctx.lineWidth = 3;
@@ -136,7 +136,7 @@ const SignatureCanvas = forwardRef<SignatureCanvasRef, SignatureCanvasProps>(
             }
 
             if (!isDrawing) return;
-            const ctx = canvasRef.current?.getContext('2d');
+            const ctx = canvasRef.current?.getContext('2d', { willReadFrequently: true });
             if (!ctx) return;
 
             const { x, y } = getPoint(e);
@@ -157,7 +157,7 @@ const SignatureCanvas = forwardRef<SignatureCanvasRef, SignatureCanvasProps>(
             clear: () => {
                 const canvas = canvasRef.current;
                 if (canvas) {
-                    const ctx = canvas.getContext('2d');
+                    const ctx = canvas.getContext('2d', { willReadFrequently: true });
                     ctx?.clearRect(0, 0, canvas.width, canvas.height);
                     setHasDrawn(false);
                 }

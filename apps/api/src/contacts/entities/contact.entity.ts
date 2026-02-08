@@ -45,7 +45,7 @@ export class Contact {
     @Column({ default: false })
     isFavorite: boolean;
 
-    @ManyToOne(() => User, (user) => user.id)
+    @ManyToOne(() => User)
     owner: User;
 
     @CreateDateColumn()
