@@ -197,39 +197,47 @@ export default function SignSplitSheetPage() {
             {/* Signature Modal */}
             {showSignModal && (
                 <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/80 backdrop-blur-sm">
-                    <div className="w-full h-full sm:h-auto sm:max-w-lg bg-surface border-0 sm:border border-border sm:rounded-2xl p-6 shadow-2xl flex flex-col">
-                        <h2 className="text-2xl font-bold text-textMain mb-6">Adoptar tu Firma</h2>
+                    <div className="w-full h-[100dvh] sm:h-auto sm:max-w-lg bg-surface border-0 sm:border border-border sm:rounded-2xl p-4 sm:p-6 shadow-2xl flex flex-col">
+                        <div className="flex justify-between items-center mb-4 sm:mb-6">
+                            <h2 className="text-xl sm:text-2xl font-bold text-textMain">Adoptar tu Firma</h2>
+                            <button
+                                onClick={() => setShowSignModal(false)}
+                                className="sm:hidden text-textMuted hover:text-textMain p-2"
+                            >
+                                ✕
+                            </button>
+                        </div>
 
                         {/* Tabs */}
-                        <div className="flex gap-4 mb-4 sm:mb-6 border-b border-border pb-2 flex-shrink-0">
+                        <div className="flex gap-4 mb-4 border-b border-border pb-2 flex-shrink-0">
                             <button
                                 onClick={() => setSignMode('draw')}
-                                className={`pb-2 text-sm font-bold transition-colors ${signMode === 'draw' ? 'text-primary border-b-2 border-primary' : 'text-textMuted hover:text-textMain'}`}
+                                className={`pb-2 text-sm font-bold transition-colors flex-1 text-center ${signMode === 'draw' ? 'text-primary border-b-2 border-primary' : 'text-textMuted hover:text-textMain'}`}
                             >
                                 DIBUJAR
                             </button>
                             <button
                                 onClick={() => setSignMode('type')}
-                                className={`pb-2 text-sm font-bold transition-colors ${signMode === 'type' ? 'text-primary border-b-2 border-primary' : 'text-textMuted hover:text-textMain'}`}
+                                className={`pb-2 text-sm font-bold transition-colors flex-1 text-center ${signMode === 'type' ? 'text-primary border-b-2 border-primary' : 'text-textMuted hover:text-textMain'}`}
                             >
                                 ESCRIBIR
                             </button>
                         </div>
 
                         {/* Input Area - Grows to fill space on mobile */}
-                        <div className="bg-white rounded-xl mb-4 sm:mb-6 overflow-hidden flex-1 sm:flex-none sm:h-48 flex items-center justify-center relative group min-h-[200px] border border-gray-200">
+                        <div className="bg-white rounded-xl mb-4 overflow-hidden flex-1 flex items-center justify-center relative group min-h-[300px] border border-gray-200">
                             {signMode === 'draw' ? (
                                 <SignatureCanvas
                                     ref={sigPad}
-                                    canvasProps={{ className: 'w-full h-full' }}
+                                    canvasProps={{ className: 'w-full h-full touch-none' }}
                                     backgroundColor="white"
                                 />
                             ) : (
                                 <input
                                     type="text"
                                     placeholder="Escribe tu nombre completo"
-                                    className="w-full h-full text-center text-3xl font-[cursive] text-black outline-none bg-transparent"
-                                    style={{ fontFamily: '"Dancing Script", cursive' }} // Ensure font is loaded in global.css
+                                    className="w-full h-full text-center text-3xl font-[cursive] text-black outline-none bg-transparent px-4"
+                                    style={{ fontFamily: '"Dancing Script", cursive' }}
                                     value={typedSignature}
                                     onChange={(e) => setTypedSignature(e.target.value)}
                                 />
@@ -238,7 +246,7 @@ export default function SignSplitSheetPage() {
                             {signMode === 'draw' && (
                                 <button
                                     onClick={() => sigPad.current?.clear()}
-                                    className="absolute top-2 right-2 text-xs text-gray-400 hover:text-red-500 border border-gray-200 rounded px-2 py-1"
+                                    className="absolute top-4 right-4 text-xs font-bold text-gray-500 hover:text-red-600 bg-gray-100/80 hover:bg-gray-200 backdrop-blur px-3 py-1.5 rounded-full shadow-sm transition-colors border border-gray-300"
                                 >
                                     Borrar
                                 </button>
@@ -246,32 +254,32 @@ export default function SignSplitSheetPage() {
                         </div>
 
                         {/* Legal */}
-                        <div className="mb-6 flex-shrink-0">
-                            <label className="flex items-start gap-3 cursor-pointer group">
+                        <div className="mb-4 sm:mb-6 flex-shrink-0">
+                            <label className="flex items-start gap-3 cursor-pointer group p-3 rounded-lg hover:bg-surface-highlight transition-colors">
                                 <input
                                     type="checkbox"
-                                    className="mt-1 w-4 h-4 rounded border-border bg-surface-highlight text-primary focus:ring-primary"
+                                    className="mt-1 w-5 h-5 rounded border-border bg-surface-highlight text-primary focus:ring-primary"
                                     checked={acceptedTerms}
                                     onChange={(e) => setAcceptedTerms(e.target.checked)}
                                 />
-                                <span className="text-sm text-textMuted group-hover:text-textMain transition-colors">
+                                <span className="text-xs sm:text-sm text-textMuted group-hover:text-textMain transition-colors">
                                     Acepto usar esta firma electrónica como mi representación legal vinculante para este acuerdo de Split Sheet. Entiendo que esta acción es final e irrevocable.
                                 </span>
                             </label>
                         </div>
 
                         {/* Actions */}
-                        <div className="flex gap-3 flex-shrink-0">
+                        <div className="flex gap-3 flex-shrink-0 pb-safe">
                             <button
                                 onClick={() => setShowSignModal(false)}
-                                className="flex-1 py-3 bg-surface-highlight text-textMain font-bold rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-700 hover:bg-gray-200 transition-colors"
+                                className="hidden sm:block flex-1 py-3 bg-surface-highlight text-textMain font-bold rounded-lg hover:bg-neutral-700 transition-colors"
                             >
                                 Cancelar
                             </button>
                             <button
                                 onClick={handleAdoptSignature}
                                 disabled={isSubmitting || !acceptedTerms}
-                                className="flex-1 py-3 bg-primary text-black font-bold rounded-lg hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="flex-1 py-4 bg-primary text-black font-bold rounded-xl hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(212,175,55,0.3)] text-lg"
                             >
                                 {isSubmitting ? 'Firmando...' : 'ADOPTAR Y FIRMAR'}
                             </button>

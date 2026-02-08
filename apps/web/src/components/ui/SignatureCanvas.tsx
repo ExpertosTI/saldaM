@@ -47,24 +47,40 @@ const SignatureCanvas = forwardRef<SignatureCanvasRef, SignatureCanvasProps>(
             const ctx = canvas.getContext('2d');
             if (!ctx) return;
 
-            // Handle resizing
             const resizeCanvas = () => {
                 const parent = canvas.parentElement;
                 if (parent) {
-                    canvas.width = parent.clientWidth;
-                    canvas.height = parent.clientHeight;
-                    // Reset context props after resize
-                    ctx.lineCap = 'round';
-                    ctx.lineJoin = 'round';
-                    ctx.strokeStyle = 'black';
-                    ctx.lineWidth = 2;
+                    const rect = parent.getBoundingClientRect();
+                    // Only resize if dimensions actually changed to avoid clearing loop
+                    if (canvas.width !== rect.width || canvas.height !== rect.height) {
+                        // Store current image data to restore after resize if desired
+                        // For now we clear on resize as scaling bitmaps is tricky without blur
+                        canvas.width = rect.width;
+                        canvas.height = rect.height;
+
+                        // Reset context props
+                        ctx.lineCap = 'round';
+                        ctx.lineJoin = 'round';
+                        ctx.strokeStyle = 'black';
+                        ctx.lineWidth = 2;
+                    }
                 }
             };
 
-            resizeCanvas();
-            window.addEventListener('resize', resizeCanvas);
+            const resizeObserver = new ResizeObserver(() => {
+                resizeCanvas();
+            });
 
-            return () => window.removeEventListener('resize', resizeCanvas);
+            if (canvas.parentElement) {
+                resizeObserver.observe(canvas.parentElement);
+            }
+
+            // Initial sizing
+            resizeCanvas();
+
+            return () => {
+                resizeObserver.disconnect();
+            };
         }, []);
 
         const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
