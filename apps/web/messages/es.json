@@ -238,5 +238,12 @@
     "Settings": {
         "title": "Configuración",
         "subtitle": "Administra tu cuenta y preferencias."
+    },
+    "Signature": {
+        "title": "Firmar Documento",
+        "clear": "Limpiar",
+        "drawHere": "Dibuja tu firma aquí",
+        "cancel": "Cancelar",
+        "adopt": "Adoptar y Firmar"
     }
 }
