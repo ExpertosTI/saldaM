@@ -194,81 +194,89 @@ export default function CreateSplitSheet() {
         <div className="max-w-4xl mx-auto">
             <h1 className="text-2xl sm:text-3xl font-bold text-white mb-8">{t('createTitle')}</h1>
 
-            <div className="glass-panel p-6 sm:p-8 rounded-2xl mb-8">
-                <label className="block text-gray-400 text-sm mb-2">{t('songTitle')}</label>
+            <div className="glass-panel p-6 sm:p-8 rounded-2xl mb-8 border border-white/10 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
+                <label className="block text-primary/80 text-sm font-bold uppercase tracking-wider mb-2">{t('songTitle')}</label>
                 <input
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="w-full bg-transparent border-b-2 border-gray-700 text-xl sm:text-2xl font-bold text-white focus:border-primary outline-none py-2 transition-colors placeholder-gray-700"
+                    className="w-full bg-transparent border-b-2 border-neutral-800 text-xl sm:text-3xl font-bold text-white focus:border-primary outline-none py-3 transition-all placeholder-neutral-700"
                     placeholder={t('songTitlePlaceholder')}
                 />
             </div>
 
             <div className="space-y-4 mb-8">
-                <h2 className="text-xl font-bold text-white flex justify-between items-center">
+                <h2 className="text-xl font-bold text-white flex justify-between items-center px-2">
                     {t('collaborators')}
-                    <span className={`text-sm py-1 px-3 rounded-full ${totalPercentage === 100
-                        ? 'bg-green-900/50 text-green-400 border border-green-500/30'
-                        : 'bg-red-900/50 text-red-400 border border-red-500/30'
+                    <span className={`text-sm py-1.5 px-4 rounded-full font-bold shadow-lg ${totalPercentage === 100
+                        ? 'bg-gradient-to-r from-green-900/80 to-green-800/80 text-green-400 border border-green-500/30'
+                        : 'bg-gradient-to-r from-red-900/80 to-red-800/80 text-red-400 border border-red-500/30'
                         }`}>
                         {t('total')}: {totalPercentage}%
                     </span>
                 </h2>
 
-                {collaborators.map((c, i) => (
-                    <div key={i} className="glass-panel p-4 rounded-xl">
-                        <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
-                            <div className="flex-1">
-                                <input
-                                    type="text"
-                                    placeholder={t('collaboratorPlaceholder')}
-                                    className={`w-full bg-neutral-900/50 border border-neutral-700 rounded-lg p-2.5 text-white focus:border-primary outline-none ${c.isOwner ? 'opacity-75' : ''}`}
-                                    value={c.name}
-                                    onChange={(e) => updateCollaborator(i, 'name', e.target.value)}
-                                    readOnly={c.isOwner}
-                                />
+                <div className="space-y-3">
+                    {collaborators.map((c, i) => (
+                        <div key={i} className="glass-panel p-4 rounded-xl border border-white/5 hover:border-white/10 transition-all group">
+                            <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
+                                <div className="flex-1">
+                                    <label className="text-xs text-gray-500 mb-1 block sm:hidden">Nombre / Email</label>
+                                    <input
+                                        type="text"
+                                        placeholder={t('collaboratorPlaceholder')}
+                                        className={`w-full bg-neutral-900/50 border border-neutral-800 rounded-lg p-3 text-white focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all ${c.isOwner ? 'opacity-75 cursor-not-allowed' : ''}`}
+                                        value={c.name}
+                                        onChange={(e) => updateCollaborator(i, 'name', e.target.value)}
+                                        readOnly={c.isOwner}
+                                    />
+                                </div>
+                                <div className="sm:w-40">
+                                    <label className="text-xs text-gray-500 mb-1 block sm:hidden">Rol</label>
+                                    <select
+                                        className="w-full bg-neutral-900/50 border border-neutral-800 rounded-lg p-3 text-white outline-none focus:border-primary transition-all appearance-none cursor-pointer"
+                                        value={c.role}
+                                        onChange={(e) => updateCollaborator(i, 'role', e.target.value)}
+                                    >
+                                        <option value="Songwriter">{t('roles.songwriter')}</option>
+                                        <option value="Producer">{t('roles.producer')}</option>
+                                        <option value="Publisher">{t('roles.publisher')}</option>
+                                    </select>
+                                </div>
+                                <div className="w-28 relative">
+                                    <label className="text-xs text-gray-500 mb-1 block sm:hidden">Porcentaje</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max="100"
+                                        className="w-full bg-neutral-900/50 border border-neutral-800 rounded-lg p-3 text-white focus:border-primary outline-none text-right pr-10 font-mono font-bold"
+                                        value={c.percentage}
+                                        onChange={(e) => updateCollaborator(i, 'percentage', parseFloat(e.target.value) || 0)}
+                                    />
+                                    <span className="absolute right-4 top-3 sm:top-3.5 text-gray-500 font-bold">%</span>
+                                </div>
+                                {!c.isOwner && (
+                                    <button
+                                        onClick={() => removeCollaborator(i)}
+                                        className="p-3 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                                        title="Eliminar"
+                                    >
+                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </button>
+                                )}
                             </div>
-                            <select
-                                className="bg-neutral-900/50 border border-neutral-700 rounded-lg p-2.5 text-white outline-none min-w-[120px]"
-                                value={c.role}
-                                onChange={(e) => updateCollaborator(i, 'role', e.target.value)}
-                            >
-                                <option value="Songwriter">{t('roles.songwriter')}</option>
-                                <option value="Producer">{t('roles.producer')}</option>
-                                <option value="Publisher">{t('roles.publisher')}</option>
-                            </select>
-                            <div className="w-24 relative">
-                                <input
-                                    type="number"
-                                    min="0"
-                                    max="100"
-                                    className="w-full bg-neutral-900/50 border border-neutral-700 rounded-lg p-2.5 text-white focus:border-primary outline-none text-right pr-8"
-                                    value={c.percentage}
-                                    onChange={(e) => updateCollaborator(i, 'percentage', parseFloat(e.target.value) || 0)}
-                                />
-                                <span className="absolute right-3 top-2.5 text-gray-500">%</span>
-                            </div>
-                            {!c.isOwner && (
-                                <button
-                                    onClick={() => removeCollaborator(i)}
-                                    className="text-red-400 hover:text-red-300 p-2"
-                                    title="Eliminar"
-                                >
-                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                    </svg>
-                                </button>
-                            )}
                         </div>
-                    </div>
-                ))}
+                    ))}
+                </div>
 
-                <div className="flex gap-3">
+                <div className="flex justify-center pt-4">
                     <button
                         onClick={addCollaborator}
-                        className="text-primary hover:text-white text-sm font-semibold transition-colors"
+                        className="group flex items-center gap-2 px-6 py-3 bg-neutral-900/80 border border-neutral-800 rounded-full hover:border-primary/50 hover:bg-neutral-800 transition-all text-sm font-bold text-gray-300 hover:text-white"
                     >
+                        <span className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-black transition-all">+</span>
                         {t('addCollaborator')}
                     </button>
                 </div>

@@ -68,6 +68,32 @@ export class SignatureService {
         return lines.length ? lines : [''];
     }
 
+    // Helper to ensure directory exists
+    private ensureDirectory(dir: string) {
+        if (!existsSync(dir)) {
+            // Recursive mkdir
+            const fs = require('fs');
+            fs.mkdirSync(dir, { recursive: true });
+        }
+    }
+
+    async saveSignatureFile(splitSheetId: string, userId: string, base64Data: string): Promise<string> {
+        const uploadDir = path.resolve(process.cwd(), 'uploads/signatures');
+        this.ensureDirectory(uploadDir);
+
+        const filename = `${splitSheetId}_${userId}_${Date.now()}.png`;
+        const filePath = path.join(uploadDir, filename);
+
+        // Remove header if present (data:image/png;base64,...)
+        const base64Image = base64Data.replace(/^data:image\/\w+;base64,/, "");
+        const buffer = Buffer.from(base64Image, 'base64');
+
+        const fs = require('fs');
+        fs.writeFileSync(filePath, buffer);
+
+        return filename;
+    }
+
     // 1. Generate the visual PDF representation of the Split Sheet
     async generateSplitSheetPdf(splitSheet: SplitSheet): Promise<Buffer> {
         const pdfDoc = await PDFDocument.create();
@@ -131,7 +157,7 @@ export class SignatureService {
             { key: 'sig', w: tableW * 0.15, label: 'FIRMA' },
         ];
         const headerH = 18;
-        const rowH = 26;
+        const rowH = 36; // Increased from 26 to accommodate signature image
 
         page.drawRectangle({ x: tableX, y: y - headerH, width: tableW, height: headerH, color: rgb(0.97, 0.94, 0.91), borderColor: rgb(0.85, 0.8, 0.75), borderWidth: 1 });
         let cx = tableX;
@@ -165,10 +191,41 @@ export class SignatureService {
             for (const c of cols) {
                 const lines = values[c.key] || [''];
                 const textYTop = y - 10;
+
+                // Special handling for Signature Image
+                if (c.key === 'sig' && collab.hasSigned && collab.signatureSnapshotPath) {
+                    try {
+                        const uploadDir = path.resolve(process.cwd(), 'uploads/signatures');
+                        const sigPath = path.join(uploadDir, collab.signatureSnapshotPath);
+                        if (existsSync(sigPath)) {
+                            const sigBytes = readFileSync(sigPath);
+                            const sigImage = await pdfDoc.embedPng(sigBytes);
+                            // Fit within the cell (w: c.w, h: rowH)
+                            const maxWidth = c.w - 10;
+                            const maxHeight = rowH - 10;
+                            const scale = Math.min(maxWidth / sigImage.width, maxHeight / sigImage.height);
+
+                            page.drawImage(sigImage, {
+                                x: rx + 5,
+                                y: y - rowH + 5,
+                                width: sigImage.width * scale,
+                                height: sigImage.height * scale
+                            });
+                        }
+                    } catch (e) {
+                        console.warn(`Failed to embed signature for ${collab.email}`, e);
+                    }
+                }
+
                 for (let i = 0; i < lines.length; i++) {
                     const line = lines[i] || '';
                     const size = c.key === 'name' ? 9 : 9;
+                    // Don't draw "FIRMADO" text if we are trying to draw signature image? 
+                    // Let's keep status text but small if image is there? Or just overlay.
+                    // If we have an image, maybe we don't need text, or text below.
+                    // For now, let's just keep text. It might overlap.
                     const color = c.key === 'sig' ? statusColor : rgb(0.1, 0.1, 0.1);
+                    // Shift text up a bit if it's the signature column so image fits?
                     page.drawText(line, { x: rx + 6, y: textYTop - i * 10, size, font, color });
                 }
 

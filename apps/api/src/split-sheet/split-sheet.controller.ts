@@ -77,8 +77,8 @@ export class SplitSheetController {
 
     @Post(':id/sign')
     @UseGuards(AuthGuard('jwt'))
-    async sign(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string, @Req() req: any) {
-        return this.splitSheetService.sign(id, req.user);
+    async sign(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string, @Req() req: any, @Body() body: { signature: string }) {
+        return this.splitSheetService.sign(id, req.user, body.signature);
     }
 
     @Delete(':id')

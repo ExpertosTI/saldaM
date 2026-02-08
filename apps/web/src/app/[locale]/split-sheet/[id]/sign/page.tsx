@@ -116,7 +116,11 @@ export default function SignSplitSheetPage() {
             // 3. Sign the Document
             const res = await fetch(`${API_BASE_URL}/split-sheets/${params.id}/sign`, {
                 method: 'POST',
-                headers: { Authorization: `Bearer ${token}` }
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({ signature: signatureData })
             });
 
             if (res.ok) {
@@ -148,15 +152,15 @@ export default function SignSplitSheetPage() {
                     <p className="text-sm text-gray-400">Creado el {new Date(splitSheet?.createdAt).toLocaleDateString()}</p>
                 </div>
 
-                <div className="mb-8">
-                    <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">Estado de Firmas</h3>
-                    <div className="space-y-3">
+                <div className="mb-8 p-4 bg-white/5 rounded-xl border border-white/5">
+                    <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4 border-b border-white/5 pb-2">Estado de Firmas</h3>
+                    <div className="space-y-4">
                         {splitSheet?.collaborators.map((c: any) => (
                             <div key={c.id} className="flex items-center gap-3">
-                                <div className={`w-2 h-2 rounded-full ${c.hasSigned ? 'bg-green-500' : 'bg-yellow-500'}`} />
+                                <div className={`w-2.5 h-2.5 rounded-full shadow-lg ${c.hasSigned ? 'bg-green-500 shadow-green-500/50' : 'bg-yellow-500 shadow-yellow-500/50 animate-pulse'}`} />
                                 <div>
-                                    <div className="text-sm font-medium text-gray-200">{c.legalName || c.email}</div>
-                                    <div className="text-xs text-gray-500">{c.role} • {c.percentage}%</div>
+                                    <div className="text-sm font-bold text-white leading-tight">{c.legalName || c.email}</div>
+                                    <div className="text-xs text-gray-400 mt-0.5">{c.role} • <span className="text-primary">{c.percentage}%</span></div>
                                 </div>
                             </div>
                         ))}
@@ -166,9 +170,9 @@ export default function SignSplitSheetPage() {
                 {!alreadySigned ? (
                     <button
                         onClick={() => setShowSignModal(true)}
-                        className="w-full py-4 bg-primary text-black font-bold rounded-xl hover:brightness-110 transition-all shadow-lg hover:shadow-primary/20"
+                        className="w-full py-4 bg-gradient-to-r from-primary to-yellow-500 text-black font-bold rounded-xl hover:brightness-110 hover:scale-[1.02] transition-all shadow-[0_0_20px_rgba(212,175,55,0.4)] uppercase tracking-wide flex items-center justify-center gap-2"
                     >
-                        FIRMAR DOCUMENTO
+                        <span className="text-xl">✍️</span> FIRMAR AHORA
                     </button>
                 ) : (
                     <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-xl text-green-400 text-center font-bold">
