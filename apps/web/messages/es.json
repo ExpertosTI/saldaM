@@ -239,6 +239,21 @@
         "title": "Configuración",
         "subtitle": "Administra tu cuenta y preferencias."
     },
+    "Royalties": {
+        "title": "Regalías",
+        "subtitle": "Rastrea tus ganancias y pagos.",
+        "totalEarnings": "Ganancias Totales",
+        "pendingPayout": "Pago Pendiente",
+        "lastPayout": "Último Pago",
+        "sourceBS": "Venta Directa",
+        "sourceStreaming": "Streaming",
+        "sourceSync": "Sincronización",
+        "sourcePerformance": "Ejecución Pública",
+        "recentTransactions": "Transacciones Recientes",
+        "noTransactions": "No hay transacciones recientes.",
+        "downloadReport": "Descargar Reporte",
+        "viewDetails": "Ver Detalles"
+    },
     "Signature": {
         "title": "Firmar Documento",
         "clear": "Limpiar",

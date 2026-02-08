@@ -20,32 +20,37 @@ export class ContactsService {
     }
 
     async findAll(user: User, options?: { search?: string; role?: ContactRole; favorite?: boolean }) {
-        const where: any = { owner: { id: user.id } };
+        try {
+            const where: any = { owner: { id: user.id } };
 
-        if (options?.role) {
-            where.role = options.role;
+            if (options?.role) {
+                where.role = options.role;
+            }
+
+            if (options?.favorite !== undefined) {
+                where.isFavorite = options.favorite;
+            }
+
+            let contacts = await this.contactsRepository.find({
+                where,
+                order: { name: 'ASC' },
+            });
+
+            // Filter by search if provided (name or email)
+            if (options?.search) {
+                const searchLower = options.search.toLowerCase();
+                contacts = contacts.filter(c =>
+                    c.name?.toLowerCase().includes(searchLower) ||
+                    c.email?.toLowerCase().includes(searchLower) ||
+                    c.pro?.toLowerCase().includes(searchLower)
+                );
+            }
+
+            return contacts;
+        } catch (error) {
+            console.error('Error in ContactsService.findAll', error);
+            throw error;
         }
-
-        if (options?.favorite !== undefined) {
-            where.isFavorite = options.favorite;
-        }
-
-        let contacts = await this.contactsRepository.find({
-            where,
-            order: { name: 'ASC' },
-        });
-
-        // Filter by search if provided (name or email)
-        if (options?.search) {
-            const searchLower = options.search.toLowerCase();
-            contacts = contacts.filter(c =>
-                c.name?.toLowerCase().includes(searchLower) ||
-                c.email?.toLowerCase().includes(searchLower) ||
-                c.pro?.toLowerCase().includes(searchLower)
-            );
-        }
-
-        return contacts;
     }
 
     async findOne(id: string, userId: string) {
@@ -93,33 +98,38 @@ export class ContactsService {
     }
 
     async getStats(userId: string) {
-        const contacts = await this.contactsRepository.find({
-            where: { owner: { id: userId } },
-        });
+        try {
+            const contacts = await this.contactsRepository.find({
+                where: { owner: { id: userId } },
+            });
 
-        const stats = {
-            total: contacts.length,
-            byRole: {
-                songwriter: 0,
-                producer: 0,
-                publisher: 0,
-                artist: 0,
-                other: 0,
-            },
-            favorites: 0,
-        };
+            const stats = {
+                total: contacts.length,
+                byRole: {
+                    songwriter: 0,
+                    producer: 0,
+                    publisher: 0,
+                    artist: 0,
+                    other: 0,
+                },
+                favorites: 0,
+            };
 
-        for (const contact of contacts) {
-            if (contact.isFavorite) stats.favorites++;
-            switch (contact.role) {
-                case ContactRole.SONGWRITER: stats.byRole.songwriter++; break;
-                case ContactRole.PRODUCER: stats.byRole.producer++; break;
-                case ContactRole.PUBLISHER: stats.byRole.publisher++; break;
-                case ContactRole.ARTIST: stats.byRole.artist++; break;
-                default: stats.byRole.other++;
+            for (const contact of contacts) {
+                if (contact.isFavorite) stats.favorites++;
+                switch (contact.role) {
+                    case ContactRole.SONGWRITER: stats.byRole.songwriter++; break;
+                    case ContactRole.PRODUCER: stats.byRole.producer++; break;
+                    case ContactRole.PUBLISHER: stats.byRole.publisher++; break;
+                    case ContactRole.ARTIST: stats.byRole.artist++; break;
+                    default: stats.byRole.other++;
+                }
             }
-        }
 
-        return stats;
+            return stats;
+        } catch (error) {
+            console.error('Error in ContactsService.getStats', error);
+            throw error;
+        }
     }
 }
