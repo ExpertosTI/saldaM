@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import { useTheme } from 'next-themes';
+
 import { getToken, removeToken, API_BASE_URL } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 import ConfirmDialog from '@/components/ConfirmDialog';
@@ -42,7 +42,6 @@ export default function SettingsPage() {
         pushNotifications: true
     });
 
-    const { theme, setTheme } = useTheme();
     const [mounted, setMounted] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -242,37 +241,7 @@ export default function SettingsPage() {
                     </div>
                 </section>
 
-                {/* Appearance */}
-                <section className="glass-panel p-5 sm:p-6 rounded-xl">
-                    <h2 className="text-lg font-bold text-textMain border-b border-border pb-2 mb-4 flex items-center gap-2">
-                        <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-                        </svg>
-                        Apariencia
-                    </h2>
-                    <div className="flex gap-3">
-                        <button
-                            onClick={() => setTheme('dark')}
-                            className={`flex-1 p-4 rounded-lg border transition-all ${theme === 'dark'
-                                ? 'border-primary bg-primary/10'
-                                : 'border-border bg-surface-highlight hover:border-textMuted'
-                                }`}
-                        >
-                            <div className="w-8 h-8 mx-auto mb-2 rounded-full bg-neutral-900 border border-white/20" />
-                            <span className="text-sm text-textMain">Oscuro</span>
-                        </button>
-                        <button
-                            onClick={() => setTheme('light')}
-                            className={`flex-1 p-4 rounded-lg border transition-all ${theme === 'light'
-                                ? 'border-primary bg-primary/10'
-                                : 'border-border bg-surface-highlight hover:border-textMuted'
-                                }`}
-                        >
-                            <div className="w-8 h-8 mx-auto mb-2 rounded-full bg-white border border-neutral-300" />
-                            <span className="text-sm text-textMain">Claro</span>
-                        </button>
-                    </div>
-                </section>
+
 
                 {/* Session & Security */}
                 <section className="glass-panel p-5 sm:p-6 rounded-xl">

@@ -370,63 +370,66 @@ export default function CollaboratorsPage() {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {contacts.map((contact) => (
-                        <div
-                            key={contact.id}
-                            className="glass-panel p-5 rounded-xl hover:border-primary/30 transition-colors group"
-                        >
-                            <div className="flex items-start justify-between mb-3">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center text-primary font-bold text-lg">
-                                        {contact.name?.[0]?.toUpperCase() || '?'}
+                    {Array.isArray(contacts) && contacts.map((contact) => {
+                        const roleKey = (contact.role && roleLabels[contact.role]) ? contact.role : 'OTHER';
+                        return (
+                            <div
+                                key={contact.id}
+                                className="glass-panel p-5 rounded-xl hover:border-primary/30 transition-colors group"
+                            >
+                                <div className="flex items-start justify-between mb-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center text-primary font-bold text-lg">
+                                            {(typeof contact.name === 'string' && contact.name[0]) ? contact.name[0].toUpperCase() : '?'}
+                                        </div>
+                                        <div>
+                                            <h3 className="text-textMain font-semibold">{typeof contact.name === 'string' ? contact.name : 'Sin Nombre'}</h3>
+                                            <p className="text-xs text-textMuted">{contact.email}</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <h3 className="text-textMain font-semibold">{contact.name}</h3>
-                                        <p className="text-xs text-textMuted">{contact.email}</p>
-                                    </div>
+                                    <button
+                                        onClick={() => handleToggleFavorite(contact.id)}
+                                        className={`text-lg transition-colors ${contact.isFavorite ? 'text-primary' : 'text-gray-600 hover:text-primary'
+                                            }`}
+                                    >
+                                        {contact.isFavorite ? '★' : '☆'}
+                                    </button>
                                 </div>
-                                <button
-                                    onClick={() => handleToggleFavorite(contact.id)}
-                                    className={`text-lg transition-colors ${contact.isFavorite ? 'text-primary' : 'text-gray-600 hover:text-primary'
-                                        }`}
-                                >
-                                    {contact.isFavorite ? '★' : '☆'}
-                                </button>
-                            </div>
 
-                            <div className="flex items-center gap-2 mb-3">
-                                <span className={`px-2 py-0.5 rounded text-xs border ${roleColors[contact.role]}`}>
-                                    {roleLabels[contact.role]}
-                                </span>
-                                {contact.pro && (
-                                    <span className="px-2 py-0.5 rounded text-xs bg-surface-highlight text-textMuted">
-                                        {contact.pro}
+                                <div className="flex items-center gap-2 mb-3">
+                                    <span className={`px-2 py-0.5 rounded text-xs border ${roleColors[roleKey] || roleColors['OTHER']}`}>
+                                        {roleLabels[roleKey] || 'Otro'}
                                     </span>
+                                    {contact.pro && (
+                                        <span className="px-2 py-0.5 rounded text-xs bg-surface-highlight text-textMuted">
+                                            {contact.pro}
+                                        </span>
+                                    )}
+                                </div>
+
+                                {contact.ipiNumber && (
+                                    <p className="text-xs text-textMuted mb-2">
+                                        <span className="text-gray-500">IPI:</span> {contact.ipiNumber}
+                                    </p>
                                 )}
-                            </div>
 
-                            {contact.ipiNumber && (
-                                <p className="text-xs text-textMuted mb-2">
-                                    <span className="text-gray-500">IPI:</span> {contact.ipiNumber}
-                                </p>
-                            )}
-
-                            <div className="flex gap-2 pt-3 border-t border-white/5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button
-                                    onClick={() => handleOpenModal(contact)}
-                                    className="flex-1 px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 rounded text-textMuted hover:text-textMain transition-colors"
-                                >
-                                    Editar
-                                </button>
-                                <button
-                                    onClick={() => confirmDelete(contact.id)}
-                                    className="px-3 py-1.5 text-xs bg-red-500/10 hover:bg-red-500/20 rounded text-red-400 transition-colors"
-                                >
-                                    Eliminar
-                                </button>
+                                <div className="flex gap-2 pt-3 border-t border-white/5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button
+                                        onClick={() => handleOpenModal(contact)}
+                                        className="flex-1 px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 rounded text-textMuted hover:text-textMain transition-colors"
+                                    >
+                                        Editar
+                                    </button>
+                                    <button
+                                        onClick={() => confirmDelete(contact.id)}
+                                        className="px-3 py-1.5 text-xs bg-red-500/10 hover:bg-red-500/20 rounded text-red-400 transition-colors"
+                                    >
+                                        Eliminar
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        )
+                    })}
                 </div>
             )}
 
