@@ -261,28 +261,28 @@ export default function CollaboratorsPage() {
     return (
         <div className="max-w-7xl mx-auto">
             <header className="mb-8">
-                <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Colaboradores</h1>
-                <p className="text-gray-400 text-sm sm:text-base">Gestiona tu red de artistas, productores y publishers.</p>
+                <h1 className="text-2xl sm:text-3xl font-bold text-textMain mb-2">Colaboradores</h1>
+                <p className="text-textMuted text-sm sm:text-base">Gestiona tu red de artistas, productores y publishers.</p>
             </header>
 
             {/* Stats Cards */}
             {stats && (
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
                     <div className="glass-panel p-4 rounded-xl">
-                        <p className="text-2xl sm:text-3xl font-bold text-white">{stats.total}</p>
-                        <p className="text-xs text-gray-400">Total Contactos</p>
+                        <p className="text-2xl sm:text-3xl font-bold text-textMain">{stats.total}</p>
+                        <p className="text-xs text-textMuted">Total Contactos</p>
                     </div>
                     <div className="glass-panel p-4 rounded-xl">
                         <p className="text-2xl sm:text-3xl font-bold text-primary">{stats.favorites}</p>
-                        <p className="text-xs text-gray-400">Favoritos</p>
+                        <p className="text-xs text-textMuted">Favoritos</p>
                     </div>
                     <div className="glass-panel p-4 rounded-xl">
                         <p className="text-2xl sm:text-3xl font-bold text-blue-400">{stats.byRole.songwriter}</p>
-                        <p className="text-xs text-gray-400">Compositores</p>
+                        <p className="text-xs text-textMuted">Compositores</p>
                     </div>
                     <div className="glass-panel p-4 rounded-xl">
                         <p className="text-2xl sm:text-3xl font-bold text-purple-400">{stats.byRole.producer}</p>
-                        <p className="text-xs text-gray-400">Productores</p>
+                        <p className="text-xs text-textMuted">Productores</p>
                     </div>
                 </div>
             )}
@@ -296,13 +296,13 @@ export default function CollaboratorsPage() {
                     <input
                         type="text"
                         placeholder="Buscar por nombre o email..."
-                        className="w-full pl-10 pr-4 py-2.5 bg-neutral-900/50 border border-neutral-700 rounded-lg text-white placeholder-gray-500 focus:border-primary outline-none text-sm"
+                        className="w-full pl-10 pr-4 py-2.5 bg-surface-highlight border border-border rounded-lg text-textMain placeholder-textMuted focus:border-primary outline-none text-sm"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                     />
                 </div>
                 <select
-                    className="px-4 py-2.5 bg-neutral-900/50 border border-neutral-700 rounded-lg text-white text-sm focus:border-primary outline-none"
+                    className="px-4 py-2.5 bg-surface-highlight border border-border rounded-lg text-textMain text-sm focus:border-primary outline-none"
                     value={roleFilter}
                     onChange={(e) => setRoleFilter(e.target.value)}
                 >
@@ -317,7 +317,7 @@ export default function CollaboratorsPage() {
                     onClick={() => setShowFavorites(!showFavorites)}
                     className={`px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors ${showFavorites
                         ? 'bg-primary/20 border-primary text-primary'
-                        : 'bg-neutral-900/50 border-neutral-700 text-gray-400 hover:text-white'
+                        : 'bg-surface-highlight border-border text-textMuted hover:text-textMain'
                         }`}
                 >
                     ★ Favoritos
@@ -336,10 +336,10 @@ export default function CollaboratorsPage() {
                     {[1, 2, 3, 4, 5, 6].map((i) => (
                         <div key={i} className="glass-panel p-5 rounded-xl animate-pulse">
                             <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-full bg-neutral-800" />
+                                <div className="w-12 h-12 rounded-full bg-surface-highlight" />
                                 <div className="flex-1">
-                                    <div className="h-4 w-32 bg-neutral-800 rounded mb-2" />
-                                    <div className="h-3 w-24 bg-neutral-800 rounded" />
+                                    <div className="h-4 w-32 bg-surface-highlight rounded mb-2" />
+                                    <div className="h-3 w-24 bg-surface-highlight rounded" />
                                 </div>
                             </div>
                         </div>
@@ -347,13 +347,13 @@ export default function CollaboratorsPage() {
                 </div>
             ) : contacts.length === 0 ? (
                 <div className="glass-panel p-12 rounded-xl text-center">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-neutral-800 flex items-center justify-center">
-                        <svg className="w-8 h-8 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-surface-highlight flex items-center justify-center">
+                        <svg className="w-8 h-8 text-textMuted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                         </svg>
                     </div>
-                    <h3 className="text-lg font-semibold text-white mb-2">No hay contactos</h3>
-                    <p className="text-gray-500 text-sm mb-4">
+                    <h3 className="text-lg font-semibold text-textMain mb-2">No hay contactos</h3>
+                    <p className="text-textMuted text-sm mb-4">
                         {search || roleFilter || showFavorites
                             ? 'No se encontraron contactos con esos filtros.'
                             : 'Comienza agregando tu primer colaborador.'}
@@ -380,8 +380,8 @@ export default function CollaboratorsPage() {
                                         {contact.name?.[0]?.toUpperCase() || '?'}
                                     </div>
                                     <div>
-                                        <h3 className="text-white font-semibold">{contact.name}</h3>
-                                        <p className="text-xs text-gray-500">{contact.email}</p>
+                                        <h3 className="text-textMain font-semibold">{contact.name}</h3>
+                                        <p className="text-xs text-textMuted">{contact.email}</p>
                                     </div>
                                 </div>
                                 <button
@@ -398,22 +398,22 @@ export default function CollaboratorsPage() {
                                     {roleLabels[contact.role]}
                                 </span>
                                 {contact.pro && (
-                                    <span className="px-2 py-0.5 rounded text-xs bg-neutral-800 text-gray-400">
+                                    <span className="px-2 py-0.5 rounded text-xs bg-surface-highlight text-textMuted">
                                         {contact.pro}
                                     </span>
                                 )}
                             </div>
 
                             {contact.ipiNumber && (
-                                <p className="text-xs text-gray-500 mb-2">
-                                    <span className="text-gray-600">IPI:</span> {contact.ipiNumber}
+                                <p className="text-xs text-textMuted mb-2">
+                                    <span className="text-gray-500">IPI:</span> {contact.ipiNumber}
                                 </p>
                             )}
 
                             <div className="flex gap-2 pt-3 border-t border-white/5 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button
                                     onClick={() => handleOpenModal(contact)}
-                                    className="flex-1 px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 rounded text-gray-400 hover:text-white transition-colors"
+                                    className="flex-1 px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 rounded text-textMuted hover:text-textMain transition-colors"
                                 >
                                     Editar
                                 </button>

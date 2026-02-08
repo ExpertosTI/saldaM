@@ -163,19 +163,19 @@ export default function ProfilePage() {
 
                     {/* Basic Info */}
                     <div className="flex-1">
-                        <h2 className="text-2xl font-bold text-white mb-1">
+                        <h2 className="text-2xl font-bold text-textMain mb-1">
                             {user?.firstName && user?.lastName
                                 ? `${user.firstName} ${user.lastName}`
                                 : user?.firstName || 'Nuevo Usuario'}
                         </h2>
-                        <p className="text-gray-400 text-sm mb-3">{user?.email}</p>
+                        <p className="text-textMuted text-sm mb-3">{user?.email}</p>
                         <div className="flex gap-2">
                             {user?.userType && (
                                 <span className="px-3 py-1 rounded-full text-xs font-semibold bg-primary/20 text-primary border border-primary/30">
                                     {user.userType}
                                 </span>
                             )}
-                            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white/5 text-gray-400 border border-white/10">
+                            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white/5 text-textMuted border border-white/10">
                                 Miembro desde {new Date(user?.createdAt || '').getFullYear()}
                             </span>
                         </div>
@@ -186,7 +186,7 @@ export default function ProfilePage() {
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {/* User Type Selection */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-400 mb-3">Tipo de Usuario</label>
+                        <label className="block text-sm font-medium text-textMuted mb-3">Tipo de Usuario</label>
                         <div className="grid grid-cols-3 gap-3">
                             {['ARTIST', 'PRODUCER', 'PUBLISHER'].map((type) => (
                                 <button
@@ -195,7 +195,7 @@ export default function ProfilePage() {
                                     onClick={() => setUserType(type)}
                                     className={`p-4 rounded-xl border-2 transition-all font-bold text-sm ${userType === type
                                         ? 'bg-primary/20 text-primary border-primary'
-                                        : 'bg-neutral-900 text-gray-400 border-neutral-700 hover:border-gray-500 hover:text-white'
+                                        : 'bg-surface-highlight text-textMuted border-border hover:border-gray-500 hover:text-textMain'
                                         }`}
                                 >
                                     {type === 'ARTIST' ? 'Artista' : type === 'PRODUCER' ? 'Productor' : 'Publisher'}
@@ -207,49 +207,49 @@ export default function ProfilePage() {
                     {/* Name Fields */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-400 mb-2">{t('firstNameLabel')}</label>
+                            <label className="block text-sm font-medium text-textMuted mb-2">{t('firstNameLabel')}</label>
                             <input
                                 type="text"
                                 value={firstName}
                                 onChange={(e) => setFirstName(e.target.value)}
                                 placeholder={t('firstNamePlaceholder')}
-                                className="w-full px-4 py-3 bg-neutral-900 border border-neutral-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-white placeholder-gray-600 transition-all"
+                                className="w-full px-4 py-3 bg-surface-highlight border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-textMain placeholder-textMuted transition-all"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-400 mb-2">{t('lastNameLabel')}</label>
+                            <label className="block text-sm font-medium text-textMuted mb-2">{t('lastNameLabel')}</label>
                             <input
                                 type="text"
                                 value={lastName}
                                 onChange={(e) => setLastName(e.target.value)}
                                 placeholder={t('lastNamePlaceholder')}
-                                className="w-full px-4 py-3 bg-neutral-900 border border-neutral-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-white placeholder-gray-600 transition-all"
+                                className="w-full px-4 py-3 bg-surface-highlight border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-textMain placeholder-textMuted transition-all"
                             />
                         </div>
                     </div>
 
                     {/* Bio */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-400 mb-2">{t('bioLabel')}</label>
+                        <label className="block text-sm font-medium text-textMuted mb-2">{t('bioLabel')}</label>
                         <textarea
                             value={bio}
                             onChange={(e) => setBio(e.target.value)}
                             placeholder={t('bioPlaceholder')}
                             rows={3}
-                            className="w-full px-4 py-3 bg-neutral-900 border border-neutral-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-white placeholder-gray-600 transition-all resize-none"
+                            className="w-full px-4 py-3 bg-surface-highlight border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-textMain placeholder-textMuted transition-all resize-none"
                         />
                     </div>
 
                     {/* Professional Info */}
-                    <div className="border-t border-neutral-800 pt-6">
-                        <h3 className="text-lg font-semibold text-white mb-4">Información Profesional</h3>
+                    <div className="border-t border-border pt-6">
+                        <h3 className="text-lg font-semibold text-textMain mb-4">Información Profesional</h3>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-400 mb-2">{t('proAffiliationLabel')}</label>
+                                <label className="block text-sm font-medium text-textMuted mb-2">{t('proAffiliationLabel')}</label>
                                 <select
                                     value={proAffiliation}
                                     onChange={(e) => setProAffiliation(e.target.value)}
-                                    className="w-full px-4 py-3 bg-neutral-900 border border-neutral-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-white transition-all"
+                                    className="w-full px-4 py-3 bg-surface-highlight border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-textMain transition-all"
                                 >
                                     <option value="">{t('proAffiliationPlaceholder')}</option>
                                     <option value="ASCAP">ASCAP</option>
@@ -264,25 +264,25 @@ export default function ProfilePage() {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-400 mb-2">{t('ipiNumberLabel')}</label>
+                                <label className="block text-sm font-medium text-textMuted mb-2">{t('ipiNumberLabel')}</label>
                                 <input
                                     type="text"
                                     value={ipiNumber}
                                     onChange={(e) => setIpiNumber(e.target.value)}
                                     placeholder={t('ipiNumberPlaceholder')}
-                                    className="w-full px-4 py-3 bg-neutral-900 border border-neutral-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-white placeholder-gray-600 transition-all"
+                                    className="w-full px-4 py-3 bg-surface-highlight border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-textMain placeholder-textMuted transition-all"
                                 />
                             </div>
                         </div>
 
                         <div className="mt-4">
-                            <label className="block text-sm font-medium text-gray-400 mb-2">Compañía Editorial</label>
+                            <label className="block text-sm font-medium text-textMuted mb-2">Compañía Editorial</label>
                             <input
                                 type="text"
                                 value={publishingCompany}
                                 onChange={(e) => setPublishingCompany(e.target.value)}
                                 placeholder="Nombre de tu compañía editorial (si aplica)"
-                                className="w-full px-4 py-3 bg-neutral-900 border border-neutral-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-white placeholder-gray-600 transition-all"
+                                className="w-full px-4 py-3 bg-surface-highlight border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-textMain placeholder-textMuted transition-all"
                             />
                         </div>
                     </div>
