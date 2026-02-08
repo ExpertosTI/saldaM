@@ -100,7 +100,7 @@ export default function Sidebar() {
         { href: `/${locale}/dashboard/collaborators`, label: t('collaborators'), icon: 'users' },
         { href: `/${locale}/dashboard/profile`, label: t('profile'), icon: 'user' },
         // { href: `/${locale}/dashboard/royalties`, label: t('royalties'), icon: 'chart' }, // Demo Feature Removed
-        // { href: `/${locale}/dashboard/settings/signature`, label: 'Firma Digital', icon: 'signature' }, // Not ready yet
+        { href: `/${locale}/dashboard/settings/signature`, label: 'Firma Digital', icon: 'signature' },
         { href: `/${locale}/dashboard/settings`, label: t('settings'), icon: 'settings' },
     ];
 

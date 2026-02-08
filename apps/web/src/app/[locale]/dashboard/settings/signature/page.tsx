@@ -46,13 +46,13 @@ export default function SignatureSettingsPage() {
 
     return (
         <div className="max-w-4xl mx-auto p-6">
-            <h1 className="text-3xl font-bold text-white mb-2">Firma Digital</h1>
-            <p className="text-gray-400 mb-8">
+            <h1 className="text-3xl font-bold text-textMain mb-2">Firma Digital</h1>
+            <p className="text-textMuted mb-8">
                 Adopta tu firma digital para firmar Split Sheets automáticamente.
                 Esta firma tiene validez legal dentro de la plataforma.
             </p>
 
-            <div className="bg-[#0A0A0A] border border-white/10 rounded-2xl p-8">
+            <div className="glass-panel rounded-2xl p-8">
                 {status === 'success' ? (
                     <div className="text-center py-12">
                         <div className="w-16 h-16 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -60,14 +60,16 @@ export default function SignatureSettingsPage() {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
                         </div>
-                        <h3 className="text-xl font-bold text-white mb-2">¡Firma Guardada!</h3>
-                        <p className="text-gray-400">Tu firma ha sido adoptada correctamente.</p>
-                        <button
-                            onClick={() => setStatus('idle')}
-                            className="mt-6 px-6 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-colors"
-                        >
-                            Actualizar Firma
-                        </button>
+                        <h3 className="text-xl font-bold text-textMain mb-2">¡Firma Guardada!</h3>
+                        <p className="text-textMuted">Tu firma ha sido adoptada correctamente.</p>
+                        <div className="mt-6 flex justify-center">
+                            <button
+                                onClick={() => setStatus('idle')}
+                                className="px-6 py-2 bg-surface-highlight hover:bg-border rounded-lg text-textMain transition-colors border border-border"
+                            >
+                                Actualizar Firma
+                            </button>
+                        </div>
                     </div>
                 ) : (
                     <>

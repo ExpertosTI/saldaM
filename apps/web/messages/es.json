@@ -234,5 +234,9 @@
         "terms": "Términos",
         "support": "Soporte",
         "comingSoon": ""
+    },
+    "Settings": {
+        "title": "Configuración",
+        "subtitle": "Administra tu cuenta y preferencias."
     }
 }

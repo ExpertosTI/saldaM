@@ -31,15 +31,15 @@ export default function SignaturePad({ onSave, onCancel }: SignaturePadProps) {
     };
 
     return (
-        <div className="flex flex-col gap-4 w-full h-full max-w-lg mx-auto bg-neutral-900 rounded-xl p-4 border border-white/10">
+        <div className="flex flex-col gap-4 w-full h-full max-w-lg mx-auto glass-panel rounded-xl p-4">
             <div className="flex justify-between items-center mb-2">
-                <h3 className="text-white font-bold text-lg">Firmar Documento</h3>
-                <button onClick={clear} className="text-xs text-gray-400 hover:text-white underline">
+                <h3 className="text-textMain font-bold text-lg">Firmar Documento</h3>
+                <button onClick={clear} className="text-xs text-textMuted hover:text-textMain underline">
                     Limpiar
                 </button>
             </div>
 
-            <div className="border border-white/20 rounded-lg overflow-hidden bg-white/5 relative">
+            <div className="border border-border rounded-lg overflow-hidden bg-background relative">
                 <SignatureCanvas
                     ref={sigCanvas}
                     backgroundColor="transparent"
@@ -48,7 +48,7 @@ export default function SignaturePad({ onSave, onCancel }: SignaturePadProps) {
                     }}
                     onEnd={handleEnd}
                 />
-                <div className="absolute bottom-2 left-2 text-[10px] text-gray-500 pointer-events-none select-none">
+                <div className="absolute bottom-2 left-2 text-[10px] text-textMuted pointer-events-none select-none">
                     Dibuja tu firma aquí
                 </div>
             </div>
@@ -56,7 +56,7 @@ export default function SignaturePad({ onSave, onCancel }: SignaturePadProps) {
             <div className="flex gap-3 mt-2">
                 <button
                     onClick={onCancel}
-                    className="flex-1 px-4 py-2 rounded-lg border border-white/10 text-gray-300 hover:bg-white/5 transition-colors"
+                    className="flex-1 px-4 py-2 rounded-lg border border-border text-textMuted hover:bg-surface-highlight transition-colors"
                 >
                     Cancelar
                 </button>
