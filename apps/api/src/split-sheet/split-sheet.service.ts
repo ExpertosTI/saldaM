@@ -144,6 +144,58 @@ export class SplitSheetService {
             await this.auditLogService.log('SHEET_COMPLETED',
                 `Split Sheet ${id} is fully signed and COMPLETED.`,
                 user);
+
+            // Generate Final PDF
+            try {
+                const pdfBuffer = await this.signatureService.generateFullSplitSheetPdf(splitSheet);
+                const filename = `SplitSheet_${splitSheet.title.replace(/[^a-z0-9]/gi, '_')}.pdf`;
+
+                // Notify all collaborators + owner
+                const recipients = new Set<string>();
+                if (splitSheet.owner?.email) recipients.add(splitSheet.owner.email);
+                splitSheet.collaborators.forEach(c => {
+                    if (c.email) recipients.add(c.email);
+                });
+
+                const downloadLink = `${process.env.APP_WEB_URL || 'https://app.saldanamusic.com'}/dashboard/split-sheets/${id}`;
+
+                for (const email of recipients) {
+                    await this.mailService.sendSplitSheetCompleted(
+                        email,
+                        splitSheet.title,
+                        downloadLink,
+                        [{ filename, content: pdfBuffer }]
+                    );
+                }
+            } catch (err) {
+                console.error('Failed to send completion emails/PDF', err);
+            }
+
+            // Generate Final PDF
+            try {
+                const pdfBuffer = await this.signatureService.generateFullSplitSheetPdf(splitSheet);
+                const filename = `SplitSheet_${splitSheet.title.replace(/[^a-z0-9]/gi, '_')}.pdf`;
+
+                // Notify all collaborators + owner
+                const recipients = new Set<string>();
+                if (splitSheet.owner?.email) recipients.add(splitSheet.owner.email);
+                splitSheet.collaborators.forEach(c => {
+                    if (c.email) recipients.add(c.email);
+                });
+
+                const downloadLink = `${process.env.APP_WEB_URL || 'https://app.saldanamusic.com'}/dashboard/split-sheets/${id}`;
+
+                for (const email of recipients) {
+                    await this.mailService.sendSplitSheetCompleted(
+                        email,
+                        splitSheet.title,
+                        downloadLink,
+                        [{ filename, content: pdfBuffer }]
+                    );
+                }
+            } catch (err) {
+                console.error('Failed to send completion emails/PDF', err);
+            }
         }
 
         return { message: 'Signed successfully', status: splitSheet.status };

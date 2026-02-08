@@ -97,13 +97,14 @@ export class MailService {
 </html>`;
   }
 
-  private async send(params: { to: string; subject: string; text: string; html: string }) {
+  private async send(params: { to: string; subject: string; text: string; html: string; attachments?: any[] }) {
     const mailOptions: nodemailer.SendMailOptions = {
       from: this.from,
       to: params.to,
       subject: params.subject,
       text: params.text,
       html: params.html,
+      attachments: params.attachments,
     };
     if (this.replyTo) mailOptions.replyTo = this.replyTo;
     if (this.bcc) mailOptions.bcc = this.bcc;
@@ -164,16 +165,16 @@ export class MailService {
     await this.send({ to: email, subject, text, html });
   }
 
-  async sendSplitSheetCompleted(email: string, splitSheetTitle: string, downloadLink: string) {
+  async sendSplitSheetCompleted(email: string, splitSheetTitle: string, downloadLink: string, attachments?: { filename: string; content: Buffer }[]) {
     const subject = `Split Sheet Completado: ${splitSheetTitle}`;
-    const text = `¡Split Sheet completado!\n\nTodos los colaboradores han firmado "${splitSheetTitle}".\n\nAccede aquí: ${downloadLink}`;
+    const text = `¡Split Sheet completado!\n\nTodos los colaboradores han firmado "${splitSheetTitle}".\n\nAccede aquí: ${downloadLink}\n\nAdjunto encontrarás el documento firmado.`;
     const html = this.renderTemplate({
       title: subject,
       preheader: `Completado: ${splitSheetTitle}`,
-      bodyHtml: `Todos los colaboradores han firmado <strong>${this.escapeHtml(splitSheetTitle)}</strong>.`,
+      bodyHtml: `Todos los colaboradores han firmado <strong>${this.escapeHtml(splitSheetTitle)}</strong>.<br/><br/>Adjunto encontrarás una copia del documento final.`,
       cta: { label: 'Ver Documento', url: downloadLink },
     });
-    await this.send({ to: email, subject, text, html });
+    await this.send({ to: email, subject, text, html, attachments });
   }
 
   async sendCollaboratorInvite(email: string, inviterName: string, splitSheetTitle: string, inviteLink: string, collaboratorName?: string) {
