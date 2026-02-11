@@ -75,10 +75,19 @@ export class SplitSheetController {
         return this.splitSheetService.startSignatures(id, req.user);
     }
 
+    @Post(':id/sign/otp')
+    @UseGuards(AuthGuard('jwt'))
+    async requestOtp(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string, @Req() req: any) {
+        return this.splitSheetService.requestSignatureOtp(id, req.user);
+    }
+
     @Post(':id/sign')
     @UseGuards(AuthGuard('jwt'))
-    async sign(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string, @Req() req: any, @Body() body: { signature: string }) {
-        return this.splitSheetService.sign(id, req.user, body.signature);
+    async sign(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string, @Req() req: any, @Body() body: { signature: string; otpCode: string }) {
+        // Capture IP and User Agent
+        req.user.ipAddress = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+        req.user.userAgent = req.headers['user-agent'];
+        return this.splitSheetService.sign(id, req.user, body.signature, body.otpCode);
     }
 
     @Delete(':id')
@@ -97,5 +106,23 @@ export class SplitSheetController {
     @UseGuards(AuthGuard('jwt'))
     async removeCollaborator(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string, @Param('email') email: string, @Req() req: any) {
         return this.splitSheetService.removeCollaborator(id, req.user, email);
+    }
+
+    @Post(':id/request-sign-otp')
+    @UseGuards(AuthGuard('jwt'))
+    async requestSignOtp(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string, @Req() req: any) {
+        return this.splitSheetService.requestSignOtp(id, req.user);
+    }
+
+    @Post(':id/verify-sign-otp')
+    @UseGuards(AuthGuard('jwt'))
+    async verifySignOtp(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string, @Req() req: any, @Body() body: { otp: string }) {
+        return this.splitSheetService.verifySignOtp(id, req.user, body.otp);
+    }
+
+    @Post(':id/upload-id')
+    @UseGuards(AuthGuard('jwt'))
+    async uploadIdentityDoc(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string, @Req() req: any, @Body() body: { document: string; documentType: string }) {
+        return this.splitSheetService.uploadIdentityDoc(id, req.user, body.document, body.documentType);
     }
 }

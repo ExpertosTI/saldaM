@@ -1,4 +1,4 @@
-import { Module, OnModuleInit } from '@nestjs/common';
+import { Module, OnModuleInit, Logger } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
@@ -60,6 +60,8 @@ import { Contact } from './contacts/entities/contact.entity';
   ],
 })
 export class AppModule implements OnModuleInit {
+  private readonly logger = new Logger(AppModule.name);
+
   constructor(private dataSource: DataSource) { }
 
   async onModuleInit() {
@@ -68,7 +70,7 @@ export class AppModule implements OnModuleInit {
     const existingMaster = await userRepository.findOne({ where: { email: masterEmail } });
 
     if (!existingMaster) {
-      console.log('Creating Master User...');
+      this.logger.log('Creating Master User...');
       const master = userRepository.create({
         email: masterEmail,
         firstName: 'Master',
@@ -79,7 +81,7 @@ export class AppModule implements OnModuleInit {
         isActive: true,
       });
       await userRepository.save(master);
-      console.log('Master User created successfully.');
+      this.logger.log('Master User created successfully.');
     }
   }
 }

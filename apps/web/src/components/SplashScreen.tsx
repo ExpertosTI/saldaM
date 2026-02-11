@@ -4,31 +4,33 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 
 export default function SplashScreen({ children }: { children: React.ReactNode }) {
-    const [isVisible, setIsVisible] = useState(true);
+    // Initialize to false to match server render (children shown immediately)
+    // This prevents React error #418 (hydration mismatch)
+    const [isVisible, setIsVisible] = useState(false);
     const [fadeOut, setFadeOut] = useState(false);
 
     useEffect(() => {
-        // Check if already loaded in this session
+        // Only show splash on first visit in this session (client-side only)
         if (typeof window !== 'undefined') {
             const hasLoaded = sessionStorage.getItem('sm_loaded');
             if (hasLoaded) {
-                setIsVisible(false);
-                return;
+                return; // Already loaded, keep isVisible = false
             }
-        }
 
-        // Start fade out after delay
-        const timer = setTimeout(() => {
-            setFadeOut(true);
-            setTimeout(() => {
-                setIsVisible(false);
-                if (typeof window !== 'undefined') {
+            // First visit: show splash
+            setIsVisible(true);
+
+            // Start fade out after delay
+            const timer = setTimeout(() => {
+                setFadeOut(true);
+                setTimeout(() => {
+                    setIsVisible(false);
                     sessionStorage.setItem('sm_loaded', '1');
-                }
-            }, 600);
-        }, 1200);
+                }, 600);
+            }, 1200);
 
-        return () => clearTimeout(timer);
+            return () => clearTimeout(timer);
+        }
     }, []);
 
     if (!isVisible) {

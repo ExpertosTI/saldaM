@@ -145,10 +145,10 @@ export default function CreateSplitSheet() {
             const payload = {
                 title,
                 collaborators: collaborators.map(c => ({
-                    name: c.name.replace(` ${t('ownerLabel')}`, ''),
-                    email: c.email || undefined,
+                    legalName: c.name.replace(` ${t('ownerLabel')}`, ''),
+                    email: c.email || user?.email || '',
                     role: c.role.toUpperCase(),
-                    percentage: c.percentage
+                    percentage: Number(c.percentage) || 0,
                 })),
                 status
             };

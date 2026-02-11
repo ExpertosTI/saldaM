@@ -444,6 +444,15 @@ export class SignatureService {
                 auditPage.drawText(`  IP Address: ${collab.ipAddress}`, { x: 50, y, size: 8, font });
                 y -= 12;
                 auditPage.drawText(`  User Agent: ${collab.userAgent}`, { x: 50, y, size: 8, font });
+                y -= 12;
+                if (collab.otpVerified) {
+                    auditPage.drawText(`  Verification: Email OTP (2FA) Verified`, { x: 50, y, size: 8, font, color: rgb(0, 0.5, 0) });
+                    y -= 12;
+                }
+                if (collab.signatureHash) {
+                    auditPage.drawText(`  Agreement Hash: ${collab.signatureHash}`, { x: 50, y, size: 6, font });
+                    y -= 12;
+                }
                 y -= 25;
             }
         }

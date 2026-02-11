@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class MailService {
+  private readonly logger = new Logger(MailService.name);
   private transporter: nodemailer.Transporter;
 
   private readonly from: string;
@@ -30,7 +31,7 @@ export class MailService {
     this.webUrl = process.env.APP_WEB_URL || 'https://app.saldanamusic.com';
 
     if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-      console.warn('⚠️ SMTP credentials not configured. Email sending will fail.');
+      this.logger.warn('⚠️ SMTP credentials not configured. Email sending will fail.');
     }
   }
 
@@ -110,7 +111,7 @@ export class MailService {
     if (this.bcc) mailOptions.bcc = this.bcc;
 
     const info = await this.transporter.sendMail(mailOptions);
-    console.log(`Mail sent to=${params.to} subject="${params.subject}" messageId=${info.messageId}`);
+    this.logger.log(`Mail sent to=${params.to} subject="${params.subject}" messageId=${info.messageId}`);
     return info;
   }
 
@@ -191,6 +192,22 @@ export class MailService {
               <br/><br/>
               Si tienes una cuenta, estos datos se vincularán automáticamente.`,
       cta: { label: 'Aceptar Invitación', url: inviteLink },
+    });
+    await this.send({ to: email, subject, text, html });
+  }
+
+  async sendOtp(email: string, otp: string) {
+    const subject = 'Código de Verificación - Saldaña Music';
+    const text = `Tu código de verificación es: ${otp}\n\nExpira en 10 minutos.`;
+    const html = this.renderTemplate({
+      title: subject,
+      preheader: `Tu código de seguridad: ${otp}`,
+      bodyHtml: `Usa el siguiente código para verificar tu identidad:<br/><br/>
+              <div style="font-size:32px; font-weight:800; letter-spacing:0.1em; color:#D4AF37; text-align:center; margin:20px 0;">
+                ${otp}
+              </div>
+              <br/>
+              Este código expirará en 10 minutos. No lo compartas con nadie.`,
     });
     await this.send({ to: email, subject, text, html });
   }

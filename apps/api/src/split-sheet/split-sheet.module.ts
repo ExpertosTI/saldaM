@@ -8,6 +8,7 @@ import { SignatureModule } from '../signature/signature.module';
 import { AuditLogModule } from '../audit-log/audit-log.module';
 import { MailModule } from '../mail/mail.module';
 import { ContactsModule } from '../contacts/contacts.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
     imports: [
@@ -16,6 +17,7 @@ import { ContactsModule } from '../contacts/contacts.module';
         AuditLogModule,
         MailModule,
         ContactsModule,
+        AuthModule,
     ],
     controllers: [SplitSheetController],
     providers: [SplitSheetService],

@@ -264,7 +264,7 @@ export default function NewSplitSheetPage() {
                                             >
                                                 <option value="SONGWRITER">Compositor / Autor</option>
                                                 <option value="PRODUCER">Productor</option>
-                                                <option value="MASTER_OWNER">Dueño de Máster</option>
+                                                <option value="PUBLISHER">Editorial / Publisher</option>
                                             </select>
                                         </div>
                                         <div>

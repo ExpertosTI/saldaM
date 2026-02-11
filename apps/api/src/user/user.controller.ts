@@ -1,9 +1,10 @@
-import { Controller, Post, Body, Get, Param, Patch, Delete, UseGuards, Req, ForbiddenException } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Patch, Delete, UseGuards, Req, ForbiddenException, Logger } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { UserService } from './user.service';
 
 @Controller('users')
 export class UserController {
+    private readonly logger = new Logger(UserController.name);
     constructor(private readonly userService: UserService) { }
 
     @Post('register')
@@ -14,9 +15,9 @@ export class UserController {
     @Get('me')
     @UseGuards(AuthGuard('jwt'))
     async getMe(@Req() req: any) {
-        console.log('[Users] GET /me - User ID from token:', req.user?.id);
+        this.logger.debug(`[Users] GET /me - User ID from token: ${req.user?.id}`);
         const user = await this.userService.findById(req.user.id);
-        console.log('[Users] User data:', { id: user.id, email: user.email, firstName: user.firstName, userType: user.userType });
+        this.logger.debug(`[Users] User data: ${JSON.stringify({ id: user.id, email: user.email, firstName: user.firstName, userType: user.userType })}`);
         return user;
     }
 
