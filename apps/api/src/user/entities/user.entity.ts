@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  OneToMany,
+} from 'typeorm';
 import { Exclude } from 'class-transformer';
 import { SplitSheet } from '../../split-sheet/entities/split-sheet.entity';
 
@@ -37,7 +43,7 @@ export class User {
     enum: UserType,
     nullable: true,
   })
-  userType: UserType;
+  userType: UserType | null;
 
   @Column({ default: false })
   isEmailVerified: boolean;
@@ -51,54 +57,54 @@ export class User {
 
   @Exclude()
   @Column({ nullable: true })
-  kycDocumentPath: string;
+  kycDocumentPath: string | null;
 
   @Exclude()
   @Column({ nullable: true })
-  kycVideoPath: string;
+  kycVideoPath: string | null;
 
   @Column({ unique: true })
   email: string;
 
   @Exclude()
   @Column({ nullable: true })
-  passwordHash: string;
+  passwordHash: string | null;
 
   @Column({ nullable: true })
-  avatarUrl: string;
+  avatarUrl: string | null;
 
   @Column({ nullable: true })
-  bio: string;
+  bio: string | null;
 
   @Column({ nullable: true })
-  phone: string;
+  phone: string | null;
 
   @Column({ nullable: true })
-  firstName: string;
+  firstName: string | null;
 
   @Column({ nullable: true })
-  lastName: string;
+  lastName: string | null;
 
   @Column({ nullable: true })
-  ipiNumber: string;
+  ipiNumber: string | null;
 
   @Column({ nullable: true })
-  proAffiliation: string; // e.g. ASCAP, BMI, SESAC
+  proAffiliation: string | null; // e.g. ASCAP, BMI, SESAC
 
   @Column({ nullable: true })
-  publishingCompany: string;
-
-  @Exclude()
-  @Column({ nullable: true })
-  signatureEncryptedPath: string;
+  publishingCompany: string | null;
 
   @Exclude()
   @Column({ nullable: true })
-  encryptionKeyId: string;
+  signatureEncryptedPath: string | null;
+
+  @Exclude()
+  @Column({ nullable: true })
+  encryptionKeyId: string | null;
 
   // New fields for Signature Module 2.0
   @Column({ nullable: true, type: 'text' })
-  signatureUrl: string; // Base64 or URL of the signature image
+  signatureUrl: string | null; // Base64 or URL of the signature image
 
   @Column({ default: false })
   hasRegisteredSignature: boolean;

@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import ThemeToggle from '@/components/ThemeToggle';
@@ -20,11 +21,21 @@ interface UserData {
 export default function Sidebar() {
     const locale = useLocale();
     const pathname = usePathname();
-    const router = useRouter();
     const t = useTranslations('Dashboard.nav');
     const [user, setUser] = useState<UserData | null>(null);
     const [loading, setLoading] = useState(true);
     const [isOpen, setIsOpen] = useState(false);
+
+    const handleLogout = useCallback(() => {
+        removeToken();
+
+        const domain = window.location.hostname.endsWith('saldanamusic.com')
+            ? '; Domain=.saldanamusic.com' : '';
+        document.cookie = `token=; path=/; max-age=0${domain}`;
+        document.cookie = `saldana_is_new_user=; path=/; max-age=0${domain}`;
+
+        window.location.href = `/${locale}/login`;
+    }, [locale]);
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -43,7 +54,6 @@ export default function Sidebar() {
                     const data = await res.json();
                     setUser(data);
                 } else if (res.status === 401) {
-                    // Token expired - force logout
                     handleLogout();
                 }
             } catch (e) {
@@ -54,7 +64,7 @@ export default function Sidebar() {
         };
 
         fetchUser();
-    }, []);
+    }, [handleLogout]);
 
     // Close sidebar when route changes on mobile
     useEffect(() => {
@@ -72,20 +82,6 @@ export default function Sidebar() {
             document.body.style.overflow = '';
         };
     }, [isOpen]);
-
-    const handleLogout = () => {
-        // Clear all auth data using centralized function
-        removeToken();
-
-        // Also clear cookies with domain (redundant but ensures complete cleanup)
-        const domain = window.location.hostname.endsWith('saldanamusic.com')
-            ? '; Domain=.saldanamusic.com' : '';
-        document.cookie = `token=; path=/; max-age=0${domain}`;
-        document.cookie = `saldana_is_new_user=; path=/; max-age=0${domain}`;
-
-        // Force full page reload to clear any cached state
-        window.location.href = `/${locale}/login`;
-    };
 
     const isActive = (path: string) => {
         if (path === `/${locale}/dashboard`) {
@@ -145,7 +141,7 @@ export default function Sidebar() {
                     </svg>
                 </button>
                 <Link href={`/${locale}/dashboard`} className="flex items-center gap-2">
-                    <img src="/logo.svg" alt="Saldaña Music" className="h-8 w-auto" />
+                    <Image src="/logo.svg" alt="Saldaña Music" width={120} height={32} className="h-8 w-auto" />
                 </Link>
                 {/* Logout button in header for mobile - ALWAYS visible to prevent trapped states */}
                 <button
@@ -179,7 +175,7 @@ export default function Sidebar() {
                 {/* Logo - Hidden on mobile (shown in header) */}
                 <div className="p-5 border-b border-white/5 hidden lg:block">
                     <Link href={`/${locale}`} className="flex items-center gap-3 group">
-                        <img src="/logo.svg" alt="Logo" className="h-9 w-auto" />
+                        <Image src="/logo.svg" alt="Logo" width={140} height={36} className="h-9 w-auto" />
                         <div className="flex flex-col">
                             <span className="text-base font-bold tracking-[0.15em] text-white leading-none">SALDAÑA</span>
                             <span className="text-[0.5rem] tracking-[0.5em] text-primary/80 uppercase font-light leading-none mt-0.5">MUSIC</span>
@@ -200,9 +196,12 @@ export default function Sidebar() {
                     ) : user ? (
                         <Link href={`/${locale}/dashboard/profile`} className="flex items-center gap-3 group hover:bg-white/5 rounded-lg p-2 -m-2 transition-colors">
                             {user.avatarUrl ? (
-                                <img
+                                <Image
                                     src={user.avatarUrl}
                                     alt={user.firstName || 'Usuario'}
+                                    width={44}
+                                    height={44}
+                                    unoptimized
                                     className="w-11 h-11 rounded-full object-cover ring-2 ring-primary/20 group-hover:ring-primary/50 transition-all"
                                 />
                             ) : (

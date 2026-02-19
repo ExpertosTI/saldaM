@@ -112,10 +112,11 @@ export default function CreateSplitSheet() {
         })));
     };
 
-    const updateCollaborator = (index: number, field: keyof Collaborator, value: any) => {
+    const updateCollaborator = <K extends keyof Collaborator>(index: number, field: K, value: Collaborator[K]) => {
         const newCollabs = [...collaborators];
-        // @ts-ignore
-        newCollabs[index][field] = value;
+        const existing = newCollabs[index];
+        if (!existing) return;
+        newCollabs[index] = { ...existing, [field]: value };
         setCollaborators(newCollabs);
     };
 
@@ -163,7 +164,7 @@ export default function CreateSplitSheet() {
             });
 
             if (res.ok) {
-                const data = await res.json();
+                await res.json();
                 setMessage({ type: 'success', text: status === 'DRAFT' ? s('draftSaved') : s('splitSheetCreated') });
                 // Redirect to the split sheet
                 setTimeout(() => {
@@ -236,7 +237,7 @@ export default function CreateSplitSheet() {
                                     <select
                                         className="w-full bg-surface-highlight border border-border rounded-lg p-3 text-textMain outline-none focus:border-primary transition-all appearance-none cursor-pointer"
                                         value={c.role}
-                                        onChange={(e) => updateCollaborator(i, 'role', e.target.value)}
+                                        onChange={(e) => updateCollaborator(i, 'role', e.target.value as Role)}
                                     >
                                         <option value="Songwriter">{t('roles.songwriter')}</option>
                                         <option value="Producer">{t('roles.producer')}</option>

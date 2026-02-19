@@ -8,7 +8,7 @@ export default getRequestConfig(async ({ requestLocale }) => {
     let locale = await requestLocale;
 
     // Ensure that a valid locale is used
-    if (!locale || !locales.includes(locale as any)) {
+    if (!locale || !locales.includes(locale)) {
         locale = defaultLocale;
     }
 
@@ -30,12 +30,13 @@ export default getRequestConfig(async ({ requestLocale }) => {
                     fileContents = fs.readFileSync(candidate, 'utf8');
                     break;
                 }
-            } catch { }
+            } catch {
+                continue;
+            }
         }
 
         messages = fileContents ? JSON.parse(fileContents) : {};
-    } catch (error) {
-        // Fallback to empty
+    } catch {
         messages = {};
     }
 

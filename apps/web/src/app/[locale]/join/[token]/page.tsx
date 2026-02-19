@@ -49,7 +49,7 @@ export default function JoinPage() {
                 setStatus('error');
                 setMessage(data.message || t('System.joinFailed'));
             }
-        } catch (e) {
+        } catch {
             setStatus('error');
             setMessage(t('System.genericError'));
         }

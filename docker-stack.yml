@@ -7,6 +7,11 @@ services:
   db:
     image: postgres:16-alpine
     restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: JustDtBase2027@
@@ -21,6 +26,9 @@ services:
         limits:
           cpus: '0.5'
           memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
       restart_policy:
         condition: on-failure
 
@@ -29,6 +37,11 @@ services:
   # -------------------------------------------------------------------------
   api:
     image: ghcr.io/expertosti/saldanamusic-api:latest
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
     environment:
       - DB_Type=postgres
       # Password encoded properly
@@ -56,6 +69,9 @@ services:
         limits:
           cpus: '0.5'
           memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
       restart_policy:
         condition: on-failure
       labels:
@@ -73,6 +89,11 @@ services:
   # -------------------------------------------------------------------------
   web:
     image: ghcr.io/expertosti/saldanamusic-web:latest
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
     environment:
       - NEXT_PUBLIC_API_URL=https://app.saldanamusic.com/api
       - NEXT_PUBLIC_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
@@ -85,6 +106,9 @@ services:
         limits:
           cpus: '0.5'
           memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
       restart_policy:
         condition: on-failure
       labels:

@@ -1,7 +1,6 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { useTranslations } from 'next-intl';
 import SignatureCanvas, { SignatureCanvasRef } from '@/components/ui/SignatureCanvas';
 
 interface SignaturePadProps {
@@ -12,7 +11,6 @@ interface SignaturePadProps {
 export default function SignaturePad({ onSave, onCancel }: SignaturePadProps) {
     const sigCanvas = useRef<SignatureCanvasRef>(null);
     const [isEmpty, setIsEmpty] = useState(true);
-    const t = useTranslations('Signature'); // Assuming you'll add translations
 
     const clear = () => {
         sigCanvas.current?.clear();

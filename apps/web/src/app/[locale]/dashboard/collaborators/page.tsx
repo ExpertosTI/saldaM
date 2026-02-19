@@ -1,8 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useState, useEffect, useCallback } from 'react';
 import { getToken, API_BASE_URL } from '@/lib/auth';
 import { useToast } from '@/components/ToastProvider';
 import ConfirmDialog from '@/components/ConfirmDialog';
@@ -51,7 +49,6 @@ const roleLabels: Record<string, string> = {
 };
 
 export default function CollaboratorsPage() {
-    const t = useTranslations('Dashboard');
     const { success, error } = useToast();
     const [contacts, setContacts] = useState<Contact[]>([]);
     const [stats, setStats] = useState<ContactStats | null>(null);
@@ -80,7 +77,7 @@ export default function CollaboratorsPage() {
     const [contactToDeleteId, setContactToDeleteId] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    const fetchContacts = async () => {
+    const fetchContacts = useCallback(async () => {
         const token = getToken();
         if (!token) return;
 
@@ -103,9 +100,9 @@ export default function CollaboratorsPage() {
             console.error('Error fetching contacts:', e);
             error('Error de conexión al cargar contactos.');
         }
-    };
+    }, [error, roleFilter, search, showFavorites]);
 
-    const fetchStats = async () => {
+    const fetchStats = useCallback(async () => {
         const token = getToken();
         if (!token) return;
 
@@ -123,7 +120,7 @@ export default function CollaboratorsPage() {
             console.error('Error fetching stats:', e);
             error('Error de conexión al cargar estadísticas.');
         }
-    };
+    }, [error]);
 
     useEffect(() => {
         const load = async () => {
@@ -132,11 +129,11 @@ export default function CollaboratorsPage() {
             setLoading(false);
         };
         load();
-    }, []);
+    }, [fetchContacts, fetchStats]);
 
     useEffect(() => {
         fetchContacts();
-    }, [search, roleFilter, showFavorites]);
+    }, [fetchContacts]);
 
     const handleOpenModal = (contact?: Contact) => {
         if (contact) {

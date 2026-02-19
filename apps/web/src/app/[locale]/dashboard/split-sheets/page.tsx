@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { getToken, API_BASE_URL } from '@/lib/auth';
@@ -12,7 +12,7 @@ interface SplitSheet {
     title: string;
     status: 'DRAFT' | 'PENDING_SIGNATURES' | 'COMPLETED';
     createdAt: string;
-    collaborators?: any[];
+    collaborators?: unknown[];
 }
 
 export default function SplitSheetsPage() {
@@ -24,7 +24,6 @@ export default function SplitSheetsPage() {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('');
-    const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
     // Confirm Dialog State
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -34,7 +33,7 @@ export default function SplitSheetsPage() {
     // Stats
     const [stats, setStats] = useState({ draft: 0, pending: 0, completed: 0, total: 0 });
 
-    const fetchSheets = async () => {
+    const fetchSheets = useCallback(async () => {
         const token = getToken();
         if (!token) return;
 
@@ -60,11 +59,11 @@ export default function SplitSheetsPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [error]);
 
     useEffect(() => {
         fetchSheets();
-    }, []);
+    }, [fetchSheets]);
 
     const filteredSheets = sheets.filter(sheet => {
         const matchesSearch = !search || sheet.title.toLowerCase().includes(search.toLowerCase());

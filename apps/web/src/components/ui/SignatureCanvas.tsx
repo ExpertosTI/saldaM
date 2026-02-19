@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, useState, forwardRef, useImperativeHandle } from 'react';
+import { useRef, useEffect, useState, forwardRef, useImperativeHandle, useCallback } from 'react';
 
 interface SignatureCanvasProps {
     canvasProps?: React.CanvasHTMLAttributes<HTMLCanvasElement>;
@@ -22,7 +22,7 @@ const SignatureCanvas = forwardRef<SignatureCanvasRef, SignatureCanvasProps>(
         const [hasDrawn, setHasDrawn] = useState(false);
 
         // Resize handler that preserves content
-        const handleResize = () => {
+        const handleResize = useCallback(() => {
             const canvas = canvasRef.current;
             if (!canvas) return;
 
@@ -59,7 +59,7 @@ const SignatureCanvas = forwardRef<SignatureCanvasRef, SignatureCanvasProps>(
                 ctx.lineJoin = 'round';
                 ctx.strokeStyle = '#000000';
             }
-        };
+        }, [hasDrawn]);
 
         useEffect(() => {
             const canvas = canvasRef.current;
@@ -84,7 +84,7 @@ const SignatureCanvas = forwardRef<SignatureCanvasRef, SignatureCanvasProps>(
                 resizeObserver.disconnect();
                 window.removeEventListener('resize', handleResize);
             };
-        }, [hasDrawn]);
+        }, [handleResize]);
 
         // Helpers
         const getPoint = (e: React.MouseEvent | React.TouchEvent | TouchEvent | MouseEvent) => {

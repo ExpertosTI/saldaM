@@ -8,13 +8,13 @@ import { MailModule } from '../mail/mail.module';
 import { AuditLogModule } from '../audit-log/audit-log.module';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([User]),
-        MailModule,
-        AuditLogModule, // For logging functionality
-    ],
-    controllers: [UserController, KycController],
-    providers: [UserService],
-    exports: [UserService],
+  imports: [
+    TypeOrmModule.forFeature([User]),
+    MailModule,
+    AuditLogModule, // For logging functionality
+  ],
+  controllers: [UserController, KycController],
+  providers: [UserService],
+  exports: [UserService],
 })
-export class UserModule { }
+export class UserModule {}

@@ -5,9 +5,9 @@ import { ContactsController } from './contacts.controller';
 import { Contact } from './entities/contact.entity';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Contact])],
-    controllers: [ContactsController],
-    providers: [ContactsService],
-    exports: [ContactsService],
+  imports: [TypeOrmModule.forFeature([Contact])],
+  controllers: [ContactsController],
+  providers: [ContactsService],
+  exports: [ContactsService],
 })
-export class ContactsModule { }
+export class ContactsModule {}

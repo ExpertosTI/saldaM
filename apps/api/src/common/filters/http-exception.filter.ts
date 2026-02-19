@@ -6,7 +6,12 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
-import { Request, Response } from 'express';
+
+type HttpRequest = { url: string; method: string };
+type HttpResponse = {
+  status: (code: number) => HttpResponse;
+  json: (body: unknown) => void;
+};
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -14,26 +19,48 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
-    const response = ctx.getResponse<Response>();
-    const request = ctx.getRequest<Request>();
+    const response = ctx.getResponse<HttpResponse>();
+    const request = ctx.getRequest<HttpRequest>();
 
-    const status =
+    const status: HttpStatus =
       exception instanceof HttpException
-        ? exception.getStatus()
+        ? (exception.getStatus() as HttpStatus)
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
-    const message =
+    const responsePayload: unknown =
       exception instanceof HttpException
         ? exception.getResponse()
         : 'Internal server error';
+
+    const messageValue =
+      typeof responsePayload === 'object' &&
+      responsePayload !== null &&
+      'message' in responsePayload
+        ? (responsePayload as { message?: unknown }).message
+        : responsePayload;
+
+    const messageText = Array.isArray(messageValue)
+      ? messageValue.map((v) => String(v)).join(', ')
+      : typeof messageValue === 'string'
+        ? messageValue
+        : typeof responsePayload === 'string'
+          ? responsePayload
+          : 'Internal server error';
+
+    const errorValue =
+      typeof responsePayload === 'object' &&
+      responsePayload !== null &&
+      'error' in responsePayload
+        ? (responsePayload as { error?: unknown }).error
+        : null;
 
     const errorResponse = {
       statusCode: status,
       timestamp: new Date().toISOString(),
       path: request.url,
       method: request.method,
-      message: typeof message === 'string' ? message : (message as any).message || message,
-      error: typeof message === 'string' ? null : (message as any).error,
+      message: messageText,
+      error: typeof errorValue === 'string' ? errorValue : null,
     };
 
     if (status === HttpStatus.INTERNAL_SERVER_ERROR) {
@@ -43,7 +70,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       );
     } else {
       this.logger.warn(
-        `Method: ${request.method} Path: ${request.url} Status: ${status} Message: ${JSON.stringify(message)}`,
+        `Method: ${request.method} Path: ${request.url} Status: ${status} Message: ${JSON.stringify(responsePayload)}`,
       );
     }
 

@@ -1,9 +1,15 @@
-
-import { Injectable, NotFoundException, ForbiddenException, ConflictException, Logger, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  ConflictException,
+  Logger,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import type { FindOptionsWhere } from 'typeorm';
 import { SplitSheet, SplitSheetStatus } from './entities/split-sheet.entity';
-import { User } from '../user/entities/user.entity';
 import { SignatureService } from '../signature/signature.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { MailService } from '../mail/mail.service';
@@ -12,609 +18,806 @@ import { ContactRole } from '../contacts/entities/contact.entity';
 import { Collaborator, CollaboratorRole } from './entities/collaborator.entity';
 import { OtpService } from '../auth/otp.service';
 import * as crypto from 'crypto';
+import type { User } from '../user/entities/user.entity';
+
+type AuthUser = {
+  id: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  ipAddress?: string;
+  userAgent?: string;
+};
+
+type CreateSplitSheetDto = {
+  title: string;
+  label?: string | null;
+  studio?: string | null;
+  producerName?: string | null;
+  collaborators?: Array<{
+    email: string;
+    legalName: string;
+    role: CollaboratorRole;
+    percentage: number;
+  }>;
+};
 
 @Injectable()
 export class SplitSheetService {
-    private readonly logger = new Logger(SplitSheetService.name);
-    constructor(
-        @InjectRepository(SplitSheet)
-        private splitSheetRepository: Repository<SplitSheet>,
-        private signatureService: SignatureService,
-        private auditLogService: AuditLogService,
-        private mailService: MailService,
-        private contactsService: ContactsService,
-        private otpService: OtpService,
-    ) { }
+  private readonly logger = new Logger(SplitSheetService.name);
+  constructor(
+    @InjectRepository(SplitSheet)
+    private splitSheetRepository: Repository<SplitSheet>,
+    private signatureService: SignatureService,
+    private auditLogService: AuditLogService,
+    private mailService: MailService,
+    private contactsService: ContactsService,
+    private otpService: OtpService,
+  ) {}
 
-    async startSignatures(id: string, user: any) {
-        const splitSheet = await this.findOne(id);
-        if (!splitSheet) throw new NotFoundException('Split Sheet not found');
+  async startSignatures(id: string, user: AuthUser) {
+    const splitSheet = await this.findOne(id);
+    if (!splitSheet) throw new NotFoundException('Split Sheet not found');
 
-        if (splitSheet.owner?.id !== user.id) {
-            throw new ForbiddenException('Only owner can start signatures');
-        }
-
-        if (splitSheet.status === SplitSheetStatus.PENDING_SIGNATURES) {
-            throw new ConflictException('Split Sheet is already pending signatures');
-        }
-        if (splitSheet.status === SplitSheetStatus.COMPLETED) {
-            throw new ConflictException('Split Sheet is already completed');
-        }
-        if (splitSheet.status !== SplitSheetStatus.DRAFT) {
-            throw new ConflictException('Split Sheet cannot start signatures from current status');
-        }
-
-        splitSheet.status = SplitSheetStatus.PENDING_SIGNATURES;
-        await this.splitSheetRepository.save(splitSheet);
-
-        await this.auditLogService.log('SHEET_STATUS_CHANGE',
-            `Split Sheet ${id} moved to PENDING_SIGNATURES by ${user.email}`,
-            user);
-
-        // Send signature request emails to all collaborators
-        const ownerName = user.firstName ? `${user.firstName} ${user.lastName}` : user.email;
-        for (const collab of splitSheet.collaborators) {
-            if (!collab.hasSigned && collab.email !== user.email) {
-                try {
-                    const signLink = `https://app.saldanamusic.com/split-sheets/${id}`;
-                    // We need to fetch IPI from user or if it's stored in collaborator entity?
-                    // Collaborator entity has no IPI column yet!
-                    // WAIT: Collaborator entity SHOULD have these details if we want to display them.
-                    // But for now, let's assume we might need to fetch them or if they are users, get from User.
-
-                    // Actually, let's check if we have it on the collaborator object we have here.
-                    // If not, we might need a join.
-                    // For now, let's look at the collaborator entity definition.
-
-                    await this.mailService.sendSignatureRequest(
-                        collab.email,
-                        ownerName,
-                        splitSheet.title,
-                        signLink,
-                        collab.legalName,
-                        collab.ipi // Function signature updated to accept this 6th arg
-                    );
-                } catch (e) {
-                    this.logger.error(`Failed to send signature request to ${collab.email}`, e);
-                }
-            }
-        }
-
-        return {
-            ...splitSheet,
-            message: 'Signature process started. Signature requests were sent to collaborators.',
-            status: splitSheet.status,
-        };
+    if (splitSheet.owner?.id !== user.id) {
+      throw new ForbiddenException('Only owner can start signatures');
     }
 
-    async requestSignatureOtp(id: string, user: any) {
-        const splitSheet = await this.findOne(id);
-        if (!splitSheet) throw new NotFoundException('Split Sheet not found');
-
-        // Check if user is a collaborator or owner
-        const collaborator = splitSheet.collaborators.find(c => c.email === user.email);
-        const isOwner = splitSheet.owner?.id === user.id;
-
-        if (!collaborator && !isOwner) {
-            throw new ForbiddenException('You are not a collaborator on this sheet');
-        }
-
-        if (collaborator && collaborator.hasSigned) {
-            throw new ConflictException('You have already signed this document');
-        }
-
-        const otp = this.otpService.generateOtp(user.email);
-        await this.mailService.sendOtp(user.email, otp);
-
-        return { message: 'OTP sent to email' };
+    if (splitSheet.status === SplitSheetStatus.PENDING_SIGNATURES) {
+      throw new ConflictException('Split Sheet is already pending signatures');
+    }
+    if (splitSheet.status === SplitSheetStatus.COMPLETED) {
+      throw new ConflictException('Split Sheet is already completed');
+    }
+    if (splitSheet.status !== SplitSheetStatus.DRAFT) {
+      throw new ConflictException(
+        'Split Sheet cannot start signatures from current status',
+      );
     }
 
-    async sign(id: string, user: any, signatureBase64?: string, otpCode?: string) {
-        const splitSheet = await this.findOne(id);
-        if (!splitSheet) throw new Error('Split Sheet not found');
-
-        // Check if collaborator
-        const collaborator = splitSheet.collaborators.find(c => c.email === user.email);
-        const isOwner = splitSheet.owner?.id === user.id;
-
-        if (!collaborator && !isOwner) {
-            throw new Error('You are not a collaborator on this sheet');
-        }
-
-        if (!collaborator) {
-            throw new Error('Owner must be listed as a collaborator to sign for a split.');
-        }
-
-        if (collaborator.hasSigned) {
-            return { message: 'Already signed', status: splitSheet.status };
-        }
-
-        // Verify OTP if provided (Enforce it for "Next Level" security)
-        if (!otpCode) {
-            throw new BadRequestException('OTP code is required for signature verification');
-        }
-
-        const isValidOtp = this.otpService.verifyOtp(user.email, otpCode);
-        if (!isValidOtp) {
-            throw new ForbiddenException('Invalid or expired OTP code');
-        }
-
-        // Cryptographic Hash of the Agreement
-        // We hash the critical terms: Title, Collaborators (Names, Emails, Percentages, Roles)
-        const agreementData = {
-            title: splitSheet.title,
-            collaborators: splitSheet.collaborators.map(c => ({
-                email: c.email,
-                legalName: c.legalName,
-                role: c.role,
-                percentage: c.percentage
-            })).sort((a, b) => a.email.localeCompare(b.email)) // Ensure deterministic order
-        };
-        const agreementString = JSON.stringify(agreementData);
-        const agreementHash = crypto.createHash('sha256').update(agreementString).digest('hex');
-
-        collaborator.hasSigned = true;
-        collaborator.signedAt = new Date();
-        collaborator.ipAddress = user.ipAddress || '0.0.0.0';
-        collaborator.userAgent = user.userAgent || 'Unknown';
-        collaborator.signatureHash = agreementHash;
-        collaborator.otpVerified = true;
-
-        // Save Signature Snapshot if provided
-        if (signatureBase64) {
-            // For MVP, since we don't have S3 set up in the context, we will store the Base64 directly 
-            // IF the column supports it (text). Ideally this is a file path.
-            // Given the entity definition 'signatureSnapshotPath': string, it implies a path.
-            // But for now, to make it work "without missing module", we will assume the PDF generator
-            // can handle this value or we save it to disk.
-            // Let's implement a simple disk write in signatureService or here?
-            // Better: Store it in the field. If it's too long, it might fail if column is varchar(255).
-            // Let's check entity. If it is 'text' it's fine. Entity didn't specify type, defaults to varchar usually.
-            // SAFE BET: Use SignatureService to save it to disk and return the path.
-            try {
-                const signaturePath = await this.signatureService.saveSignatureFile(id, user.id, signatureBase64);
-                collaborator.signatureSnapshotPath = signaturePath;
-            } catch (e) {
-                this.logger.error("Failed to save signature file", e);
-                // Fallback?
-            }
-        }
-
-        await this.splitSheetRepository.save(splitSheet); // Cascades to collaborators
-
-        await this.auditLogService.log('SIGNATURE_ADDED',
-            `User ${user.email} signed Split Sheet ${id}`,
-            user);
-
-        // Check if ALL signed
-        const allSigned = splitSheet.collaborators.every(c => c.hasSigned);
-        if (allSigned) {
-            splitSheet.status = SplitSheetStatus.COMPLETED;
-            splitSheet.finalDocHash = crypto.randomUUID(); // Mock hash
-            await this.splitSheetRepository.save(splitSheet);
-
-            await this.auditLogService.log('SHEET_COMPLETED',
-                `Split Sheet ${id} is fully signed and COMPLETED.`,
-                user);
-
-            // Generate Final PDF
-            try {
-                const visualPdfBuffer = await this.signatureService.generateFullSplitSheetPdf(splitSheet);
-                const pdfBuffer = await this.signatureService.appendAuditTrail(visualPdfBuffer, splitSheet);
-                const filename = `SplitSheet_${splitSheet.title.replace(/[^a-z0-9]/gi, '_')}.pdf`;
-
-                // Notify all collaborators + owner
-                const recipients = new Set<string>();
-                if (splitSheet.owner?.email) recipients.add(splitSheet.owner.email);
-                splitSheet.collaborators.forEach(c => {
-                    if (c.email) recipients.add(c.email);
-                });
-
-                const downloadLink = `${process.env.APP_WEB_URL || 'https://app.saldanamusic.com'}/dashboard/split-sheets/${id}`;
-
-                for (const email of recipients) {
-                    await this.mailService.sendSplitSheetCompleted(
-                        email,
-                        splitSheet.title,
-                        downloadLink,
-                        [{ filename, content: pdfBuffer }]
-                    );
-                }
-            } catch (err) {
-                this.logger.error('Failed to send completion emails/PDF', err);
-            }
-
-
-        }
-
-        return { message: 'Signed successfully', status: splitSheet.status };
-    }
-
-    async create(createSplitSheetDto: any, user: any): Promise<SplitSheet> {
-        const splitSheet = this.splitSheetRepository.create({
-            ...createSplitSheetDto,
-            owner: user,
-        });
-        const saved = await this.splitSheetRepository.save(splitSheet) as unknown as SplitSheet;
-        await this.auditLogService.log('SPLIT_SHEET_CREATED', `User ${user.email} created split sheet ${saved.id}`, user);
-
-        // Auto-add collaborators to contacts
-        if (createSplitSheetDto.collaborators && Array.isArray(createSplitSheetDto.collaborators)) {
-            for (const collab of createSplitSheetDto.collaborators) {
-                // Skip adding self as contact
-                if (collab.email !== user.email) {
-                    await this.ensureContactExists(user, collab.email, collab.legalName, collab.role);
-
-                    // Send Email Invite
-                    try {
-                        const inviteLink = `${process.env.APP_WEB_URL || 'https://app.saldanamusic.com'}/dashboard/split-sheets`;
-                        await this.mailService.sendCollaboratorInvite(
-                            collab.email,
-                            `${user.firstName} ${user.lastName || ''}`.trim(),
-                            saved.title,
-                            inviteLink,
-                            collab.legalName
-                        );
-                        this.logger.log(`[SplitSheet] Sent invite to ${collab.email}`);
-                    } catch (err) {
-                        this.logger.error(`[SplitSheet] Failed to send invite to ${collab.email}`, err);
-                    }
-                }
-            }
-        }
-
-        return saved;
-    }
-
-    async findAllByUser(userId: string, email: string) {
-        // Prevent data mixing if email is empty
-        const conditions: any[] = [{ owner: { id: userId } }];
-        if (email && email.trim().length > 0) {
-            conditions.push({ collaborators: { email: email } });
-        }
-
-        return this.splitSheetRepository.find({
-            where: conditions,
-            relations: ['collaborators', 'owner'],
-            order: { createdAt: 'DESC' },
-        });
-    }
-
-    async findOne(id: string, user?: any) {
-        const sheet = await this.splitSheetRepository.findOne({
-            where: { id },
-            relations: ['collaborators', 'owner'],
-        });
-        if (!sheet) return null;
-
-        // Verificar acceso: owner o collaborador
-        if (user) {
-            const isOwner = sheet.owner?.id === user.id;
-            const isCollaborator = sheet.collaborators?.some(c => c.email === user.email);
-            if (!isOwner && !isCollaborator) {
-                throw new Error('Unauthorized: You do not have access to this split sheet');
-            }
-        }
-        return sheet;
-    }
-
-    async downloadPdf(id: string, user: any): Promise<Buffer> {
-        const splitSheet = await this.findOne(id);
-        if (!splitSheet) {
-            throw new Error('Split Sheet not found');
-        }
-
-        // Security Check
-        const isOwner = splitSheet.owner?.id === user.id;
-        const isCollaborator = splitSheet.collaborators.some(c => c.email === user.email);
-
-        if (!isCollaborator && !isOwner) {
-            throw new Error('You do not have permission to download this file');
-        }
-
-        return this.signatureService.generateSplitSheetPdf(splitSheet);
-    }
-
-    async downloadFullPdf(id: string, user: any): Promise<Buffer> {
-        const splitSheet = await this.findOne(id);
-        if (!splitSheet) {
-            throw new Error('Split Sheet not found');
-        }
-
-        const isOwner = splitSheet.owner?.id === user.id;
-        const isCollaborator = splitSheet.collaborators.some(c => c.email === user.email);
-
-        if (!isCollaborator && !isOwner) {
-            throw new Error('You do not have permission to download this file');
-        }
-
-        return this.signatureService.generateFullSplitSheetPdf(splitSheet);
-    }
-
-    async generateInvite(id: string, user: any): Promise<string> {
-        const splitSheet = await this.findOne(id);
-        if (!splitSheet) throw new Error('Split Sheet not found');
-
-        if (splitSheet.owner?.id !== user.id) {
-            throw new Error('Only owner can generate invite links');
-        }
-
-        if (!splitSheet.inviteToken) {
-            splitSheet.inviteToken = crypto.randomUUID();
-            await this.splitSheetRepository.save(splitSheet);
-        }
-        return splitSheet.inviteToken;
-    }
-
-    async joinViaInvite(token: string, user: any) {
-        const splitSheet = await this.splitSheetRepository.findOne({
-            where: { inviteToken: token },
-            relations: ['collaborators']
-        });
-
-        if (!splitSheet) throw new Error('Invalid invite token');
-
-        // Check if already a collaborator
-        const exists = splitSheet.collaborators.some(c => c.email === user.email);
-        if (exists) return { message: 'Already a collaborator', splitSheetId: splitSheet.id };
-
-        // Add as new collaborator
-        // We need to inject CollaboratorRepository or just use cascade if we modify the array?
-        // Cascade is on, so pushing to array and saving split sheet should work.
-        const newCollab = new Collaborator();
-        newCollab.email = user.email;
-        newCollab.legalName = user.firstName ? `${user.firstName} ${user.lastName}` : 'Guest';
-        newCollab.role = CollaboratorRole.SONGWRITER; // Default role
-        newCollab.percentage = 0; // Default 0
-        newCollab.splitSheet = splitSheet;
-
-        splitSheet.collaborators.push(newCollab);
-        await this.splitSheetRepository.save(splitSheet);
-
-        // Auto-add the NEW collaborator to the OWNER's contacts
-        if (splitSheet.owner) {
-            await this.ensureContactExists(splitSheet.owner, newCollab.email, newCollab.legalName, newCollab.role);
-        }
-
-        return { message: 'Joined successfully', splitSheetId: splitSheet.id };
-    }
-
-    async getStats(user: any) {
-        const total = await this.splitSheetRepository.count({
-            where: [
-                { owner: { id: user.id } },
-                { collaborators: { email: user.email } }
-            ]
-        });
-        const pending = await this.splitSheetRepository.count({
-            where: [
-                { owner: { id: user.id }, status: SplitSheetStatus.PENDING_SIGNATURES },
-                { collaborators: { email: user.email }, status: SplitSheetStatus.PENDING_SIGNATURES }
-            ]
-        });
-
-        // Calculate estimated royalties (mock for now, but scoped to user)
-        // In a real scenario, we would sum up royalties from a Royalty report related to these sheets
-
-        return {
-            totalSongs: total,
-            pendingSignatures: pending,
-            estimatedRoyalties: 0,
-        };
-    }
-
-    async deleteSplitSheet(id: string, user: any) {
-        const splitSheet = await this.findOne(id);
-        if (!splitSheet) throw new Error('Split Sheet not found');
-        if (splitSheet.owner?.id !== user.id) {
-            throw new Error('Only owner can delete this split sheet');
-        }
-        if (splitSheet.status === SplitSheetStatus.COMPLETED) {
-            throw new Error('Cannot delete a completed split sheet');
-        }
-        await this.auditLogService.log('SPLIT_SHEET_DELETED', `User ${user.email} deleted split sheet ${id}`, user);
-        await this.splitSheetRepository.remove(splitSheet);
-        return { message: 'Split sheet deleted successfully' };
-    }
-
-    async addCollaborator(id: string, user: any, collaboratorData: { email: string; legalName: string; role: CollaboratorRole; percentage: number }) {
-        const splitSheet = await this.findOne(id);
-        if (!splitSheet) throw new Error('Split Sheet not found');
-        if (splitSheet.owner?.id !== user.id) {
-            throw new Error('Only owner can add collaborators');
-        }
-        if (splitSheet.status !== SplitSheetStatus.DRAFT) {
-            throw new Error('Cannot modify collaborators after signatures started');
-        }
-        const exists = splitSheet.collaborators.some(c => c.email === collaboratorData.email);
-        if (exists) throw new Error('Collaborator already exists');
-
-        const newCollab = new Collaborator();
-        newCollab.email = collaboratorData.email;
-        newCollab.legalName = collaboratorData.legalName;
-        newCollab.role = collaboratorData.role;
-        newCollab.percentage = collaboratorData.percentage;
-        newCollab.splitSheet = splitSheet;
-
-        splitSheet.collaborators.push(newCollab);
-        await this.splitSheetRepository.save(splitSheet);
-        await this.auditLogService.log('COLLABORATOR_ADDED', `Collaborator ${collaboratorData.email} added to split sheet ${id}`, user);
-
-        // Auto-add to contacts
-        if (collaboratorData.email !== user.email) {
-            await this.ensureContactExists(user, collaboratorData.email, collaboratorData.legalName, collaboratorData.role);
-
-            // Send Email Invite
-            try {
-                const inviteLink = `${process.env.APP_WEB_URL || 'https://app.saldanamusic.com'}/dashboard/split-sheets/${id}`;
-                await this.mailService.sendCollaboratorInvite(
-                    collaboratorData.email,
-                    `${user.firstName} ${user.lastName || ''}`.trim(),
-                    splitSheet.title,
-                    inviteLink,
-                    collaboratorData.legalName
-                );
-            } catch (err) {
-                this.logger.error(`[SplitSheet] Failed to send invite to ${collaboratorData.email}`, err);
-            }
-        }
-
-        return splitSheet;
-    }
-
-    async removeCollaborator(id: string, user: any, collaboratorEmail: string) {
-        const splitSheet = await this.findOne(id);
-        if (!splitSheet) throw new Error('Split Sheet not found');
-        if (splitSheet.owner?.id !== user.id) {
-            throw new Error('Only owner can remove collaborators');
-        }
-        if (splitSheet.status !== SplitSheetStatus.DRAFT) {
-            throw new Error('Cannot modify collaborators after signatures started');
-        }
-        const collabIndex = splitSheet.collaborators.findIndex(c => c.email === collaboratorEmail);
-        if (collabIndex === -1) throw new Error('Collaborator not found');
-
-        splitSheet.collaborators.splice(collabIndex, 1);
-        await this.splitSheetRepository.save(splitSheet);
-        await this.auditLogService.log('COLLABORATOR_REMOVED', `Collaborator ${collaboratorEmail} removed from split sheet ${id}`, user);
-        return { message: 'Collaborator removed successfully' };
-    }
-
-    private async ensureContactExists(user: any, collaboratorEmail: string, collaboratorName: string, role: string) {
-        // Find existing contact
-        const existing = await this.contactsService.findAll(user, { search: collaboratorEmail });
-        const exists = existing.find(c => c.email === collaboratorEmail);
-
-        if (!exists) {
-            try {
-                // Map collaborator role to contact role
-                let contactRole = ContactRole.OTHER;
-                switch (role) {
-                    case CollaboratorRole.SONGWRITER: contactRole = ContactRole.SONGWRITER; break;
-                    case CollaboratorRole.PRODUCER: contactRole = ContactRole.PRODUCER; break;
-                    case CollaboratorRole.PUBLISHER: contactRole = ContactRole.PUBLISHER; break;
-                }
-
-                await this.contactsService.create({
-                    name: collaboratorName,
-                    email: collaboratorEmail,
-                    role: contactRole,
-                    phone: '', // Optional
-                    notes: 'Automatically added from Split Sheet',
-                }, user);
-            } catch (error) {
-                this.logger.error(`Failed to auto-create contact for ${collaboratorEmail}`, error);
-            }
-        }
-    }
-
-    // ==================== ENHANCED SIGNATURE SECURITY ====================
-
-    // In-memory OTP store: key = `${splitSheetId}:${email}`, value = { code, expiresAt }
-    private otpStore = new Map<string, { code: string; expiresAt: Date }>();
-
-    async requestSignOtp(id: string, user: any) {
-        const splitSheet = await this.findOne(id);
-        if (!splitSheet) throw new NotFoundException('Split Sheet not found');
-
-        // Check if user is a collaborator
-        const collaborator = splitSheet.collaborators.find(c => c.email === user.email);
-        if (!collaborator) {
-            throw new ForbiddenException('You are not a collaborator on this sheet');
-        }
-
-        // Generate 6-digit OTP
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const key = `${id}:${user.email}`;
-        this.otpStore.set(key, {
-            code: otp,
-            expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
-        });
-
-        // Send OTP via email
+    splitSheet.status = SplitSheetStatus.PENDING_SIGNATURES;
+    await this.splitSheetRepository.save(splitSheet);
+
+    await this.auditLogService.log(
+      'SHEET_STATUS_CHANGE',
+      `Split Sheet ${id} moved to PENDING_SIGNATURES by ${user.email}`,
+      user,
+    );
+
+    // Send signature request emails to all collaborators
+    const ownerName = user.firstName
+      ? `${user.firstName} ${user.lastName}`
+      : user.email;
+    for (const collab of splitSheet.collaborators) {
+      if (!collab.hasSigned && collab.email !== user.email) {
         try {
-            await this.mailService.sendOtp(user.email, otp);
-        } catch (err) {
-            console.error(`Failed to send OTP to ${user.email}`, err);
-            throw new Error('Failed to send verification code. Please try again.');
+          const signLink = `https://app.saldanamusic.com/split-sheets/${id}`;
+          // We need to fetch IPI from user or if it's stored in collaborator entity?
+          // Collaborator entity has no IPI column yet!
+          // WAIT: Collaborator entity SHOULD have these details if we want to display them.
+          // But for now, let's assume we might need to fetch them or if they are users, get from User.
+
+          // Actually, let's check if we have it on the collaborator object we have here.
+          // If not, we might need a join.
+          // For now, let's look at the collaborator entity definition.
+
+          await this.mailService.sendSignatureRequest(
+            collab.email,
+            ownerName,
+            splitSheet.title,
+            signLink,
+            collab.legalName ?? undefined,
+            collab.ipi ?? undefined, // Function signature updated to accept this 6th arg
+          );
+        } catch (e) {
+          this.logger.error(
+            `Failed to send signature request to ${collab.email}`,
+            e,
+          );
         }
-
-        await this.auditLogService.log('OTP_REQUESTED',
-            `OTP requested for signing Split Sheet ${id} by ${user.email}`,
-            user);
-
-        return { message: 'Verification code sent to your email.' };
+      }
     }
 
-    async verifySignOtp(id: string, user: any, otp: string) {
-        const key = `${id}:${user.email}`;
-        const stored = this.otpStore.get(key);
+    return {
+      ...splitSheet,
+      message:
+        'Signature process started. Signature requests were sent to collaborators.',
+      status: splitSheet.status,
+    };
+  }
 
-        if (!stored) {
-            throw new ForbiddenException('No verification code found. Please request a new one.');
-        }
+  async requestSignatureOtp(id: string, user: AuthUser) {
+    const splitSheet = await this.findOne(id);
+    if (!splitSheet) throw new NotFoundException('Split Sheet not found');
 
-        if (new Date() > stored.expiresAt) {
-            this.otpStore.delete(key);
-            throw new ForbiddenException('Verification code has expired. Please request a new one.');
-        }
+    // Check if user is a collaborator or owner
+    const collaborator = splitSheet.collaborators.find(
+      (c) => c.email === user.email,
+    );
+    const isOwner = splitSheet.owner?.id === user.id;
 
-        if (stored.code !== otp) {
-            throw new ForbiddenException('Invalid verification code.');
-        }
-
-        // OTP verified — mark the collaborator
-        this.otpStore.delete(key);
-
-        const splitSheet = await this.findOne(id);
-        if (!splitSheet) throw new NotFoundException('Split Sheet not found');
-
-        const collaborator = splitSheet.collaborators.find(c => c.email === user.email);
-        if (collaborator) {
-            collaborator.otpVerifiedAt = new Date();
-            await this.splitSheetRepository.save(splitSheet);
-        }
-
-        await this.auditLogService.log('OTP_VERIFIED',
-            `OTP verified for signing Split Sheet ${id} by ${user.email}`,
-            user);
-
-        return { message: 'Identity verified successfully.', verified: true };
+    if (!collaborator && !isOwner) {
+      throw new ForbiddenException('You are not a collaborator on this sheet');
     }
 
-    async uploadIdentityDoc(id: string, user: any, documentBase64: string, documentType: string) {
-        const splitSheet = await this.findOne(id);
-        if (!splitSheet) throw new NotFoundException('Split Sheet not found');
-
-        const collaborator = splitSheet.collaborators.find(c => c.email === user.email);
-        if (!collaborator) {
-            throw new ForbiddenException('You are not a collaborator on this sheet');
-        }
-
-        // Save the document to disk
-        const fs = await import('fs');
-        const path = await import('path');
-
-        const uploadsDir = path.join(process.cwd(), 'uploads', 'identity-docs');
-        if (!fs.existsSync(uploadsDir)) {
-            fs.mkdirSync(uploadsDir, { recursive: true });
-        }
-
-        // Extract the base64 data (remove data:image/...;base64, prefix if present)
-        const base64Data = documentBase64.replace(/^data:[^;]+;base64,/, '');
-        const filename = `${id}_${user.id}_${Date.now()}.jpg`;
-        const filePath = path.join(uploadsDir, filename);
-
-        fs.writeFileSync(filePath, Buffer.from(base64Data, 'base64'));
-
-        // Update the collaborator record
-        collaborator.identityDocPath = `uploads/identity-docs/${filename}`;
-        await this.splitSheetRepository.save(splitSheet);
-
-        await this.auditLogService.log('IDENTITY_DOC_UPLOADED',
-            `Identity document (${documentType}) uploaded for Split Sheet ${id} by ${user.email}`,
-            user);
-
-        return { message: 'Identity document uploaded successfully.', path: collaborator.identityDocPath };
+    if (collaborator && collaborator.hasSigned) {
+      throw new ConflictException('You have already signed this document');
     }
+
+    const otp = this.otpService.generateOtp(user.email);
+    await this.mailService.sendOtp(user.email, otp);
+
+    return { message: 'OTP sent to email' };
+  }
+
+  async sign(
+    id: string,
+    user: AuthUser,
+    signatureBase64?: string,
+    otpCode?: string,
+  ) {
+    const splitSheet = await this.findOne(id);
+    if (!splitSheet) throw new Error('Split Sheet not found');
+
+    // Check if collaborator
+    const collaborator = splitSheet.collaborators.find(
+      (c) => c.email === user.email,
+    );
+    const isOwner = splitSheet.owner?.id === user.id;
+
+    if (!collaborator && !isOwner) {
+      throw new Error('You are not a collaborator on this sheet');
+    }
+
+    if (!collaborator) {
+      throw new Error(
+        'Owner must be listed as a collaborator to sign for a split.',
+      );
+    }
+
+    if (collaborator.hasSigned) {
+      return { message: 'Already signed', status: splitSheet.status };
+    }
+
+    // Verify OTP if provided (Enforce it for "Next Level" security)
+    if (!otpCode) {
+      throw new BadRequestException(
+        'OTP code is required for signature verification',
+      );
+    }
+
+    const isValidOtp = this.otpService.verifyOtp(user.email, otpCode);
+    if (!isValidOtp) {
+      throw new ForbiddenException('Invalid or expired OTP code');
+    }
+
+    // Cryptographic Hash of the Agreement
+    // We hash the critical terms: Title, Collaborators (Names, Emails, Percentages, Roles)
+    const agreementData = {
+      title: splitSheet.title,
+      collaborators: splitSheet.collaborators
+        .map((c) => ({
+          email: c.email,
+          legalName: c.legalName,
+          role: c.role,
+          percentage: c.percentage,
+        }))
+        .sort((a, b) => a.email.localeCompare(b.email)), // Ensure deterministic order
+    };
+    const agreementString = JSON.stringify(agreementData);
+    const agreementHash = crypto
+      .createHash('sha256')
+      .update(agreementString)
+      .digest('hex');
+
+    collaborator.hasSigned = true;
+    collaborator.signedAt = new Date();
+    collaborator.ipAddress = user.ipAddress || '0.0.0.0';
+    collaborator.userAgent = user.userAgent || 'Unknown';
+    collaborator.signatureHash = agreementHash;
+    collaborator.otpVerified = true;
+
+    // Save Signature Snapshot if provided
+    if (signatureBase64) {
+      // For MVP, since we don't have S3 set up in the context, we will store the Base64 directly
+      // IF the column supports it (text). Ideally this is a file path.
+      // Given the entity definition 'signatureSnapshotPath': string, it implies a path.
+      // But for now, to make it work "without missing module", we will assume the PDF generator
+      // can handle this value or we save it to disk.
+      // Let's implement a simple disk write in signatureService or here?
+      // Better: Store it in the field. If it's too long, it might fail if column is varchar(255).
+      // Let's check entity. If it is 'text' it's fine. Entity didn't specify type, defaults to varchar usually.
+      // SAFE BET: Use SignatureService to save it to disk and return the path.
+      try {
+        const signaturePath = this.signatureService.saveSignatureFile(
+          id,
+          user.id,
+          signatureBase64,
+        );
+        collaborator.signatureSnapshotPath = signaturePath;
+      } catch (e: unknown) {
+        this.logger.error(
+          'Failed to save signature file',
+          e instanceof Error ? e.stack : String(e),
+        );
+        // Fallback?
+      }
+    }
+
+    await this.splitSheetRepository.save(splitSheet); // Cascades to collaborators
+
+    await this.auditLogService.log(
+      'SIGNATURE_ADDED',
+      `User ${user.email} signed Split Sheet ${id}`,
+      user,
+    );
+
+    // Check if ALL signed
+    const allSigned = splitSheet.collaborators.every((c) => c.hasSigned);
+    if (allSigned) {
+      splitSheet.status = SplitSheetStatus.COMPLETED;
+      splitSheet.finalDocHash = crypto.randomUUID(); // Mock hash
+      await this.splitSheetRepository.save(splitSheet);
+
+      await this.auditLogService.log(
+        'SHEET_COMPLETED',
+        `Split Sheet ${id} is fully signed and COMPLETED.`,
+        user,
+      );
+
+      // Generate Final PDF
+      try {
+        const visualPdfBuffer =
+          await this.signatureService.generateFullSplitSheetPdf(splitSheet);
+        const pdfBuffer = await this.signatureService.appendAuditTrail(
+          visualPdfBuffer,
+          splitSheet,
+        );
+        const filename = `SplitSheet_${splitSheet.title.replace(/[^a-z0-9]/gi, '_')}.pdf`;
+
+        // Notify all collaborators + owner
+        const recipients = new Set<string>();
+        if (splitSheet.owner?.email) recipients.add(splitSheet.owner.email);
+        splitSheet.collaborators.forEach((c) => {
+          if (c.email) recipients.add(c.email);
+        });
+
+        const downloadLink = `${process.env.APP_WEB_URL || 'https://app.saldanamusic.com'}/dashboard/split-sheets/${id}`;
+
+        for (const email of recipients) {
+          await this.mailService.sendSplitSheetCompleted(
+            email,
+            splitSheet.title,
+            downloadLink,
+            [{ filename, content: pdfBuffer }],
+          );
+        }
+      } catch (err) {
+        this.logger.error('Failed to send completion emails/PDF', err);
+      }
+    }
+
+    return { message: 'Signed successfully', status: splitSheet.status };
+  }
+
+  async create(
+    createSplitSheetDto: CreateSplitSheetDto,
+    user: AuthUser,
+  ): Promise<SplitSheet> {
+    const splitSheet = this.splitSheetRepository.create({
+      title: createSplitSheetDto.title,
+      label: createSplitSheetDto.label ?? null,
+      studio: createSplitSheetDto.studio ?? null,
+      producerName: createSplitSheetDto.producerName ?? null,
+      collaborators: (createSplitSheetDto.collaborators || []).map((c) => ({
+        email: c.email,
+        legalName: c.legalName,
+        role: c.role,
+        percentage: c.percentage,
+      })),
+      owner: { id: user.id } as User,
+    });
+    const saved = (await this.splitSheetRepository.save(
+      splitSheet,
+    )) as unknown as SplitSheet;
+    await this.auditLogService.log(
+      'SPLIT_SHEET_CREATED',
+      `User ${user.email} created split sheet ${saved.id}`,
+      user,
+    );
+
+    // Auto-add collaborators to contacts
+    if (
+      createSplitSheetDto.collaborators &&
+      Array.isArray(createSplitSheetDto.collaborators)
+    ) {
+      for (const collab of createSplitSheetDto.collaborators) {
+        // Skip adding self as contact
+        if (collab.email !== user.email) {
+          await this.ensureContactExists(
+            user,
+            collab.email,
+            collab.legalName,
+            collab.role,
+          );
+
+          // Send Email Invite
+          try {
+            const inviteLink = `${process.env.APP_WEB_URL || 'https://app.saldanamusic.com'}/dashboard/split-sheets`;
+            await this.mailService.sendCollaboratorInvite(
+              collab.email,
+              `${user.firstName} ${user.lastName || ''}`.trim(),
+              saved.title,
+              inviteLink,
+              collab.legalName,
+            );
+            this.logger.log(`[SplitSheet] Sent invite to ${collab.email}`);
+          } catch (err) {
+            this.logger.error(
+              `[SplitSheet] Failed to send invite to ${collab.email}`,
+              err,
+            );
+          }
+        }
+      }
+    }
+
+    return saved;
+  }
+
+  async findAllByUser(userId: string, email: string) {
+    // Prevent data mixing if email is empty
+    const conditions: FindOptionsWhere<SplitSheet>[] = [
+      { owner: { id: userId } },
+    ];
+    if (email && email.trim().length > 0) {
+      conditions.push({ collaborators: { email } });
+    }
+
+    return this.splitSheetRepository.find({
+      where: conditions,
+      relations: ['collaborators', 'owner'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async findOne(id: string, user?: AuthUser) {
+    const sheet = await this.splitSheetRepository.findOne({
+      where: { id },
+      relations: ['collaborators', 'owner'],
+    });
+    if (!sheet) return null;
+
+    // Verificar acceso: owner o collaborador
+    if (user) {
+      const isOwner = sheet.owner?.id === user.id;
+      const isCollaborator = sheet.collaborators?.some(
+        (c) => c.email === user.email,
+      );
+      if (!isOwner && !isCollaborator) {
+        throw new Error(
+          'Unauthorized: You do not have access to this split sheet',
+        );
+      }
+    }
+    return sheet;
+  }
+
+  async downloadPdf(id: string, user: AuthUser): Promise<Buffer> {
+    const splitSheet = await this.findOne(id);
+    if (!splitSheet) {
+      throw new Error('Split Sheet not found');
+    }
+
+    // Security Check
+    const isOwner = splitSheet.owner?.id === user.id;
+    const isCollaborator = splitSheet.collaborators.some(
+      (c) => c.email === user.email,
+    );
+
+    if (!isCollaborator && !isOwner) {
+      throw new Error('You do not have permission to download this file');
+    }
+
+    return this.signatureService.generateSplitSheetPdf(splitSheet);
+  }
+
+  async downloadFullPdf(id: string, user: AuthUser): Promise<Buffer> {
+    const splitSheet = await this.findOne(id);
+    if (!splitSheet) {
+      throw new Error('Split Sheet not found');
+    }
+
+    const isOwner = splitSheet.owner?.id === user.id;
+    const isCollaborator = splitSheet.collaborators.some(
+      (c) => c.email === user.email,
+    );
+
+    if (!isCollaborator && !isOwner) {
+      throw new Error('You do not have permission to download this file');
+    }
+
+    return this.signatureService.generateFullSplitSheetPdf(splitSheet);
+  }
+
+  async generateInvite(id: string, user: AuthUser): Promise<string> {
+    const splitSheet = await this.findOne(id);
+    if (!splitSheet) throw new Error('Split Sheet not found');
+
+    if (splitSheet.owner?.id !== user.id) {
+      throw new Error('Only owner can generate invite links');
+    }
+
+    if (!splitSheet.inviteToken) {
+      splitSheet.inviteToken = crypto.randomUUID();
+      await this.splitSheetRepository.save(splitSheet);
+    }
+    return splitSheet.inviteToken;
+  }
+
+  async joinViaInvite(token: string, user: AuthUser) {
+    const splitSheet = await this.splitSheetRepository.findOne({
+      where: { inviteToken: token },
+      relations: ['collaborators'],
+    });
+
+    if (!splitSheet) throw new Error('Invalid invite token');
+
+    // Check if already a collaborator
+    const exists = splitSheet.collaborators.some((c) => c.email === user.email);
+    if (exists)
+      return { message: 'Already a collaborator', splitSheetId: splitSheet.id };
+
+    // Add as new collaborator
+    // We need to inject CollaboratorRepository or just use cascade if we modify the array?
+    // Cascade is on, so pushing to array and saving split sheet should work.
+    const newCollab = new Collaborator();
+    newCollab.email = user.email;
+    newCollab.legalName = user.firstName
+      ? `${user.firstName} ${user.lastName}`
+      : 'Guest';
+    newCollab.role = CollaboratorRole.SONGWRITER; // Default role
+    newCollab.percentage = 0; // Default 0
+    newCollab.splitSheet = splitSheet;
+
+    splitSheet.collaborators.push(newCollab);
+    await this.splitSheetRepository.save(splitSheet);
+
+    // Auto-add the NEW collaborator to the OWNER's contacts
+    if (splitSheet.owner) {
+      await this.ensureContactExists(
+        splitSheet.owner,
+        newCollab.email,
+        newCollab.legalName,
+        newCollab.role,
+      );
+    }
+
+    return { message: 'Joined successfully', splitSheetId: splitSheet.id };
+  }
+
+  async getStats(user: AuthUser) {
+    const total = await this.splitSheetRepository.count({
+      where: [
+        { owner: { id: user.id } },
+        { collaborators: { email: user.email } },
+      ],
+    });
+    const pending = await this.splitSheetRepository.count({
+      where: [
+        { owner: { id: user.id }, status: SplitSheetStatus.PENDING_SIGNATURES },
+        {
+          collaborators: { email: user.email },
+          status: SplitSheetStatus.PENDING_SIGNATURES,
+        },
+      ],
+    });
+
+    // Calculate estimated royalties (mock for now, but scoped to user)
+    // In a real scenario, we would sum up royalties from a Royalty report related to these sheets
+
+    return {
+      totalSongs: total,
+      pendingSignatures: pending,
+      estimatedRoyalties: 0,
+    };
+  }
+
+  async deleteSplitSheet(id: string, user: AuthUser) {
+    const splitSheet = await this.findOne(id);
+    if (!splitSheet) throw new Error('Split Sheet not found');
+    if (splitSheet.owner?.id !== user.id) {
+      throw new Error('Only owner can delete this split sheet');
+    }
+    if (splitSheet.status === SplitSheetStatus.COMPLETED) {
+      throw new Error('Cannot delete a completed split sheet');
+    }
+    await this.auditLogService.log(
+      'SPLIT_SHEET_DELETED',
+      `User ${user.email} deleted split sheet ${id}`,
+      user,
+    );
+    await this.splitSheetRepository.remove(splitSheet);
+    return { message: 'Split sheet deleted successfully' };
+  }
+
+  async addCollaborator(
+    id: string,
+    user: AuthUser,
+    collaboratorData: {
+      email: string;
+      legalName: string;
+      role: CollaboratorRole;
+      percentage: number;
+    },
+  ) {
+    const splitSheet = await this.findOne(id);
+    if (!splitSheet) throw new Error('Split Sheet not found');
+    if (splitSheet.owner?.id !== user.id) {
+      throw new Error('Only owner can add collaborators');
+    }
+    if (splitSheet.status !== SplitSheetStatus.DRAFT) {
+      throw new Error('Cannot modify collaborators after signatures started');
+    }
+    const exists = splitSheet.collaborators.some(
+      (c) => c.email === collaboratorData.email,
+    );
+    if (exists) throw new Error('Collaborator already exists');
+
+    const newCollab = new Collaborator();
+    newCollab.email = collaboratorData.email;
+    newCollab.legalName = collaboratorData.legalName;
+    newCollab.role = collaboratorData.role;
+    newCollab.percentage = collaboratorData.percentage;
+    newCollab.splitSheet = splitSheet;
+
+    splitSheet.collaborators.push(newCollab);
+    await this.splitSheetRepository.save(splitSheet);
+    await this.auditLogService.log(
+      'COLLABORATOR_ADDED',
+      `Collaborator ${collaboratorData.email} added to split sheet ${id}`,
+      user,
+    );
+
+    // Auto-add to contacts
+    if (collaboratorData.email !== user.email) {
+      await this.ensureContactExists(
+        user,
+        collaboratorData.email,
+        collaboratorData.legalName,
+        collaboratorData.role,
+      );
+
+      // Send Email Invite
+      try {
+        const inviteLink = `${process.env.APP_WEB_URL || 'https://app.saldanamusic.com'}/dashboard/split-sheets/${id}`;
+        await this.mailService.sendCollaboratorInvite(
+          collaboratorData.email,
+          `${user.firstName} ${user.lastName || ''}`.trim(),
+          splitSheet.title,
+          inviteLink,
+          collaboratorData.legalName,
+        );
+      } catch (err) {
+        this.logger.error(
+          `[SplitSheet] Failed to send invite to ${collaboratorData.email}`,
+          err,
+        );
+      }
+    }
+
+    return splitSheet;
+  }
+
+  async removeCollaborator(
+    id: string,
+    user: AuthUser,
+    collaboratorEmail: string,
+  ) {
+    const splitSheet = await this.findOne(id);
+    if (!splitSheet) throw new Error('Split Sheet not found');
+    if (splitSheet.owner?.id !== user.id) {
+      throw new Error('Only owner can remove collaborators');
+    }
+    if (splitSheet.status !== SplitSheetStatus.DRAFT) {
+      throw new Error('Cannot modify collaborators after signatures started');
+    }
+    const collabIndex = splitSheet.collaborators.findIndex(
+      (c) => c.email === collaboratorEmail,
+    );
+    if (collabIndex === -1) throw new Error('Collaborator not found');
+
+    splitSheet.collaborators.splice(collabIndex, 1);
+    await this.splitSheetRepository.save(splitSheet);
+    await this.auditLogService.log(
+      'COLLABORATOR_REMOVED',
+      `Collaborator ${collaboratorEmail} removed from split sheet ${id}`,
+      user,
+    );
+    return { message: 'Collaborator removed successfully' };
+  }
+
+  private async ensureContactExists(
+    user: Pick<User, 'id' | 'email'>,
+    collaboratorEmail: string,
+    collaboratorName: string,
+    role: CollaboratorRole,
+  ) {
+    // Find existing contact
+    const existing = await this.contactsService.findAll(user, {
+      search: collaboratorEmail,
+    });
+    const exists = existing.find((c) => c.email === collaboratorEmail);
+
+    if (!exists) {
+      try {
+        // Map collaborator role to contact role
+        let contactRole = ContactRole.OTHER;
+        switch (role) {
+          case CollaboratorRole.SONGWRITER:
+            contactRole = ContactRole.SONGWRITER;
+            break;
+          case CollaboratorRole.PRODUCER:
+            contactRole = ContactRole.PRODUCER;
+            break;
+          case CollaboratorRole.PUBLISHER:
+            contactRole = ContactRole.PUBLISHER;
+            break;
+        }
+
+        await this.contactsService.create(
+          {
+            name: collaboratorName,
+            email: collaboratorEmail,
+            role: contactRole,
+            phone: '', // Optional
+            notes: 'Automatically added from Split Sheet',
+          },
+          user,
+        );
+      } catch (error) {
+        this.logger.error(
+          `Failed to auto-create contact for ${collaboratorEmail}`,
+          error,
+        );
+      }
+    }
+  }
+
+  // ==================== ENHANCED SIGNATURE SECURITY ====================
+
+  // In-memory OTP store: key = `${splitSheetId}:${email}`, value = { code, expiresAt }
+  private otpStore = new Map<string, { code: string; expiresAt: Date }>();
+
+  async requestSignOtp(id: string, user: AuthUser) {
+    const splitSheet = await this.findOne(id);
+    if (!splitSheet) throw new NotFoundException('Split Sheet not found');
+
+    // Check if user is a collaborator
+    const collaborator = splitSheet.collaborators.find(
+      (c) => c.email === user.email,
+    );
+    if (!collaborator) {
+      throw new ForbiddenException('You are not a collaborator on this sheet');
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const key = `${id}:${user.email}`;
+    this.otpStore.set(key, {
+      code: otp,
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
+    });
+
+    // Send OTP via email
+    try {
+      await this.mailService.sendOtp(user.email, otp);
+    } catch (err: unknown) {
+      this.logger.error(
+        `Failed to send OTP to ${user.email}`,
+        err instanceof Error ? err.stack : String(err),
+      );
+      throw new Error('Failed to send verification code. Please try again.');
+    }
+
+    await this.auditLogService.log(
+      'OTP_REQUESTED',
+      `OTP requested for signing Split Sheet ${id} by ${user.email}`,
+      user,
+    );
+
+    return { message: 'Verification code sent to your email.' };
+  }
+
+  async verifySignOtp(id: string, user: AuthUser, otp: string) {
+    const key = `${id}:${user.email}`;
+    const stored = this.otpStore.get(key);
+
+    if (!stored) {
+      throw new ForbiddenException(
+        'No verification code found. Please request a new one.',
+      );
+    }
+
+    if (new Date() > stored.expiresAt) {
+      this.otpStore.delete(key);
+      throw new ForbiddenException(
+        'Verification code has expired. Please request a new one.',
+      );
+    }
+
+    if (stored.code !== otp) {
+      throw new ForbiddenException('Invalid verification code.');
+    }
+
+    // OTP verified — mark the collaborator
+    this.otpStore.delete(key);
+
+    const splitSheet = await this.findOne(id);
+    if (!splitSheet) throw new NotFoundException('Split Sheet not found');
+
+    const collaborator = splitSheet.collaborators.find(
+      (c) => c.email === user.email,
+    );
+    if (collaborator) {
+      collaborator.otpVerifiedAt = new Date();
+      await this.splitSheetRepository.save(splitSheet);
+    }
+
+    await this.auditLogService.log(
+      'OTP_VERIFIED',
+      `OTP verified for signing Split Sheet ${id} by ${user.email}`,
+      user,
+    );
+
+    return { message: 'Identity verified successfully.', verified: true };
+  }
+
+  async uploadIdentityDoc(
+    id: string,
+    user: AuthUser,
+    documentBase64: string,
+    documentType: string,
+  ) {
+    const splitSheet = await this.findOne(id);
+    if (!splitSheet) throw new NotFoundException('Split Sheet not found');
+
+    const collaborator = splitSheet.collaborators.find(
+      (c) => c.email === user.email,
+    );
+    if (!collaborator) {
+      throw new ForbiddenException('You are not a collaborator on this sheet');
+    }
+
+    // Save the document to disk
+    const fs = await import('fs');
+    const path = await import('path');
+
+    const uploadsDir = path.join(process.cwd(), 'uploads', 'identity-docs');
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+
+    // Extract the base64 data (remove data:image/...;base64, prefix if present)
+    const base64Data = documentBase64.replace(/^data:[^;]+;base64,/, '');
+    const filename = `${id}_${user.id}_${Date.now()}.jpg`;
+    const filePath = path.join(uploadsDir, filename);
+
+    fs.writeFileSync(filePath, Buffer.from(base64Data, 'base64'));
+
+    // Update the collaborator record
+    collaborator.identityDocPath = `uploads/identity-docs/${filename}`;
+    await this.splitSheetRepository.save(splitSheet);
+
+    await this.auditLogService.log(
+      'IDENTITY_DOC_UPLOADED',
+      `Identity document (${documentType}) uploaded for Split Sheet ${id} by ${user.email}`,
+      user,
+    );
+
+    return {
+      message: 'Identity document uploaded successfully.',
+      path: collaborator.identityDocPath,
+    };
+  }
 }

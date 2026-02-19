@@ -11,15 +11,15 @@ import { ContactsModule } from '../contacts/contacts.module';
 import { AuthModule } from '../auth/auth.module';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([SplitSheet, Collaborator]),
-        SignatureModule,
-        AuditLogModule,
-        MailModule,
-        ContactsModule,
-        AuthModule,
-    ],
-    controllers: [SplitSheetController],
-    providers: [SplitSheetService],
+  imports: [
+    TypeOrmModule.forFeature([SplitSheet, Collaborator]),
+    SignatureModule,
+    AuditLogModule,
+    MailModule,
+    ContactsModule,
+    AuthModule,
+  ],
+  controllers: [SplitSheetController],
+  providers: [SplitSheetService],
 })
-export class SplitSheetModule { }
+export class SplitSheetModule {}

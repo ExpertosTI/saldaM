@@ -5,7 +5,12 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { getToken, API_BASE_URL } from '@/lib/auth';
 
-export default function ActionsRow({ sheet, currentUserId }: { sheet: any; currentUserId?: string | null }) {
+type SplitSheetSummary = {
+    id: string;
+    status?: string | null;
+};
+
+export default function ActionsRow({ sheet }: { sheet: SplitSheetSummary; currentUserId?: string | null }) {
     const [loading, setLoading] = useState(false);
     const [notice, setNotice] = useState<string>('');
     const t = useTranslations();
@@ -40,7 +45,7 @@ export default function ActionsRow({ sheet, currentUserId }: { sheet: any; curre
             } else {
                 notify(t('System.inviteFailed'));
             }
-        } catch (e) {
+        } catch {
             notify(t('System.shareError'));
         } finally {
             setLoading(false);
@@ -108,7 +113,7 @@ export default function ActionsRow({ sheet, currentUserId }: { sheet: any; curre
             } else {
                 notify(data.message || t('System.genericError'));
             }
-        } catch (e) {
+        } catch {
             notify(t('System.genericError'));
         } finally {
             setLoading(false);

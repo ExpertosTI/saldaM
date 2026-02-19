@@ -1,15 +1,55 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2, Save, FileText } from "lucide-react";
 import { useToast } from "@/components/ToastProvider";
+import { API_BASE_URL, getToken } from "@/lib/auth";
+
+type CollaboratorRole = "SONGWRITER" | "PRODUCER" | "PUBLISHER";
+
+type Collaborator = {
+    legalName: string;
+    email: string;
+    role: CollaboratorRole;
+    percentage: number;
+    ipi: string;
+    proAffiliation: string;
+    phone: string;
+};
+
+type FormDataState = {
+    title: string;
+    label: string;
+    studio: string;
+    producerName: string;
+    collaborators: Collaborator[];
+};
+
+type Contact = {
+    id: string;
+    name: string;
+    email: string;
+    role?: CollaboratorRole | null;
+    notes?: string | null;
+    phone?: string | null;
+};
+
+const emptyCollaborator: Collaborator = {
+    legalName: "",
+    email: "",
+    role: "SONGWRITER",
+    percentage: 0,
+    ipi: "",
+    proAffiliation: "",
+    phone: "",
+};
 
 export default function NewSplitSheetPage() {
     const router = useRouter();
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<FormDataState>({
         title: "",
         label: "",
         studio: "",
@@ -26,27 +66,19 @@ export default function NewSplitSheetPage() {
             },
         ],
     });
-    const [contacts, setContacts] = useState<any[]>([]);
-    const [loadingContacts, setLoadingContacts] = useState(true);
+    const [contacts, setContacts] = useState<Contact[]>([]);
+    const [, setLoadingContacts] = useState(true);
 
-    useEffect(() => {
-        fetchContacts();
-    }, []);
-
-    const fetchContacts = async () => {
+    const fetchContacts = useCallback(async () => {
         try {
-            // Get token helper ideally, but for now assuming we have a way or just direct fetch if relying on cookie proxy? 
-            // Wait, this is client side. We need the token.
-            // Let's assume a helper or just localStorage for now as established in other files (getToken()).
-            // Accessing localStorage directly for simplicity or importing the helper.
-            const token = localStorage.getItem('token');
+            const token = getToken();
             if (!token) return;
 
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://app.saldanamusic.com/api'}/contacts/mine`, {
+            const res = await fetch(`${API_BASE_URL}/contacts/mine`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) {
-                const data = await res.json();
+                const data: Contact[] = await res.json();
                 setContacts(data);
             }
         } catch (e) {
@@ -54,14 +86,22 @@ export default function NewSplitSheetPage() {
         } finally {
             setLoadingContacts(false);
         }
-    };
+    }, []);
 
-    const handleQuickAdd = (contact: any) => {
+    useEffect(() => {
+        fetchContacts();
+    }, [fetchContacts]);
+
+    const handleQuickAdd = (contact: Contact) => {
         // Check if already added
         if (formData.collaborators.some(c => c.email === contact.email)) {
             toast("Este colaborador ya está en la lista.", "warning");
             return;
         }
+
+        const ipi = contact.notes?.includes("IPI:")
+            ? contact.notes.split("IPI:")[1]?.trim() || ""
+            : "";
 
         setFormData({
             ...formData,
@@ -70,10 +110,10 @@ export default function NewSplitSheetPage() {
                 {
                     legalName: contact.name,
                     email: contact.email,
-                    role: contact.role || "SONGWRITER", // Default or map from contact role
+                    role: contact.role || "SONGWRITER",
                     percentage: 0,
-                    ipi: contact.notes?.includes('IPI:') ? contact.notes.split('IPI:')[1].trim() : "", // Naive parsing or just empty
-                    proAffiliation: "", // Add to contact entity later if needed
+                    ipi,
+                    proAffiliation: "",
                     phone: contact.phone || "",
                 },
             ],
@@ -95,15 +135,7 @@ export default function NewSplitSheetPage() {
             ...formData,
             collaborators: [
                 ...formData.collaborators,
-                {
-                    legalName: "",
-                    email: "",
-                    role: "SONGWRITER",
-                    percentage: 0,
-                    ipi: "",
-                    proAffiliation: "",
-                    phone: "",
-                },
+                { ...emptyCollaborator },
             ],
         });
     };
@@ -114,9 +146,9 @@ export default function NewSplitSheetPage() {
         setFormData({ ...formData, collaborators: newCollabs });
     };
 
-    const updateCollaborator = (index: number, field: string, value: any) => {
+    const updateCollaborator = <K extends keyof Collaborator>(index: number, field: K, value: Collaborator[K]) => {
         const newCollabs = [...formData.collaborators];
-        newCollabs[index] = { ...newCollabs[index], [field]: value } as any;
+        newCollabs[index] = { ...newCollabs[index], [field]: value };
         setFormData({ ...formData, collaborators: newCollabs });
     };
 
@@ -128,8 +160,8 @@ export default function NewSplitSheetPage() {
         setLoading(true);
 
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://app.saldanamusic.com/api'}/split-sheets`, {
+            const token = getToken();
+            const response = await fetch(`${API_BASE_URL}/split-sheets`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -260,7 +292,7 @@ export default function NewSplitSheetPage() {
                                             <select
                                                 className="w-full bg-neutral-800 border-none rounded text-xs py-1.5 focus:ring-0"
                                                 value={collab.role}
-                                                onChange={(e) => updateCollaborator(index, 'role', e.target.value)}
+                                                onChange={(e) => updateCollaborator(index, 'role', e.target.value as CollaboratorRole)}
                                             >
                                                 <option value="SONGWRITER">Compositor / Autor</option>
                                                 <option value="PRODUCER">Productor</option>
@@ -273,7 +305,7 @@ export default function NewSplitSheetPage() {
                                                 type="number"
                                                 className="w-full bg-transparent border-b border-neutral-700 focus:border-primary focus:outline-none py-1 text-sm font-bold text-center"
                                                 value={collab.percentage}
-                                                onChange={(e) => updateCollaborator(index, 'percentage', e.target.value)}
+                                                onChange={(e) => updateCollaborator(index, 'percentage', Number(e.target.value))}
                                             />
                                         </div>
                                     </div>

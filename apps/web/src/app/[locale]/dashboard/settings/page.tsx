@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useTranslations, useLocale } from 'next-intl';
+import { useLocale } from 'next-intl';
 
 import { getToken, removeToken, API_BASE_URL } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
@@ -25,8 +25,6 @@ interface NotificationSettings {
 }
 
 export default function SettingsPage() {
-    const t = useTranslations('Settings');
-    const tCommon = useTranslations('Common');
     const locale = useLocale();
     const router = useRouter();
 
@@ -148,7 +146,9 @@ export default function SettingsPage() {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-        } catch { }
+        } catch {
+            await Promise.resolve();
+        }
 
         handleLogout();
     };

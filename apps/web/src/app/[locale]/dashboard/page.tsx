@@ -1,6 +1,19 @@
-import { getTranslations, getLocale } from 'next-intl/server';
+import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import ActionsRow from '@/components/dashboard/ActionsRow';
+
+type DashboardStats = {
+    totalSongs: number;
+    pendingSignatures: number;
+    estimatedRoyalties: number;
+};
+
+type SplitSheetSummary = {
+    id: string;
+    title: string;
+    status: 'DRAFT' | 'PENDING_SIGNATURES' | 'COMPLETED' | string;
+    createdAt: string;
+};
 
 export default async function DashboardHome({
     params
@@ -15,18 +28,8 @@ export default async function DashboardHome({
     const cookieStore = await cookies();
     const token = cookieStore.get('token')?.value;
 
-    let currentUserId = null;
-    if (token) {
-        try {
-            const parts = token.split('.');
-            if (parts.length < 2) throw new Error('Invalid token');
-            const payload = JSON.parse(atob(parts[1]!));
-            currentUserId = payload.sub || payload.id;
-        } catch (e) { }
-    }
-
-    let recentSheets: any[] = [];
-    let stats = { totalSongs: 0, pendingSignatures: 0, estimatedRoyalties: 0 };
+    let recentSheets: SplitSheetSummary[] = [];
+    let stats: DashboardStats = { totalSongs: 0, pendingSignatures: 0, estimatedRoyalties: 0 };
 
     if (token) {
         try {
@@ -160,7 +163,7 @@ export default async function DashboardHome({
                         {t('noSheetsFound')}
                     </div>
                 ) : (
-                    recentSheets.slice(0, 5).map((sheet: any) => (
+                    recentSheets.slice(0, 5).map((sheet) => (
                         <div key={sheet.id} className="glass-panel p-3 sm:p-4 rounded-xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 hover:border-primary/40 transition-all group">
                             <div className="flex items-center gap-3 sm:gap-4">
                                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-lg shadow-inner shadow-primary/10">🎵</div>
@@ -176,7 +179,6 @@ export default async function DashboardHome({
                                 <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                                     <ActionsRow
                                         sheet={sheet}
-                                        currentUserId={currentUserId}
                                     />
                                 </div>
                             </div>

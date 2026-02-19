@@ -1,15 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
-import Link from 'next/link';
-import { useLocale } from 'next-intl';
-import { useToast } from '@/components/ToastProvider';
 
 export default function RoyaltiesPage() {
-    const locale = useLocale();
-    const t = useTranslations('Royalties');
-    const { toast } = useToast();
     const [period, setPeriod] = useState('30d');
 
     // Placeholder data - would come from API

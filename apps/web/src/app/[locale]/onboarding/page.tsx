@@ -48,7 +48,9 @@ export default function OnboardingPage() {
                         parsed.isNewUser = false;
                         localStorage.setItem('saldana_auth', JSON.stringify(parsed));
                     }
-                } catch { }
+                } catch (error) {
+                    console.error(error);
+                }
 
                 // Clear the isNewUser cookie
                 document.cookie = 'saldana_is_new_user=0; path=/; max-age=0';

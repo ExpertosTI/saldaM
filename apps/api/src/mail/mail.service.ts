@@ -1,4 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 
 @Injectable()
@@ -10,6 +14,7 @@ export class MailService {
   private readonly replyTo?: string;
   private readonly bcc?: string;
   private readonly webUrl: string;
+  private readonly smtpConfigured: boolean;
 
   constructor() {
     const host = process.env.SMTP_HOST || 'smtp.hostinger.com';
@@ -30,8 +35,11 @@ export class MailService {
     this.bcc = process.env.MAIL_BCC || undefined;
     this.webUrl = process.env.APP_WEB_URL || 'https://app.saldanamusic.com';
 
-    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-      this.logger.warn('⚠️ SMTP credentials not configured. Email sending will fail.');
+    this.smtpConfigured = !!(process.env.SMTP_USER && process.env.SMTP_PASS);
+    if (!this.smtpConfigured) {
+      this.logger.warn(
+        '⚠️ SMTP credentials not configured. Email sending will fail.',
+      );
     }
   }
 
@@ -44,7 +52,12 @@ export class MailService {
       .replace(/'/g, '&#039;');
   }
 
-  private renderTemplate(params: { title: string; preheader: string; bodyHtml: string; cta?: { label: string; url: string } }) {
+  private renderTemplate(params: {
+    title: string;
+    preheader: string;
+    bodyHtml: string;
+    cta?: { label: string; url: string };
+  }) {
     const title = this.escapeHtml(params.title);
     const preheader = this.escapeHtml(params.preheader);
     const cta = params.cta
@@ -98,7 +111,16 @@ export class MailService {
 </html>`;
   }
 
-  private async send(params: { to: string; subject: string; text: string; html: string; attachments?: any[] }) {
+  private async send(params: {
+    to: string;
+    subject: string;
+    text: string;
+    html: string;
+    attachments?: nodemailer.SendMailOptions['attachments'];
+  }): Promise<{ messageId?: string }> {
+    if (!this.smtpConfigured) {
+      throw new ServiceUnavailableException('SMTP is not configured');
+    }
     const mailOptions: nodemailer.SendMailOptions = {
       from: this.from,
       to: params.to,
@@ -110,9 +132,28 @@ export class MailService {
     if (this.replyTo) mailOptions.replyTo = this.replyTo;
     if (this.bcc) mailOptions.bcc = this.bcc;
 
-    const info = await this.transporter.sendMail(mailOptions);
-    this.logger.log(`Mail sent to=${params.to} subject="${params.subject}" messageId=${info.messageId}`);
-    return info;
+    const info = (await this.transporter.sendMail(mailOptions)) as unknown as {
+      messageId?: unknown;
+    };
+    const messageIdValue = info.messageId;
+    const messageId =
+      typeof messageIdValue === 'string'
+        ? messageIdValue
+        : typeof messageIdValue === 'number'
+          ? String(messageIdValue)
+          : messageIdValue === null || messageIdValue === undefined
+            ? undefined
+            : (() => {
+                try {
+                  return JSON.stringify(messageIdValue);
+                } catch {
+                  return undefined;
+                }
+              })();
+    this.logger.log(
+      `Mail sent to=${params.to} subject="${params.subject}" messageId=${messageId ?? ''}`,
+    );
+    return { messageId };
   }
 
   async sendUserWelcome(email: string, name: string) {
@@ -129,7 +170,14 @@ export class MailService {
     await this.send({ to: email, subject, text, html });
   }
 
-  async sendSignatureRequest(email: string, inviterName: string, splitSheetTitle: string, link: string, collaboratorName?: string, collaboratorIpi?: string) {
+  async sendSignatureRequest(
+    email: string,
+    inviterName: string,
+    splitSheetTitle: string,
+    link: string,
+    collaboratorName?: string,
+    collaboratorIpi?: string,
+  ) {
     const subject = `Solicitud de Firma: ${splitSheetTitle}`;
     const text = `${inviterName} te invitó a firmar el split sheet "${splitSheetTitle}".\n\nRevisa y firma aquí: ${link}`;
 
@@ -166,7 +214,12 @@ export class MailService {
     await this.send({ to: email, subject, text, html });
   }
 
-  async sendSplitSheetCompleted(email: string, splitSheetTitle: string, downloadLink: string, attachments?: { filename: string; content: Buffer }[]) {
+  async sendSplitSheetCompleted(
+    email: string,
+    splitSheetTitle: string,
+    downloadLink: string,
+    attachments?: { filename: string; content: Buffer }[],
+  ) {
     const subject = `Split Sheet Completado: ${splitSheetTitle}`;
     const text = `¡Split Sheet completado!\n\nTodos los colaboradores han firmado "${splitSheetTitle}".\n\nAccede aquí: ${downloadLink}\n\nAdjunto encontrarás el documento firmado.`;
     const html = this.renderTemplate({
@@ -178,11 +231,19 @@ export class MailService {
     await this.send({ to: email, subject, text, html, attachments });
   }
 
-  async sendCollaboratorInvite(email: string, inviterName: string, splitSheetTitle: string, inviteLink: string, collaboratorName?: string) {
+  async sendCollaboratorInvite(
+    email: string,
+    inviterName: string,
+    splitSheetTitle: string,
+    inviteLink: string,
+    collaboratorName?: string,
+  ) {
     const subject = `Invitación a Colaborar: ${splitSheetTitle}`;
     const text = `${inviterName} te invitó a colaborar en "${splitSheetTitle}".\n\nAcepta la invitación aquí: ${inviteLink}`;
 
-    let greeting = collaboratorName ? `Hola ${this.escapeHtml(collaboratorName)},` : 'Hola,';
+    const greeting = collaboratorName
+      ? `Hola ${this.escapeHtml(collaboratorName)},`
+      : 'Hola,';
 
     const html = this.renderTemplate({
       title: subject,

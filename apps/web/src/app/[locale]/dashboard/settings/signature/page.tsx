@@ -1,13 +1,11 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { API_BASE_URL, getToken } from '@/lib/auth';
 import SignatureCanvas, { SignatureCanvasRef } from '@/components/ui/SignatureCanvas';
 
 export default function SignatureSettingsPage() {
-    const t = useTranslations('Settings');
     const router = useRouter();
     const sigPad = useRef<SignatureCanvasRef>(null);
 

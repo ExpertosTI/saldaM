@@ -9,7 +9,7 @@ const routing = {
 const intlMiddleware = createMiddleware(routing);
 
 export default function middleware(req: NextRequest) {
-    const { pathname, searchParams } = req.nextUrl;
+    const { pathname } = req.nextUrl;
 
     // DEBUG logs
     // console.log(`[Middleware] Processing request for: ${pathname}`);
@@ -21,7 +21,10 @@ export default function middleware(req: NextRequest) {
         pathname.startsWith('/static') ||
         pathname.includes('.') // files like favicon.ico, etc.
     ) {
-        return NextResponse.next();
+        const res = NextResponse.next();
+        res.headers.set('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+        res.headers.set('Cross-Origin-Embedder-Policy', 'unsafe-none');
+        return res;
     }
 
     // 2. Check for Auth Token (cookie)
@@ -53,7 +56,10 @@ export default function middleware(req: NextRequest) {
     }
 
     // 5. If checks pass, run Internationalization Middleware
-    return intlMiddleware(req);
+    const res = intlMiddleware(req);
+    res.headers.set('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+    res.headers.set('Cross-Origin-Embedder-Policy', 'unsafe-none');
+    return res;
 }
 
 export const config = {

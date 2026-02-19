@@ -1,5 +1,9 @@
 import { NestFactory, Reflector } from '@nestjs/core';
-import { ValidationPipe, ClassSerializerInterceptor, Logger } from '@nestjs/common';
+import {
+  ValidationPipe,
+  ClassSerializerInterceptor,
+  Logger,
+} from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 import compression from 'compression';
@@ -12,20 +16,29 @@ async function bootstrap() {
 
   // 1. Security Headers (Helmet)
   // 1. Security Headers (Helmet)
-  app.use(helmet({
-    crossOriginOpenerPolicy: { policy: "unsafe-none" },
-    crossOriginResourcePolicy: { policy: "cross-origin" },
-    contentSecurityPolicy: false, // temporarily disable CSP if it conflicts with Google Scripts
-  }));
+  app.use(
+    helmet({
+      crossOriginOpenerPolicy: { policy: 'unsafe-none' },
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+      contentSecurityPolicy: false, // temporarily disable CSP if it conflicts with Google Scripts
+    }),
+  );
 
   // Enable Trust Proxy for Load Balancers (Traefik/Nginx)
   try {
-    const expressApp = app.getHttpAdapter().getInstance();
-    if (expressApp && typeof expressApp.set === 'function') {
-      expressApp.set('trust proxy', 1);
+    const instance = app.getHttpAdapter().getInstance() as unknown;
+    const maybeExpress = instance as { set?: unknown };
+    if (typeof maybeExpress.set === 'function') {
+      (maybeExpress.set as (key: string, value: unknown) => void)(
+        'trust proxy',
+        1,
+      );
     }
-  } catch (error) {
-    console.warn('Failed to set trust proxy:', error);
+  } catch (error: unknown) {
+    console.warn(
+      'Failed to set trust proxy:',
+      error instanceof Error ? error.message : String(error),
+    );
   }
 
   // 2. CORS (Restricted to specific domains)
@@ -38,7 +51,12 @@ async function bootstrap() {
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'Accept',
+    ],
   });
 
   // 3. Compression (Gzip)
@@ -46,11 +64,13 @@ async function bootstrap() {
 
   // 4. Global Validation Pipes (DTO Validation)
   // 4. Global Validation Pipes & Interceptors
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
-    transform: true,
-  }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
 
   // Global Filter
   app.useGlobalFilters(new AllExceptionsFilter());
@@ -81,4 +101,10 @@ async function bootstrap() {
   await app.listen(process.env.PORT ?? 3000);
   logger.log(`Application is running on: ${await app.getUrl()}`);
 }
-bootstrap();
+bootstrap().catch((error: unknown) => {
+  const logger = new Logger('Bootstrap');
+  logger.error(
+    'Failed to start application',
+    error instanceof Error ? error.stack : String(error),
+  );
+});

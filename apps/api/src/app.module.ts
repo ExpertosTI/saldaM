@@ -28,10 +28,12 @@ import { Contact } from './contacts/entities/contact.entity';
       isGlobal: true,
     }),
     // Rate Limiting: 10 requests per 60 seconds per IP (Basic DDoS protection)
-    ThrottlerModule.forRoot([{
-      ttl: 60000,
-      limit: 100, // Increased to prevent false positives with SPA
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 100, // Increased to prevent false positives with SPA
+      },
+    ]),
     TypeOrmModule.forRoot({
       type: 'postgres',
       url: process.env.DATABASE_URL,
@@ -40,7 +42,15 @@ import { Contact } from './contacts/entities/contact.entity';
       username: process.env.DB_USERNAME || 'postgres',
       password: process.env.DB_PASSWORD || 'postgres',
       database: process.env.DB_NAME || 'saldana_music',
-      entities: [User, SplitSheet, Collaborator, Catalog, Track, AuditLog, Contact],
+      entities: [
+        User,
+        SplitSheet,
+        Collaborator,
+        Catalog,
+        Track,
+        AuditLog,
+        Contact,
+      ],
       synchronize: process.env.NODE_ENV !== 'production', // NEVER sync in production - use migrations
     }),
     MailModule,
@@ -62,12 +72,14 @@ import { Contact } from './contacts/entities/contact.entity';
 export class AppModule implements OnModuleInit {
   private readonly logger = new Logger(AppModule.name);
 
-  constructor(private dataSource: DataSource) { }
+  constructor(private dataSource: DataSource) {}
 
   async onModuleInit() {
     const userRepository = this.dataSource.getRepository(User);
     const masterEmail = 'info@saldanamusic.com'; // Updated as per request
-    const existingMaster = await userRepository.findOne({ where: { email: masterEmail } });
+    const existingMaster = await userRepository.findOne({
+      where: { email: masterEmail },
+    });
 
     if (!existingMaster) {
       this.logger.log('Creating Master User...');

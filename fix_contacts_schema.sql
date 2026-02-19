@@ -1,3 +1,6 @@
+-- Ensure UUID generator exists (required for uuid_generate_v4())
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 -- Create Contact table if it doesn't exist
 CREATE TABLE IF NOT EXISTS "contact" (
     "id" uuid NOT NULL DEFAULT uuid_generate_v4(),

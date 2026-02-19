@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useLocale, useTranslations } from 'next-intl';
 
@@ -50,7 +51,7 @@ export default function RegisterPage() {
             <div className="w-full max-w-lg p-8 glass-panel rounded-2xl shadow-2xl relative overflow-hidden">
                 {/* Logo & Decorative Gold Glow */}
                 <Link href={`/${locale}`} className="flex flex-col items-center mb-6 hover:scale-105 transition-transform cursor-pointer">
-                    <img src="/logo.svg" alt="Saldaña Music Logo" className="h-16 w-auto drop-shadow-[0_0_10px_rgba(212,175,55,0.4)] mb-4" />
+                    <Image src="/logo.svg" alt="Saldaña Music Logo" width={240} height={64} className="h-16 w-auto drop-shadow-[0_0_10px_rgba(212,175,55,0.4)] mb-4" />
                     <div className="w-24 h-1 bg-primary shadow-[0_0_30px_2px_rgba(212,175,55,0.6)]"></div>
                 </Link>
 
@@ -67,7 +68,9 @@ export default function RegisterPage() {
 
                             try {
                                 sessionStorage.setItem('saldana_pre_auth_path', `${pathname}${window.location.search}`);
-                            } catch { }
+                            } catch (error) {
+                                console.error(error);
+                            }
 
                             const popup = window.open(
                                 `${process.env.NEXT_PUBLIC_API_URL || 'https://app.saldanamusic.com/api'}/auth/google`,
@@ -96,7 +99,9 @@ export default function RegisterPage() {
                                 try {
                                     preAuthPath = sessionStorage.getItem('saldana_pre_auth_path');
                                     sessionStorage.removeItem('saldana_pre_auth_path');
-                                } catch { }
+                                } catch {
+                                    preAuthPath = null;
+                                }
 
                                 const isLoop = typeof preAuthPath === 'string' && (preAuthPath.includes('/login') || preAuthPath.includes('/register'));
 
@@ -119,7 +124,9 @@ export default function RegisterPage() {
                                 try {
                                     const data = JSON.parse(event.newValue);
                                     if (data?.token) finalizeOnce(data.token, !!data.isNewUser);
-                                } catch { }
+                                } catch {
+                                    return;
+                                }
                             };
 
                             const cleanup = () => {
@@ -143,7 +150,7 @@ export default function RegisterPage() {
                         }}
                         className="w-full flex items-center justify-center gap-3 px-6 py-3 rounded-xl bg-white text-black font-semibold hover:bg-gray-100 transition-colors"
                     >
-                        <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
+                        <Image src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" width={20} height={20} unoptimized className="w-5 h-5" />
                         {a('register.signUpWithGoogle')}
                     </button>
 

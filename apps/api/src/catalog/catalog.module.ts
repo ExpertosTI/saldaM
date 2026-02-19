@@ -6,9 +6,9 @@ import { Catalog } from './entities/catalog.entity';
 import { Track } from './entities/track.entity';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Catalog, Track])],
-    controllers: [CatalogController],
-    providers: [CatalogService],
-    exports: [CatalogService],
+  imports: [TypeOrmModule.forFeature([Catalog, Track])],
+  controllers: [CatalogController],
+  providers: [CatalogService],
+  exports: [CatalogService],
 })
-export class CatalogModule { }
+export class CatalogModule {}

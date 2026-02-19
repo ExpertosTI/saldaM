@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { getTranslations } from 'next-intl/server';
 
 export default async function Home({
@@ -25,7 +26,7 @@ export default async function Home({
                     <Link href={`/${locale}`} className="flex items-center gap-4 group cursor-pointer">
                         <div className="relative">
                             <div className="absolute inset-0 bg-primary/20 blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                            <img src="/logo.png" alt="Saldaña Music Logo" className="relative h-10 w-auto object-contain" />
+                            <Image src="/logo.png" alt="Saldaña Music Logo" width={160} height={40} className="relative h-10 w-auto object-contain" />
                         </div>
                         <div className="hidden md:flex flex-col">
                             <span className="text-lg font-bold tracking-[0.2em] text-white leading-none">SALDAÑA</span>
@@ -170,7 +171,7 @@ export default async function Home({
             <footer className="w-full border-t border-white/5 bg-black py-12 relative z-10">
                 <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
                     <div className="flex items-center gap-2 opacity-50 hover:opacity-100 transition-opacity">
-                        <img src="/logo.png" alt="Logo" className="h-6 w-auto grayscale" />
+                        <Image src="/logo.png" alt="Logo" width={96} height={24} className="h-6 w-auto grayscale" />
                         <span className="text-xs tracking-widest uppercase">{c('copyright')}</span>
                     </div>
                     <div className="flex gap-8 text-sm text-gray-500">

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { getToken, API_BASE_URL } from '@/lib/auth';
@@ -115,7 +116,7 @@ export default function ProfilePage() {
             } else {
                 setMessage({ type: 'error', text: s('profileUpdateFailed') });
             }
-        } catch (e) {
+        } catch {
             setMessage({ type: 'error', text: s('genericError') });
         } finally {
             setSaving(false);
@@ -146,9 +147,12 @@ export default function ProfilePage() {
                     {/* Avatar */}
                     <div className="relative group">
                         {user?.avatarUrl ? (
-                            <img
+                            <Image
                                 src={user.avatarUrl}
                                 alt={user.firstName || 'Usuario'}
+                                width={96}
+                                height={96}
+                                unoptimized
                                 className="w-24 h-24 rounded-2xl object-cover ring-4 ring-primary/20"
                             />
                         ) : (
