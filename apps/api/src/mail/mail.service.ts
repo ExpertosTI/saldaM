@@ -257,6 +257,31 @@ export class MailService {
     await this.send({ to: email, subject, text, html });
   }
 
+  async sendPlatformInvite(
+    email: string,
+    inviterName: string,
+    inviteLink: string,
+    collaboratorName?: string,
+  ) {
+    const subject = `Invitación a Saldaña Music`;
+    const text = `${inviterName} te ha invitado a unirte a Saldaña Music.\n\nÚnete aquí: ${inviteLink}`;
+
+    const greeting = collaboratorName
+      ? `Hola ${this.escapeHtml(collaboratorName)},`
+      : 'Hola,';
+
+    const html = this.renderTemplate({
+      title: subject,
+      preheader: `Invitación de ${inviterName}`,
+      bodyHtml: `${greeting}<br/><br/>
+              ${this.escapeHtml(inviterName)} te ha invitado a unirte a <strong>Saldaña Music</strong>, la plataforma de gestión de derechos de autor para creadores de música.
+              <br/><br/>
+              Crea tu cuenta para empezar a gestionar tus split sheets y colaboraciones.`,
+      cta: { label: 'Aceptar Invitación', url: inviteLink },
+    });
+    await this.send({ to: email, subject, text, html });
+  }
+
   async sendOtp(email: string, otp: string) {
     const subject = 'Código de Verificación - Saldaña Music';
     const text = `Tu código de verificación es: ${otp}\n\nExpira en 10 minutos.`;

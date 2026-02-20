@@ -5,6 +5,9 @@
 ALTER TABLE "collaborator" ADD COLUMN IF NOT EXISTS "userAgent" text;
 ALTER TABLE "collaborator" ADD COLUMN IF NOT EXISTS "signatureHash" text;
 ALTER TABLE "collaborator" ADD COLUMN IF NOT EXISTS "otpVerified" boolean DEFAULT false;
+ALTER TABLE "collaborator" ADD COLUMN IF NOT EXISTS "otpVerifiedAt" TIMESTAMP;
+ALTER TABLE "collaborator" ADD COLUMN IF NOT EXISTS "signatureSnapshotPath" text;
+ALTER TABLE "collaborator" ADD COLUMN IF NOT EXISTS "identityDocPath" text;
 
 -- 2. Add 'inviteToken' to 'split_sheet' if missing (fixes Audit Report issue)
 ALTER TABLE "split_sheet" ADD COLUMN IF NOT EXISTS "inviteToken" text;

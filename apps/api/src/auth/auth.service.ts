@@ -2,115 +2,15 @@ import { Injectable, Logger } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { User } from '../user/entities/user.entity';
 import { JwtService } from '@nestjs/jwt';
-import { OAuth2Client } from 'google-auth-library';
 
 @Injectable()
 export class AuthService {
-  private readonly logger = new Logger(AuthService.name);
-  private googleClient: OAuth2Client;
-
   constructor(
     private userService: UserService,
     private jwtService: JwtService,
-  ) {
-    const clientId =
-      process.env.GOOGLE_CLIENT_ID ||
-      '609647959676-acjcpqrq4oghnanp2288f1e9jkf7fnp4.apps.googleusercontent.com';
-    // Initialize Google OAuth client for token verification
-    this.googleClient = new OAuth2Client(clientId);
-  }
+  ) { }
 
-  /**
-   * Verify Google JWT token from @react-oauth/google frontend library.
-   * Returns the user (existing or newly created).
-   */
-  async verifyGoogleToken(credential: string): Promise<User> {
-    const clientId =
-      process.env.GOOGLE_CLIENT_ID ||
-      '609647959676-acjcpqrq4oghnanp2288f1e9jkf7fnp4.apps.googleusercontent.com';
-
-    const ticket = await this.googleClient.verifyIdToken({
-      idToken: credential,
-      audience: clientId,
-    });
-
-    const payload = ticket.getPayload();
-    if (!payload || !payload.email) {
-      throw new Error('Invalid Google token: no email found');
-    }
-
-    const email = payload.email;
-    const firstName = payload.given_name || payload.name?.split(' ')[0] || '';
-    const lastName =
-      payload.family_name || payload.name?.split(' ').slice(1).join(' ') || '';
-    const picture = payload.picture || null;
-
-    this.logger.log(`[Auth] Google token verified for: ${email}`);
-
-    // Use existing validateGoogleUser logic
-    return this.validateGoogleUser({ email, firstName, lastName, picture });
-  }
-
-  async validateGoogleUser(details: {
-    email: string;
-    firstName: string;
-    lastName: string;
-    picture: string | null;
-  }) {
-    this.logger.debug(`[Auth] Google login attempt: ${details.email}`);
-
-    // Check if user exists
-    const user = await this.userService.findOne(details.email);
-    if (user) {
-      this.logger.debug(
-        `[Auth] Existing user found: ${JSON.stringify({ id: user.id, email: user.email, userType: user.userType })}`,
-      );
-
-      // Always update avatar if Google provides one (keeps it current)
-      // Only update name if user hasn't set their own
-      const patch: Partial<{
-        firstName: string;
-        lastName: string;
-        avatarUrl: string;
-      }> = {};
-      if (!user.firstName && details.firstName)
-        patch.firstName = details.firstName;
-      if (!user.lastName && details.lastName) patch.lastName = details.lastName;
-      if (details.picture) patch.avatarUrl = details.picture; // Always update avatar
-
-      if (Object.keys(patch).length > 0) {
-        this.logger.debug(
-          `[Auth] Updating user with patch: ${JSON.stringify(patch)}`,
-        );
-        const updatedUser = await this.userService.updateProfile(
-          user.id,
-          patch,
-        );
-        this.logger.log(
-          `[Auth] User updated: ${JSON.stringify({ id: updatedUser.id, firstName: updatedUser.firstName, avatarUrl: !!updatedUser.avatarUrl })}`,
-        );
-        return updatedUser;
-      }
-      return user; // Log in existing user
-    }
-
-    // Create new user (Auto-registration)
-    this.logger.log(
-      `[Auth] Creating new user from Google Login: ${details.email}`,
-    );
-    const newUser = await this.userService.create({
-      email: details.email,
-      firstName: details.firstName,
-      lastName: details.lastName,
-      avatarUrl: details.picture,
-      passwordHash: null,
-      isEmailVerified: true,
-    });
-    this.logger.log(
-      `[Auth] New user created: ${JSON.stringify({ id: newUser.id, email: newUser.email, firstName: newUser.firstName })}`,
-    );
-    return newUser;
-  }
+  // Google Auth Logic Removed during Global Audit
 
   login(user: {
     id: string;

@@ -4,7 +4,6 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
 import SplashScreen from '@/components/SplashScreen';
-import GoogleAuthProvider from '@/components/GoogleAuthProvider';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { ToastProvider } from '@/components/ToastProvider';
 
@@ -57,16 +56,14 @@ export default async function LocaleLayout({
     return (
         <div className={montserrat.className} lang={locale}>
             <NextIntlClientProvider messages={messages}>
-                <GoogleAuthProvider>
-                    <ServiceWorkerRegister />
-                    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-                        <ToastProvider>
-                            <SplashScreen>
-                                {children}
-                            </SplashScreen>
-                        </ToastProvider>
-                    </ThemeProvider>
-                </GoogleAuthProvider>
+                <ServiceWorkerRegister />
+                <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+                    <ToastProvider>
+                        <SplashScreen>
+                            {children}
+                        </SplashScreen>
+                    </ToastProvider>
+                </ThemeProvider>
             </NextIntlClientProvider>
         </div>
     );

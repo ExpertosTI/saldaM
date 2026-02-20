@@ -148,7 +148,8 @@ export default function NewSplitSheetPage() {
 
     const updateCollaborator = <K extends keyof Collaborator>(index: number, field: K, value: Collaborator[K]) => {
         const newCollabs = [...formData.collaborators];
-        newCollabs[index] = { ...newCollabs[index], [field]: value };
+        const updated = { ...newCollabs[index], [field]: value } as Collaborator;
+        newCollabs[index] = updated;
         setFormData({ ...formData, collaborators: newCollabs });
     };
 

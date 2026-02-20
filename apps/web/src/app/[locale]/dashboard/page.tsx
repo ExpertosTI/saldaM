@@ -169,7 +169,9 @@ export default async function DashboardHome({
                                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-lg shadow-inner shadow-primary/10">🎵</div>
                                 <div>
                                     <h4 className="font-bold text-white text-sm group-hover:text-primary transition-colors">{sheet.title}</h4>
-                                    <p className="text-xs text-gray-400">{t('created')}: {new Date(sheet.createdAt).toLocaleDateString()}</p>
+                                    <p className="text-xs text-gray-400">
+                                        {t('created')}: {new Date(sheet.createdAt).toLocaleDateString(locale, { timeZone: 'UTC' })}
+                                    </p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3 sm:gap-4 ml-12 sm:ml-0">

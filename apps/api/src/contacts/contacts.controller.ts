@@ -83,6 +83,23 @@ export class ContactsController {
     return this.contactsService.toggleFavorite(id, req.user.id);
   }
 
+  @Post('invite')
+  @UseGuards(AuthGuard('jwt'))
+  inviteContact(
+    @Body() body: { email: string; name: string },
+    @Req()
+    req: {
+      user: {
+        id: string;
+        email: string;
+        firstName?: string;
+        lastName?: string;
+      };
+    },
+  ) {
+    return this.contactsService.inviteContact(body.email, body.name, req.user);
+  }
+
   @Delete(':id')
   @UseGuards(AuthGuard('jwt'))
   delete(@Param('id') id: string, @Req() req: RequestWithUser) {

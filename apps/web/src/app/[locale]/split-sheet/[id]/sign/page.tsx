@@ -289,16 +289,22 @@ export default function SignSplitSheetPage() {
         }
         const nextIdx = stepIndex + 1;
         if (nextIdx < STEPS.length) {
-            setCurrentStep(STEPS[nextIdx].key);
-            setError(null);
+            const nextStep = STEPS[nextIdx];
+            if (nextStep) {
+                setCurrentStep(nextStep.key);
+                setError(null);
+            }
         }
     };
 
     const goBack = () => {
         const prevIdx = stepIndex - 1;
         if (prevIdx >= 0) {
-            setCurrentStep(STEPS[prevIdx].key);
-            setError(null);
+            const prevStep = STEPS[prevIdx];
+            if (prevStep) {
+                setCurrentStep(prevStep.key);
+                setError(null);
+            }
         }
     };
 

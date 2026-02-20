@@ -37,9 +37,6 @@ export default function OnboardingPage() {
             });
 
             if (res.ok) {
-                const updatedUser = await res.json();
-                console.log('Profile updated:', updatedUser);
-
                 // Update localStorage to mark user as no longer new
                 try {
                     const stored = localStorage.getItem('saldana_auth');
@@ -57,8 +54,6 @@ export default function OnboardingPage() {
 
                 router.push(`/${params.locale}/dashboard`);
             } else {
-                const errorData = await res.json().catch(() => ({}));
-                console.error('Profile update failed:', errorData);
                 setMessage(t('System.onboardingUpdateFailed'));
             }
         } catch (error) {

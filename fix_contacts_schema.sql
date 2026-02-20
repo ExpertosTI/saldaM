@@ -22,6 +22,15 @@ CREATE TABLE IF NOT EXISTS "contact" (
 -- Add Foreign Key if not exists
 DO $$ 
 BEGIN 
+    -- Ensure ownerId column exists for FK
+    IF NOT EXISTS (
+        SELECT 1 
+        FROM information_schema.columns 
+        WHERE table_name = 'contact' AND column_name = 'ownerId'
+    ) THEN
+        ALTER TABLE "contact" ADD COLUMN "ownerId" uuid;
+    END IF;
+
     IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'FK_contact_owner') THEN 
         ALTER TABLE "contact" 
         ADD CONSTRAINT "FK_contact_owner" 

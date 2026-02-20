@@ -96,8 +96,11 @@ const SignatureCanvas = forwardRef<SignatureCanvasRef, SignatureCanvasProps>(
             let clientY = 0;
 
             if ('touches' in e) {
-                clientX = e.touches[0].clientX;
-                clientY = e.touches[0].clientY;
+                if (!e.touches || e.touches.length === 0) {
+                    return { x: 0, y: 0 };
+                }
+                clientX = e.touches[0]?.clientX ?? 0;
+                clientY = e.touches[0]?.clientY ?? 0;
             } else {
                 clientX = (e as React.MouseEvent).clientX;
                 clientY = (e as React.MouseEvent).clientY;

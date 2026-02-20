@@ -13,8 +13,14 @@ if [ -z "$DBCID" ]; then
   exit 1
 fi
 
-# Copy SQL file to container (optional) or run directly
-cat signature_migration.sql | docker exec -i "$DBCID" psql -U postgres -d saldanamusic
+# Execute SQL patches safely
+set -e
+echo "➡️  Applying security_update_migration.sql ..."
+cat security_update_migration.sql | docker exec -i "$DBCID" psql -U postgres -d saldanamusic
+echo "➡️  Ensuring audit_log schema ..."
+cat fix_audit_log_schema.sql | docker exec -i "$DBCID" psql -U postgres -d saldanamusic
+echo "➡️  Ensuring contacts schema ..."
+cat fix_contacts_schema.sql | docker exec -i "$DBCID" psql -U postgres -d saldanamusic
 echo "✅ Database schema updated."
 
 # 3. Build & Update Services

@@ -20,7 +20,7 @@ async function bootstrap() {
     helmet({
       crossOriginOpenerPolicy: { policy: 'unsafe-none' },
       crossOriginResourcePolicy: { policy: 'cross-origin' },
-      contentSecurityPolicy: false, // temporarily disable CSP if it conflicts with Google Scripts
+      contentSecurityPolicy: true, // Re-enabled since Google Scripts are removed
     }),
   );
 

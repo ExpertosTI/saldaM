@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import { useToast } from '@/components/ToastProvider';
 
 export default function RoyaltiesPage() {
     const [period, setPeriod] = useState('30d');
+    const { toast } = useToast();
 
     // Placeholder data - would come from API
     const stats = {
