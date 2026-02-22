@@ -31,7 +31,7 @@ type ContactBody = {
 
 @Controller('contacts')
 export class ContactsController {
-  constructor(private readonly contactsService: ContactsService) {}
+  constructor(private readonly contactsService: ContactsService) { }
 
   @Post()
   @UseGuards(AuthGuard('jwt'))
@@ -81,23 +81,6 @@ export class ContactsController {
   @UseGuards(AuthGuard('jwt'))
   toggleFavorite(@Param('id') id: string, @Req() req: RequestWithUser) {
     return this.contactsService.toggleFavorite(id, req.user.id);
-  }
-
-  @Post('invite')
-  @UseGuards(AuthGuard('jwt'))
-  inviteContact(
-    @Body() body: { email: string; name: string },
-    @Req()
-    req: {
-      user: {
-        id: string;
-        email: string;
-        firstName?: string;
-        lastName?: string;
-      };
-    },
-  ) {
-    return this.contactsService.inviteContact(body.email, body.name, req.user);
   }
 
   @Delete(':id')

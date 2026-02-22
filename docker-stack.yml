@@ -83,13 +83,6 @@ services:
         - "traefik.http.services.saldana-api.loadbalancer.server.port=3000"
         - "traefik.docker.network=RenaceNet"
         - "traefik.http.routers.saldana-api.priority=100"
-        # CORS Middleware explicitly allowing preflight across domains
-        - "traefik.http.middlewares.api-cors.headers.accesscontrolallowmethods=GET,OPTIONS,PUT,POST,DELETE,PATCH"
-        - "traefik.http.middlewares.api-cors.headers.accesscontrolallowheaders=*"
-        - "traefik.http.middlewares.api-cors.headers.accesscontrolalloworiginlist=*"
-        - "traefik.http.middlewares.api-cors.headers.accesscontrolmaxage=100"
-        - "traefik.http.middlewares.api-cors.headers.addvaryheader=true"
-        - "traefik.http.routers.saldana-api.middlewares=api-cors"
 
   # -------------------------------------------------------------------------
   # FRONTEND WEB (Next.js)

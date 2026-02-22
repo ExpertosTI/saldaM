@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from 'next-intl';
 import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
@@ -143,7 +144,7 @@ export default function LoginPage() {
             <div className="w-full max-w-md p-6 sm:p-8 glass-panel rounded-2xl shadow-2xl relative overflow-hidden">
                 {/* Logo & Decorative Gold Glow */}
                 <Link href={`/${locale}`} className="flex flex-col items-center mb-6 sm:mb-8 hover:scale-105 transition-transform cursor-pointer">
-                    <img src="/logo.svg" alt="Saldaña Music Logo" className="h-12 sm:h-16 w-auto drop-shadow-[0_0_10px_rgba(212,175,55,0.4)] mb-3 sm:mb-4" />
+                    <Image src="/logo.svg" alt="Saldaña Music Logo" width={220} height={64} className="h-12 sm:h-16 w-auto drop-shadow-[0_0_10px_rgba(212,175,55,0.4)] mb-3 sm:mb-4" />
                     <div className="w-20 sm:w-24 h-1 bg-primary shadow-[0_0_30px_2px_rgba(212,175,55,0.6)]"></div>
                 </Link>
 

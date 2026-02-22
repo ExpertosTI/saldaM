@@ -144,12 +144,12 @@ export class MailService {
           : messageIdValue === null || messageIdValue === undefined
             ? undefined
             : (() => {
-                try {
-                  return JSON.stringify(messageIdValue);
-                } catch {
-                  return undefined;
-                }
-              })();
+              try {
+                return JSON.stringify(messageIdValue);
+              } catch {
+                return undefined;
+              }
+            })();
     this.logger.log(
       `Mail sent to=${params.to} subject="${params.subject}" messageId=${messageId ?? ''}`,
     );
@@ -252,31 +252,6 @@ export class MailService {
               ${this.escapeHtml(inviterName)} te invitó a unirte como colaborador en <strong>${this.escapeHtml(splitSheetTitle)}</strong>.
               <br/><br/>
               Si tienes una cuenta, estos datos se vincularán automáticamente.`,
-      cta: { label: 'Aceptar Invitación', url: inviteLink },
-    });
-    await this.send({ to: email, subject, text, html });
-  }
-
-  async sendPlatformInvite(
-    email: string,
-    inviterName: string,
-    inviteLink: string,
-    collaboratorName?: string,
-  ) {
-    const subject = `Invitación a Saldaña Music`;
-    const text = `${inviterName} te ha invitado a unirte a Saldaña Music.\n\nÚnete aquí: ${inviteLink}`;
-
-    const greeting = collaboratorName
-      ? `Hola ${this.escapeHtml(collaboratorName)},`
-      : 'Hola,';
-
-    const html = this.renderTemplate({
-      title: subject,
-      preheader: `Invitación de ${inviterName}`,
-      bodyHtml: `${greeting}<br/><br/>
-              ${this.escapeHtml(inviterName)} te ha invitado a unirte a <strong>Saldaña Music</strong>, la plataforma de gestión de derechos de autor para creadores de música.
-              <br/><br/>
-              Crea tu cuenta para empezar a gestionar tus split sheets y colaboraciones.`,
       cta: { label: 'Aceptar Invitación', url: inviteLink },
     });
     await this.send({ to: email, subject, text, html });

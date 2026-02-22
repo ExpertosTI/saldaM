@@ -8,7 +8,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Contact, ContactRole } from './entities/contact.entity';
 import type { User } from '../user/entities/user.entity';
-import { MailService } from '../mail/mail.service';
 
 type CreateContactDto = {
   name: string;
@@ -30,8 +29,7 @@ export class ContactsService {
   constructor(
     @InjectRepository(Contact)
     private contactsRepository: Repository<Contact>,
-    private mailService: MailService,
-  ) {}
+  ) { }
 
   async create(createContactDto: CreateContactDto, user: Pick<User, 'id'>) {
     const contact = this.contactsRepository.create({
@@ -185,37 +183,5 @@ export class ContactsService {
       );
       throw error;
     }
-  }
-  async inviteContact(
-    email: string,
-    name: string,
-    user: { id: string; email: string; firstName?: string; lastName?: string },
-  ) {
-    let contact = await this.contactsRepository.findOne({
-      where: { email, owner: { id: user.id } },
-    });
-
-    if (!contact) {
-      contact = this.contactsRepository.create({
-        email,
-        name,
-        role: ContactRole.OTHER,
-        owner: { id: user.id } as User,
-      });
-      await this.contactsRepository.save(contact);
-    }
-
-    const inviterName =
-      `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email;
-    const inviteLink = `${process.env.APP_WEB_URL || 'https://app.saldanamusic.com'}/register`;
-
-    await this.mailService.sendPlatformInvite(
-      email,
-      inviterName,
-      inviteLink,
-      name,
-    );
-
-    return { message: 'Invitación enviada exitosamente', contact };
   }
 }

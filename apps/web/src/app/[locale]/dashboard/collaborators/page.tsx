@@ -70,7 +70,6 @@ export default function CollaboratorsPage() {
         role: 'SONGWRITER',
         notes: '',
     });
-    const [sendInvite, setSendInvite] = useState(false);
     const [saving, setSaving] = useState(false);
 
     // Confirm Dialog State
@@ -161,7 +160,6 @@ export default function CollaboratorsPage() {
                 role: 'SONGWRITER',
                 notes: '',
             });
-            setSendInvite(false);
         }
         setShowModal(true);
     };
@@ -187,20 +185,6 @@ export default function CollaboratorsPage() {
             });
 
             if (res.ok) {
-                if (sendInvite && formData.email && !editingContact) {
-                    try {
-                        await fetch(`${API_BASE_URL}/contacts/invite`, {
-                            method: 'POST',
-                            headers: {
-                                Authorization: `Bearer ${token}`,
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({ email: formData.email, name: formData.name }),
-                        });
-                    } catch (inviteError) {
-                        console.error('Error sending invite:', inviteError);
-                    }
-                }
                 setShowModal(false);
                 await Promise.all([fetchContacts(), fetchStats()]);
                 success(editingContact ? 'Contacto actualizado.' : 'Contacto creado exitosamente.');
@@ -270,13 +254,6 @@ export default function CollaboratorsPage() {
             console.error('Error toggling favorite:', e);
             error('Error de conexión al actualizar favorito.');
         }
-    };
-
-    const handleWhatsAppInvite = (contact: Contact) => {
-        const text = `¡Hola ${contact.name}! Te invito a unirte a Saldaña Music, la plataforma de gestión de derechos de autor para creadores de música. Regístrate gratis aquí: ${process.env.NEXT_PUBLIC_APP_URL || 'https://app.saldanamusic.com'}/register`;
-        const encodedText = encodeURIComponent(text);
-        const url = `https://wa.me/?text=${encodedText}`;
-        window.open(url, '_blank');
     };
 
     return (
@@ -435,12 +412,6 @@ export default function CollaboratorsPage() {
 
                                 <div className="flex gap-2 pt-3 border-t border-white/5 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <button
-                                        onClick={() => handleWhatsAppInvite(contact)}
-                                        className="flex-1 px-3 py-1.5 text-xs bg-green-500/10 hover:bg-green-500/20 rounded text-green-400 transition-colors"
-                                    >
-                                        WhatsApp
-                                    </button>
-                                    <button
                                         onClick={() => handleOpenModal(contact)}
                                         className="flex-1 px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 rounded text-textMuted hover:text-textMain transition-colors"
                                     >
@@ -448,7 +419,7 @@ export default function CollaboratorsPage() {
                                     </button>
                                     <button
                                         onClick={() => confirmDelete(contact.id)}
-                                        className="flex-1 px-3 py-1.5 text-xs bg-red-500/10 hover:bg-red-500/20 rounded text-red-400 transition-colors"
+                                        className="px-3 py-1.5 text-xs bg-red-500/10 hover:bg-red-500/20 rounded text-red-400 transition-colors"
                                     >
                                         Eliminar
                                     </button>
@@ -555,21 +526,6 @@ export default function CollaboratorsPage() {
                             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                         />
                     </div>
-
-                    {!editingContact && formData.email && (
-                        <div className="flex items-center gap-2 mt-4 p-3 bg-primary/10 border border-primary/20 rounded-lg">
-                            <input
-                                type="checkbox"
-                                id="sendInvite"
-                                checked={sendInvite}
-                                onChange={(e) => setSendInvite(e.target.checked)}
-                                className="w-4 h-4 text-primary bg-neutral-900 border-neutral-700 rounded focus:ring-primary focus:ring-2"
-                            />
-                            <label htmlFor="sendInvite" className="text-sm text-primary font-medium cursor-pointer flex-1">
-                                Enviar invitación por correo a Saldaña Music
-                            </label>
-                        </div>
-                    )}
 
                     <div className="pt-4 border-t border-white/10 flex gap-3 justify-end">
                         <button

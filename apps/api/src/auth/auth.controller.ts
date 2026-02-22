@@ -1,13 +1,24 @@
-import { Controller, Post, Body, Req, UseGuards, HttpException, HttpStatus } from '@nestjs/common';
+import {
+    Controller,
+    Post,
+    Body,
+    Req,
+    UseGuards,
+    HttpException,
+    HttpStatus,
+    Logger,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 
+type RequestWithUser = { user: { id: string } };
+
 @Controller('auth')
 export class AuthController {
+    private readonly logger = new Logger(AuthController.name);
     constructor(private authService: AuthService) { }
 
     // Legacy endpoints removed. Use /google-token.
-
 
     /**
      * New endpoint for @react-oauth/google frontend.
@@ -18,7 +29,10 @@ export class AuthController {
         const { credential } = body;
 
         if (!credential) {
-            throw new HttpException('Google credential is required', HttpStatus.BAD_REQUEST);
+            throw new HttpException(
+                'Google credential is required',
+                HttpStatus.BAD_REQUEST,
+            );
         }
 
         try {
@@ -26,7 +40,7 @@ export class AuthController {
             const user = await this.authService.verifyGoogleToken(credential);
 
             // Generate our JWT
-            const { access_token, isNewUser } = await this.authService.login(user);
+            const { access_token, isNewUser } = this.authService.login(user);
 
             return {
                 success: true,
@@ -38,20 +52,25 @@ export class AuthController {
                     firstName: user.firstName,
                     lastName: user.lastName,
                     avatarUrl: user.avatarUrl,
-                }
+                },
             };
-        } catch (error) {
-            console.error('[Auth] Google token verification failed:', error.message);
+        } catch (error: unknown) {
+            this.logger.error(
+                'Google token verification failed',
+                error instanceof Error ? error.stack : String(error),
+            );
             throw new HttpException(
-                error.message || 'Google authentication failed',
-                HttpStatus.UNAUTHORIZED
+                error instanceof Error && error.message
+                    ? error.message
+                    : 'Google authentication failed',
+                HttpStatus.UNAUTHORIZED,
             );
         }
     }
 
     @Post('refresh')
     @UseGuards(AuthGuard('jwt'))
-    async refreshToken(@Req() req) {
+    async refreshToken(@Req() req: RequestWithUser) {
         return this.authService.refreshToken(req.user.id);
     }
 
