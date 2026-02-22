@@ -88,4 +88,10 @@ export class ContactsController {
   delete(@Param('id') id: string, @Req() req: RequestWithUser) {
     return this.contactsService.delete(id, req.user.id);
   }
+
+  @Post(':id/invite')
+  @UseGuards(AuthGuard('jwt'))
+  sendInvite(@Param('id') id: string, @Req() req: RequestWithUser) {
+    return this.contactsService.sendInvite(id, req.user.id);
+  }
 }

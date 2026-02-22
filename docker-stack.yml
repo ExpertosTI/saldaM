@@ -26,9 +26,6 @@ services:
         limits:
           cpus: '0.5'
           memory: 512M
-        reservations:
-          cpus: '0.25'
-          memory: 256M
       restart_policy:
         condition: on-failure
 
@@ -69,9 +66,6 @@ services:
         limits:
           cpus: '0.5'
           memory: 512M
-        reservations:
-          cpus: '0.25'
-          memory: 256M
       restart_policy:
         condition: on-failure
       labels:
@@ -106,9 +100,6 @@ services:
         limits:
           cpus: '0.5'
           memory: 512M
-        reservations:
-          cpus: '0.25'
-          memory: 256M
       restart_policy:
         condition: on-failure
       labels:

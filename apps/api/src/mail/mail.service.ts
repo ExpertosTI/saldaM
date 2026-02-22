@@ -272,4 +272,24 @@ export class MailService {
     });
     await this.send({ to: email, subject, text, html });
   }
+
+  async sendGlobalInvite(
+    email: string,
+    inviterName: string,
+    inviteLink: string,
+  ) {
+    const subject = `Invitación a unirte a Saldaña Music`;
+    const text = `${inviterName} te ha invitado a unirte a su red en Saldaña Music.\n\nAcepta la invitación o regístrate aquí: ${inviteLink}`;
+
+    const html = this.renderTemplate({
+      title: subject,
+      preheader: `Invitación a Saldaña Music`,
+      bodyHtml: `Hola,<br/><br/>
+              ${this.escapeHtml(inviterName)} te invitó a conectarte en <strong>Saldaña Music</strong>, la plataforma operativa legal para creadores musicales.
+              <br/><br/>
+              Únete para colaborar en proyectos, gestionar split sheets y proteger tu legado musical.`,
+      cta: { label: 'Aceptar Invitación', url: inviteLink },
+    });
+    await this.send({ to: email, subject, text, html });
+  }
 }

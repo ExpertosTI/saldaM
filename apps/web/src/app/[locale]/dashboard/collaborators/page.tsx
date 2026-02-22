@@ -256,6 +256,35 @@ export default function CollaboratorsPage() {
         }
     };
 
+    const handleInvite = async (contact: Contact) => {
+        const token = getToken();
+        if (!token) return;
+
+        try {
+            const res = await fetch(`${API_BASE_URL}/contacts/${contact.id}/invite`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await res.json();
+            if (res.ok) {
+                // Copy to clipboard
+                if (data.link) {
+                    navigator.clipboard.writeText(
+                        `¡Hola${contact.name ? ' ' + contact.name : ''}! Te invito a conectarte conmigo en Saldaña Music.\n\nÚnete aquí: ${data.link}`
+                    );
+                    success('Invitación enviada y copiada al portapapeles 📋');
+                } else {
+                    success('Invitación enviada.');
+                }
+            } else {
+                error(data.message || 'Error al enviar invitación.');
+            }
+        } catch (e) {
+            console.error('Error sending invite:', e);
+            error('Error de conexión.');
+        }
+    };
+
     return (
         <div className="max-w-7xl mx-auto">
             <header className="mb-8">
@@ -411,6 +440,12 @@ export default function CollaboratorsPage() {
                                 )}
 
                                 <div className="flex gap-2 pt-3 border-t border-white/5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button
+                                        onClick={() => handleInvite(contact)}
+                                        className="flex-1 px-3 py-1.5 text-xs bg-primary/10 hover:bg-primary/20 rounded text-primary transition-colors"
+                                    >
+                                        Invitar
+                                    </button>
                                     <button
                                         onClick={() => handleOpenModal(contact)}
                                         className="flex-1 px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 rounded text-textMuted hover:text-textMain transition-colors"

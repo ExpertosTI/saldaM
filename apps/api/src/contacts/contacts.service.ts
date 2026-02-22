@@ -8,6 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Contact, ContactRole } from './entities/contact.entity';
 import type { User } from '../user/entities/user.entity';
+import { MailService } from '../mail/mail.service';
 
 type CreateContactDto = {
   name: string;
@@ -29,6 +30,7 @@ export class ContactsService {
   constructor(
     @InjectRepository(Contact)
     private contactsRepository: Repository<Contact>,
+    private mailService: MailService,
   ) { }
 
   async create(createContactDto: CreateContactDto, user: Pick<User, 'id'>) {
@@ -135,6 +137,29 @@ export class ContactsService {
     }
     await this.contactsRepository.remove(contact);
     return { message: 'Contact deleted successfully' };
+  }
+
+  async sendInvite(id: string, userId: string) {
+    const contact = await this.findOne(id, userId);
+    if (!contact) throw new NotFoundException('Contact not found');
+
+    const ownerName = contact.owner?.firstName
+      ? `${contact.owner.firstName} ${contact.owner.lastName || ''}`.trim()
+      : contact.owner?.email || 'Un colega';
+
+    // Generar un link genérico o de onboarding referenciado
+    const inviteLink = `${process.env.APP_WEB_URL || 'https://app.saldanamusic.com'}/register?ref=${userId}`;
+
+    if (contact.email) {
+      try {
+        await this.mailService.sendGlobalInvite(contact.email, ownerName, inviteLink);
+      } catch (err: unknown) {
+        this.logger.error(`Failed to send global invite to ${contact.email}`, err);
+        // Continue, we still generate a copyable link
+      }
+    }
+
+    return { message: 'Invitación enviada exitosamente', link: inviteLink };
   }
 
   async getStats(userId: string) {

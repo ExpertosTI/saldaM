@@ -124,7 +124,8 @@
             "userType": {
                 "ARTIST": "Artist",
                 "PRODUCER": "Producer",
-                "PUBLISHER": "Publisher"
+                "PUBLISHER": "Publisher",
+                "COMPOSER": "Composer"
             },
             "creatingProfile": "Creating Profile...",
             "createAccount": "Create Account",
