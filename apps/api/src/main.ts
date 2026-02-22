@@ -31,12 +31,7 @@ async function bootstrap() {
 
   // 2. CORS (Restricted to specific domains)
   app.enableCors({
-    origin: [
-      'https://app.saldanamusic.com',
-      'https://saldanamusic.com',
-      'https://www.saldanamusic.com',
-      'http://localhost:3000',
-    ],
+    origin: true,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
