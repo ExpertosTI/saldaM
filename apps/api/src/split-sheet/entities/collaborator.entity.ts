@@ -27,49 +27,49 @@ export class Collaborator {
   @Column('decimal', { precision: 5, scale: 2 })
   percentage: number;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   legalName: string | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   phone: string | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   address: string | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   ipi: string | null; // CAE/IPI Number
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   proAffiliation: string | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   publishingCompany: string | null;
 
   @Column({ default: false })
   hasSigned: boolean;
 
-  @Column({ nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
   signedAt: Date | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   ipAddress: string | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   userAgent: string | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   signatureHash: string | null; // Cryptographic hash of the agreement state at signing
 
   @Column({ default: false })
   otpVerified: boolean; // Was 2FA used?
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   signatureSnapshotPath: string | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   identityDocPath: string | null; // Path to uploaded ID document (cédula/passport)
 
-  @Column({ nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
   otpVerifiedAt: Date | null; // When email OTP was verified before signing
 
   @ManyToOne(() => SplitSheet, (sheet) => sheet.collaborators, {
