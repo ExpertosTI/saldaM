@@ -122,6 +122,7 @@
             "orRegisterWithEmail": "OR REGISTER WITH EMAIL",
             "iAmA": "I am a...",
             "userType": {
+                "SONGWRITER": "Songwriter",
                 "ARTIST": "Artist",
                 "PRODUCER": "Producer",
                 "PUBLISHER": "Publisher"

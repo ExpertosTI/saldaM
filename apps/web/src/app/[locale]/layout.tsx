@@ -4,8 +4,10 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
 import SplashScreen from '@/components/SplashScreen';
+import GoogleAuthProvider from '@/components/GoogleAuthProvider';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { ToastProvider } from '@/components/ToastProvider';
+import "../globals.css";
 
 const montserrat = Montserrat({ subsets: ["latin"], variable: "--font-montserrat" });
 
@@ -28,11 +30,6 @@ export const metadata: Metadata = {
         statusBarStyle: "black-translucent",
         title: "Saldaña Music",
     },
-    other: {
-        "format-detection": "telephone=no",
-        "mobile-web-app-capable": "yes",
-        "apple-mobile-web-app-capable": "yes",
-    },
 };
 
 export const viewport: Viewport = {
@@ -54,18 +51,31 @@ export default async function LocaleLayout({
     const messages = await getMessages();
 
     return (
-        <div className={montserrat.className} lang={locale}>
-            <NextIntlClientProvider messages={messages}>
-                <ServiceWorkerRegister />
-                <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-                    <ToastProvider>
-                        <SplashScreen>
-                            {children}
-                        </SplashScreen>
-                    </ToastProvider>
-                </ThemeProvider>
-            </NextIntlClientProvider>
-        </div>
+        <html lang={locale}>
+            <head>
+                <link rel="icon" href="/logo.svg" type="image/svg+xml" />
+                <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
+                <meta name="apple-mobile-web-app-capable" content="yes" />
+                <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+                <meta name="apple-mobile-web-app-title" content="Saldaña Music" />
+                <meta name="mobile-web-app-capable" content="yes" />
+                <meta name="format-detection" content="telephone=no" />
+            </head>
+            <body className={montserrat.className}>
+                <NextIntlClientProvider messages={messages}>
+                    <GoogleAuthProvider>
+                        <ServiceWorkerRegister />
+                        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+                            <ToastProvider>
+                                <SplashScreen>
+                                    {children}
+                                </SplashScreen>
+                            </ToastProvider>
+                        </ThemeProvider>
+                    </GoogleAuthProvider>
+                </NextIntlClientProvider>
+            </body>
+        </html>
     );
 }
 

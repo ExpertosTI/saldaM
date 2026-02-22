@@ -2,9 +2,19 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from 'next-intl';
+import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
+
+/**
+ * Google OAuth Login - Using @react-oauth/google
+ * 
+ * This approach uses Google's official library which handles all the OAuth complexity:
+ * - No manual popup management
+ * - No cross-origin issues
+ * - Token received directly via callback
+ * - Simple POST to backend to exchange for app JWT
+ */
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://app.saldanamusic.com/api';
 
@@ -19,18 +29,121 @@ export default function LoginPage() {
     const searchParams = useSearchParams();
     const handledRef = useRef(false);
 
+    // Handle legacy OAuth callback (for backward compatibility with old flow)
+    // Handle legacy OAuth callback (keep for backward compatibility if needed, but new flow doesn't use it)
+    useEffect(() => {
+        const token = searchParams.get('token');
+        if (!token) return;
+
+        // Prevent double execution (React StrictMode)
+        if (handledRef.current) return;
+        handledRef.current = true;
+
+        const isNewUser = searchParams.get('isNewUser') === 'true';
+
+        // Set cookies with proper domain for production
+        // In local development (localhost), cookie domain should be unset or localhost
+        const hostname = window.location.hostname;
+        const isProd = hostname.endsWith('saldanamusic.com');
+        const cookieDomain = isProd ? '; Domain=.saldanamusic.com' : '';
+        const secureFlag = isProd ? '; Secure' : '';
+
+        document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax${cookieDomain}${secureFlag}`;
+
+        // Put token in localStorage as backup/convenience
+        localStorage.setItem('token', token);
+
+        // Redirect based on user status
+        if (isNewUser) {
+            router.replace(`/${locale}/onboarding`);
+        } else {
+            router.replace(`/${locale}/dashboard`);
+        }
+    }, [searchParams, router, locale]);
+
+    /**
+     * Handle successful Google login from @react-oauth/google
+     */
+    const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
+        if (!credentialResponse.credential) {
+            setError('No se recibió credencial de Google');
+            return;
+        }
+
+        setIsLoading(true);
+        setError("");
+
+        try {
+            // Send Google JWT to our backend for verification and app JWT generation
+            const response = await fetch(`${API_URL}/auth/google-token`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ credential: credentialResponse.credential })
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.token) {
+                // Set cookies with proper domain
+                const hostname = window.location.hostname;
+                const isProd = hostname.endsWith('saldanamusic.com');
+                const cookieDomain = isProd ? '; Domain=.saldanamusic.com' : '';
+                const secureFlag = isProd ? '; Secure' : '';
+
+                document.cookie = `token=${data.token}; path=/; max-age=86400; SameSite=Lax${cookieDomain}${secureFlag}`;
+
+                // Also save to localStorage for API client usage if needed
+                localStorage.setItem('token', data.token);
+
+                // Redirect based on user status
+                if (data.isNewUser) {
+                    router.push(`/${locale}/onboarding`);
+                } else {
+                    router.push(`/${locale}/dashboard`);
+                }
+            } else {
+                setError(data.message || data.error || 'Error al autenticar con Google');
+                setIsLoading(false);
+            }
+        } catch (err) {
+            console.error('[Login] Google auth error:', err);
+            setError('Error de conexión. Intenta de nuevo.');
+            setIsLoading(false);
+        }
+    };
+
+    /**
+     * Handle Google login error
+     */
+    const handleGoogleError = () => {
+        setError('Error al conectar con Google');
+        setIsLoading(false);
+    };
+
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
-        // Here you would implement standard email/password authentication via your API
+        console.log("Login attempt", email, password);
         router.push(`/${locale}/dashboard`);
     };
+
+    // If handling token callback directly (legacy flow), show loader
+    if (searchParams.get('token')) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-black text-primary">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                    <p className="tracking-widest uppercase text-sm">{a('login.authenticating')}</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <main className="flex min-h-screen flex-col items-center justify-center p-4 sm:p-6 bg-background">
             <div className="w-full max-w-md p-6 sm:p-8 glass-panel rounded-2xl shadow-2xl relative overflow-hidden">
                 {/* Logo & Decorative Gold Glow */}
                 <Link href={`/${locale}`} className="flex flex-col items-center mb-6 sm:mb-8 hover:scale-105 transition-transform cursor-pointer">
-                    <Image src="/logo.svg" alt="Saldaña Music Logo" width={220} height={64} className="h-12 sm:h-16 w-auto drop-shadow-[0_0_10px_rgba(212,175,55,0.4)] mb-3 sm:mb-4" />
+                    <img src="/logo.svg" alt="Saldaña Music Logo" className="h-12 sm:h-16 w-auto drop-shadow-[0_0_10px_rgba(212,175,55,0.4)] mb-3 sm:mb-4" />
                     <div className="w-20 sm:w-24 h-1 bg-primary shadow-[0_0_30px_2px_rgba(212,175,55,0.6)]"></div>
                 </Link>
 
@@ -44,7 +157,32 @@ export default function LoginPage() {
                 )}
 
                 <div className="flex flex-col gap-4 items-center">
-                    {/* Google Login was removed natively */}
+                    {/* Google Login Button - Uses @react-oauth/google */}
+                    {isLoading ? (
+                        <div className="w-full flex items-center justify-center gap-3 px-4 sm:px-6 py-3 sm:py-4 rounded-xl bg-white/80 text-black font-semibold">
+                            <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+                            Conectando...
+                        </div>
+                    ) : (
+                        <div className="w-full flex justify-center">
+                            <GoogleLogin
+                                onSuccess={handleGoogleSuccess}
+                                onError={handleGoogleError}
+                                theme="filled_black"
+                                shape="pill"
+                                size="large"
+                                text="continue_with"
+                                width="320"
+                                logo_alignment="left"
+                            />
+                        </div>
+                    )}
+
+                    <div className="relative flex py-2 items-center w-full">
+                        <div className="flex-grow border-t border-neutral-700"></div>
+                        <span className="flex-shrink mx-4 text-gray-500 text-xs">{a('login.orLoginWithEmail')}</span>
+                        <div className="flex-grow border-t border-neutral-700"></div>
+                    </div>
                 </div>
 
                 <form onSubmit={handleLogin} className="space-y-4 sm:space-y-6 mt-4">

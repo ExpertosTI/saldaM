@@ -1,14 +1,15 @@
 import './globals.css';
 
-export default function RootLayout({
+export default async function RootLayout({
     children,
     params,
 }: {
     children: React.ReactNode;
-    params?: { locale?: string };
+    params: Promise<{ locale?: string }>;
 }) {
+    const resolvedParams = await params;
     return (
-        <html lang={params?.locale ?? 'es'} suppressHydrationWarning>
+        <html lang={resolvedParams?.locale ?? 'es'} suppressHydrationWarning>
             <body>{children}</body>
         </html>
     );
