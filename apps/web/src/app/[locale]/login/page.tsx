@@ -81,9 +81,14 @@ export default function LoginPage() {
                 body: JSON.stringify({ credential: credentialResponse.credential })
             });
 
-            const data = await response.json();
+            let data;
+            try {
+                data = await response.json();
+            } catch (parseErr) {
+                throw new Error("El servidor devolvió una respuesta inválida (CORS o Gateway Error).");
+            }
 
-            if (response.ok && data.token) {
+            if (response.ok && data?.token) {
                 // Set cookies with proper domain
                 const hostname = window.location.hostname;
                 const isProd = hostname.endsWith('saldanamusic.com');
@@ -102,12 +107,12 @@ export default function LoginPage() {
                     router.push(`/${locale}/dashboard`);
                 }
             } else {
-                setError(data.message || data.error || 'Error al autenticar con Google');
+                setError(data?.message || data?.error || 'Error al autenticar con Google');
                 setIsLoading(false);
             }
-        } catch (err) {
-            console.error('[Login] Google auth error:', err);
-            setError('Error de conexión. Intenta de nuevo.');
+        } catch (err: any) {
+            console.error('[Login] Google auth caught error:', err);
+            setError(err.message || 'Error de conexión. Intenta de nuevo.');
             setIsLoading(false);
         }
     };
