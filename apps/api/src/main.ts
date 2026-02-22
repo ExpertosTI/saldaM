@@ -13,8 +13,9 @@ async function bootstrap() {
   // 1. Security Headers (Helmet)
   // 1. Security Headers (Helmet)
   app.use(helmet({
-    crossOriginOpenerPolicy: { policy: "unsafe-none" },
-    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginOpenerPolicy: false,
+    crossOriginResourcePolicy: false,
+    crossOriginEmbedderPolicy: false,
     contentSecurityPolicy: false, // temporarily disable CSP if it conflicts with Google Scripts
   }));
 
