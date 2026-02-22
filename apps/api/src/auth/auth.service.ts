@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { User } from '../user/entities/user.entity';
 import { JwtService } from '@nestjs/jwt';
@@ -6,7 +6,6 @@ import { OAuth2Client } from 'google-auth-library';
 
 @Injectable()
 export class AuthService {
-    private readonly logger = new Logger(AuthService.name);
     private googleClient: OAuth2Client;
 
     constructor(
@@ -40,19 +39,19 @@ export class AuthService {
         const lastName = payload.family_name || payload.name?.split(' ').slice(1).join(' ') || '';
         const picture = payload.picture || null;
 
-        this.logger.log(`[Auth] Google token verified for: ${email}`);
+        console.log('[Auth] Google token verified for:', email);
 
         // Use existing validateGoogleUser logic
         return this.validateGoogleUser({ email, firstName, lastName, picture });
     }
 
     async validateGoogleUser(details: { email: string; firstName: string; lastName: string; picture: string | null }) {
-        this.logger.debug(`[Auth] Google login attempt: ${details.email}`);
+        console.log('[Auth] Google login attempt:', details.email);
 
         // Check if user exists
         const user = await this.userService.findOne(details.email);
         if (user) {
-            this.logger.debug(`[Auth] Existing user found: ${JSON.stringify({ id: user.id, email: user.email, userType: user.userType })}`);
+            console.log('[Auth] Existing user found:', { id: user.id, email: user.email, userType: user.userType });
 
             // Always update avatar if Google provides one (keeps it current)
             // Only update name if user hasn't set their own
@@ -62,9 +61,9 @@ export class AuthService {
             if (details.picture) patch.avatarUrl = details.picture; // Always update avatar
 
             if (Object.keys(patch).length > 0) {
-                this.logger.debug(`[Auth] Updating user with patch: ${JSON.stringify(patch)}`);
+                console.log('[Auth] Updating user with patch:', patch);
                 const updatedUser = await this.userService.updateProfile(user.id, patch);
-                this.logger.log(`[Auth] User updated: ${JSON.stringify({ id: updatedUser.id, firstName: updatedUser.firstName, avatarUrl: !!updatedUser.avatarUrl })}`);
+                console.log('[Auth] User updated:', { id: updatedUser.id, firstName: updatedUser.firstName, avatarUrl: !!updatedUser.avatarUrl });
                 return updatedUser;
             }
             return user; // Log in existing user
@@ -72,7 +71,7 @@ export class AuthService {
 
 
         // Create new user (Auto-registration)
-        this.logger.log(`[Auth] Creating new user from Google Login: ${details.email}`);
+        console.log('[Auth] Creating new user from Google Login:', details.email);
         const newUser = await this.userService.create({
             email: details.email,
             firstName: details.firstName,
@@ -81,7 +80,7 @@ export class AuthService {
             passwordHash: null,
             isEmailVerified: true,
         });
-        this.logger.log(`[Auth] New user created: ${JSON.stringify({ id: newUser.id, email: newUser.email, firstName: newUser.firstName })}`);
+        console.log('[Auth] New user created:', { id: newUser.id, email: newUser.email, firstName: newUser.firstName });
         return newUser;
     }
 
