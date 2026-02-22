@@ -23,13 +23,13 @@ export class SplitSheet {
   @Column()
   title: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   label: string | null; // Sello Disquero
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   studio: string | null; // Nombre del estudio
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   producerName: string | null; // Nombre del productor (if different from collaborators)
 
   @Column({
@@ -39,16 +39,16 @@ export class SplitSheet {
   })
   status: SplitSheetStatus;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   s3PdfPath: string | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   s3AuditPath: string | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   finalDocHash: string | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   inviteToken: string | null;
 
   @CreateDateColumn()
