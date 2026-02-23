@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from 'next-intl';
 
 export default function RegisterPage() {
@@ -16,7 +16,6 @@ export default function RegisterPage() {
     });
     const router = useRouter();
     const locale = useLocale();
-    const pathname = usePathname();
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState<string>('');
     const t = useTranslations();

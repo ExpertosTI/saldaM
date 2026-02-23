@@ -67,7 +67,7 @@ export class User {
   email: string;
 
   @Exclude()
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   passwordHash: string | null;
 
   @Column({ nullable: true })
