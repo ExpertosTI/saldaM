@@ -70,36 +70,36 @@ export class User {
   @Column({ type: 'text', nullable: true })
   passwordHash: string | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   avatarUrl: string | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   bio: string | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   phone: string | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   firstName: string | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   lastName: string | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   ipiNumber: string | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   proAffiliation: string | null; // e.g. ASCAP, BMI, SESAC
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   publishingCompany: string | null;
 
   @Exclude()
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   signatureEncryptedPath: string | null;
 
   @Exclude()
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   encryptionKeyId: string | null;
 
   // New fields for Signature Module 2.0
