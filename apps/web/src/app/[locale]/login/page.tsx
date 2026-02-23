@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from 'next-intl';
 import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
+import { API_BASE_URL } from '@/lib/auth';
 
 /**
  * Google OAuth Login - Using @react-oauth/google
@@ -17,7 +18,7 @@ import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
  * - Simple POST to backend to exchange for app JWT
  */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://app.saldanamusic.com/api';
+const API_URL = API_BASE_URL;
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
@@ -51,8 +52,15 @@ export default function LoginPage() {
 
         document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax${cookieDomain}${secureFlag}`;
 
-        // Put token in localStorage as backup/convenience
         localStorage.setItem('token', token);
+        localStorage.setItem(
+            'saldana_auth',
+            JSON.stringify({
+                token,
+                ts: Date.now(),
+                isNewUser,
+            })
+        );
 
         // Redirect based on user status
         if (isNewUser) {
@@ -93,8 +101,16 @@ export default function LoginPage() {
 
                 document.cookie = `token=${data.token}; path=/; max-age=86400; SameSite=Lax${cookieDomain}${secureFlag}`;
 
-                // Also save to localStorage for API client usage if needed
                 localStorage.setItem('token', data.token);
+                localStorage.setItem(
+                    'saldana_auth',
+                    JSON.stringify({
+                        token: data.token,
+                        ts: Date.now(),
+                        isNewUser: !!data.isNewUser,
+                        email: data.user?.email
+                    })
+                );
 
                 // Redirect based on user status
                 if (data.isNewUser) {
@@ -121,10 +137,50 @@ export default function LoginPage() {
         setIsLoading(false);
     };
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        console.log("Login attempt", email, password);
-        router.push(`/${locale}/dashboard`);
+        setIsLoading(true);
+        setError("");
+        try {
+            const response = await fetch(`${API_URL}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            const data = await response.json().catch(() => ({}));
+
+            if (response.ok && data.token) {
+                const hostname = window.location.hostname;
+                const isProd = hostname.endsWith('saldanamusic.com');
+                const cookieDomain = isProd ? '; Domain=.saldanamusic.com' : '';
+                const secureFlag = isProd ? '; Secure' : '';
+
+                document.cookie = `token=${data.token}; path=/; max-age=86400; SameSite=Lax${cookieDomain}${secureFlag}`;
+                localStorage.setItem('token', data.token);
+                localStorage.setItem(
+                    'saldana_auth',
+                    JSON.stringify({
+                        token: data.token,
+                        ts: Date.now(),
+                        isNewUser: !!data.isNewUser,
+                        email: data.user?.email || email
+                    })
+                );
+
+                if (data.isNewUser) {
+                    router.push(`/${locale}/onboarding`);
+                } else {
+                    router.push(`/${locale}/dashboard`);
+                }
+            } else {
+                setError(data.message || data.error || 'Credenciales inválidas');
+                setIsLoading(false);
+            }
+        } catch (err) {
+            console.error('[Login] Email auth error:', err);
+            setError('Error de conexión. Intenta de nuevo.');
+            setIsLoading(false);
+        }
     };
 
     // If handling token callback directly (legacy flow), show loader

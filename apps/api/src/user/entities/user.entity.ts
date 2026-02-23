@@ -56,11 +56,11 @@ export class User {
   kycStatus: KycStatus;
 
   @Exclude()
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   kycDocumentPath: string | null;
 
   @Exclude()
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   kycVideoPath: string | null;
 
   @Column({ unique: true })

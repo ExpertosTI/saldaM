@@ -68,6 +68,45 @@ export class AuthController {
         }
     }
 
+    @Post('login')
+    async login(@Body() body: { email: string; password: string }) {
+        const { email, password } = body;
+
+        if (!email || !password) {
+            throw new HttpException(
+                'Email and password are required',
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+
+        try {
+            const user = await this.authService.validatePasswordLogin(email, password);
+            const { access_token, isNewUser } = this.authService.login(user);
+
+            return {
+                success: true,
+                token: access_token,
+                isNewUser,
+                user: {
+                    id: user.id,
+                    email: user.email,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    avatarUrl: user.avatarUrl,
+                },
+            };
+        } catch (error: unknown) {
+            this.logger.warn(
+                `Password login failed for ${email}`,
+                error instanceof Error ? error.message : String(error),
+            );
+            throw new HttpException(
+                'Invalid credentials',
+                HttpStatus.UNAUTHORIZED,
+            );
+        }
+    }
+
     @Post('refresh')
     @UseGuards(AuthGuard('jwt'))
     async refreshToken(@Req() req: RequestWithUser) {

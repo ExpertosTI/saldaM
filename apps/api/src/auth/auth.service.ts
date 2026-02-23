@@ -112,6 +112,19 @@ export class AuthService {
         return newUser;
     }
 
+    async validatePasswordLogin(email: string, password: string): Promise<User> {
+        const user = await this.userService.findOne(email);
+        if (!user || !user.passwordHash) {
+            throw new Error('Invalid credentials');
+        }
+
+        if (user.passwordHash !== password) {
+            throw new Error('Invalid credentials');
+        }
+
+        return user;
+    }
+
     login(user: {
         id: string;
         email: string;

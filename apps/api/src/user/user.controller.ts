@@ -22,6 +22,8 @@ type RegisterBody = {
   firstName?: string;
   lastName?: string;
   avatarUrl?: string | null;
+  password?: string;
+  userType?: UserType | null;
 };
 
 type UpdateProfileBody = {
@@ -43,7 +45,14 @@ export class UserController {
 
   @Post('register')
   create(@Body() body: RegisterBody) {
-    return this.userService.create(body);
+    return this.userService.create({
+      email: body.email,
+      firstName: body.firstName,
+      lastName: body.lastName,
+      avatarUrl: body.avatarUrl,
+      userType: body.userType ?? null,
+      passwordHash: body.password || null,
+    });
   }
 
   @Get('me')
