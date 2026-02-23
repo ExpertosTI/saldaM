@@ -18,7 +18,7 @@ export class AuditLog {
   @Column({ type: 'text', nullable: true })
   details: string | null; // JSON or description
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   ipAddress: string | null;
 
   @ManyToOne(() => User, { nullable: true })
