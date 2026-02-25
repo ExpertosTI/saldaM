@@ -20,7 +20,7 @@ import { ContactRole } from '../contacts/entities/contact.entity';
 import { Collaborator, CollaboratorRole } from './entities/collaborator.entity';
 import { OtpService } from '../auth/otp.service';
 import * as crypto from 'crypto';
-import type { User } from '../user/entities/user.entity';
+import { User } from '../user/entities/user.entity';
 
 type AuthUser = {
   id: string;
