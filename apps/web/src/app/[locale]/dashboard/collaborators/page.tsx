@@ -303,6 +303,11 @@ export default function CollaboratorsPage() {
         }
     };
 
+    // Invite / Share
+    const [showShareModal, setShowShareModal] = useState(false);
+    const [shareLink, setShareLink] = useState('');
+    const [shareContactName, setShareContactName] = useState('');
+
     const handleInvite = async (contact: Contact) => {
         const token = getToken();
         if (!token) return;
@@ -313,15 +318,10 @@ export default function CollaboratorsPage() {
                 headers: { Authorization: `Bearer ${token}` },
             });
             const data = await res.json();
-            if (res.ok) {
-                if (data.link) {
-                    navigator.clipboard.writeText(
-                        `¡Hola${contact.name ? ' ' + contact.name : ''}! Te invito a conectarte conmigo en Saldaña Music.\n\nÚnete aquí: ${data.link}`
-                    );
-                    success('Invitación enviada y link copiado al portapapeles 📋');
-                } else {
-                    success('Invitación enviada.');
-                }
+            if (res.ok && data.link) {
+                setShareLink(data.link);
+                setShareContactName(contact.name || contact.email || contact.phone || '');
+                setShowShareModal(true);
             } else {
                 error(data.message || 'Error al enviar invitación.');
             }
@@ -329,6 +329,17 @@ export default function CollaboratorsPage() {
             console.error('Error sending invite:', e);
             error('Error de conexión.');
         }
+    };
+
+    const getWhatsAppShareUrl = () => {
+        const message = `¡Hola${shareContactName ? ' ' + shareContactName : ''}! 🎶\n\nTe invito a conectarte conmigo en *Saldaña Music*, la plataforma operativa legal para creadores musicales.\n\nÚnete aquí: ${shareLink}`;
+        return `https://wa.me/?text=${encodeURIComponent(message)}`;
+    };
+
+    const handleCopyLink = () => {
+        const message = `¡Hola${shareContactName ? ' ' + shareContactName : ''}! Te invito a conectarte conmigo en Saldaña Music.\n\nÚnete aquí: ${shareLink}`;
+        navigator.clipboard.writeText(message);
+        success('Link copiado al portapapeles 📋');
     };
 
     // ==================== FILTER ====================
@@ -747,6 +758,58 @@ export default function CollaboratorsPage() {
                         </button>
                     </div>
                 </form>
+            </Modal>
+
+            {/* ==================== SHARE / INVITE MODAL ==================== */}
+            <Modal
+                isOpen={showShareModal}
+                onClose={() => setShowShareModal(false)}
+                title="Compartir Invitación"
+            >
+                <div className="space-y-4">
+                    <p className="text-sm text-gray-400">
+                        Comparte esta invitación con <strong className="text-white">{shareContactName}</strong> para que se una a tu red en Saldaña Music.
+                    </p>
+
+                    {/* WhatsApp Share */}
+                    <a
+                        href={getWhatsAppShareUrl()}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 w-full px-5 py-4 bg-green-600/15 hover:bg-green-600/25 border border-green-600/30 rounded-xl text-green-400 font-medium transition-all group"
+                    >
+                        <span className="text-2xl">💬</span>
+                        <div>
+                            <p className="font-semibold text-green-300 group-hover:text-green-200">Enviar por WhatsApp</p>
+                            <p className="text-xs text-green-400/60">Se abrirá WhatsApp con el mensaje listo</p>
+                        </div>
+                    </a>
+
+                    {/* Copy Link */}
+                    <button
+                        onClick={handleCopyLink}
+                        className="flex items-center gap-3 w-full px-5 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-textMain transition-all group"
+                    >
+                        <span className="text-2xl">📋</span>
+                        <div className="text-left">
+                            <p className="font-semibold group-hover:text-primary">Copiar link</p>
+                            <p className="text-xs text-textMuted">Copiar el link de invitación al portapapeles</p>
+                        </div>
+                    </button>
+
+                    {/* Link preview */}
+                    <div className="mt-3 px-4 py-3 bg-neutral-900 rounded-lg border border-neutral-800">
+                        <p className="text-[11px] text-gray-500 mb-1">LINK DE INVITACIÓN</p>
+                        <p className="text-xs text-gray-400 break-all">{shareLink}</p>
+                    </div>
+
+                    <button
+                        onClick={() => setShowShareModal(false)}
+                        className="w-full mt-2 px-6 py-3 text-gray-400 hover:text-white transition-colors rounded-xl border border-neutral-700 hover:border-neutral-500"
+                    >
+                        Cerrar
+                    </button>
+                </div>
             </Modal>
 
             {/* ==================== DELETE CONFIRM ==================== */}
