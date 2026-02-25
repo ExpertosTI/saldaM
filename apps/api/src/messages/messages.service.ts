@@ -1,13 +1,13 @@
 import {
     Injectable,
     Logger,
-    NotFoundException,
     ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { Message } from './entities/message.entity';
 import { Contact, ContactStatus } from '../contacts/entities/contact.entity';
+import { User } from '../user/entities/user.entity';
 
 @Injectable()
 export class MessagesService {
@@ -18,6 +18,8 @@ export class MessagesService {
         private messageRepo: Repository<Message>,
         @InjectRepository(Contact)
         private contactRepo: Repository<Contact>,
+        @InjectRepository(User)
+        private userRepo: Repository<User>,
     ) { }
 
     /**
@@ -69,7 +71,7 @@ export class MessagesService {
     }
 
     /**
-     * Get inbox: list of conversations with last message
+     * Get inbox: list of conversations with last message + partner info
      */
     async getInbox(userId: string) {
         const messages = await this.messageRepo
@@ -99,7 +101,28 @@ export class MessagesService {
             }
         }
 
-        return Array.from(conversations.values());
+        // Resolve partner names and avatars
+        const partnerIds = Array.from(conversations.keys());
+        const partners = partnerIds.length > 0
+            ? await this.userRepo.find({
+                where: { id: In(partnerIds) },
+                select: ['id', 'firstName', 'lastName', 'email', 'avatarUrl'],
+            })
+            : [];
+
+        const partnerMap = new Map(partners.map((u) => [u.id, u]));
+
+        return Array.from(conversations.values()).map((conv) => {
+            const partner = partnerMap.get(conv.partnerId);
+            return {
+                ...conv,
+                partnerName: partner
+                    ? [partner.firstName, partner.lastName].filter(Boolean).join(' ').trim() || partner.email
+                    : conv.partnerId,
+                partnerEmail: partner?.email || null,
+                partnerAvatar: partner?.avatarUrl || null,
+            };
+        });
     }
 
     async getTotalUnread(userId: string) {

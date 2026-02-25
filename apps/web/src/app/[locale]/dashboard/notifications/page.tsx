@@ -33,6 +33,9 @@ interface PendingRequest {
 
 interface InboxItem {
     partnerId: string;
+    partnerName: string;
+    partnerEmail: string | null;
+    partnerAvatar: string | null;
     lastMessage: {
         id: string;
         senderId: string;
@@ -485,17 +488,21 @@ export default function NotificationsPage() {
                                     {inbox.map((item) => (
                                         <button
                                             key={item.partnerId}
-                                            onClick={() => openChat(item.partnerId, item.partnerId)}
+                                            onClick={() => openChat(item.partnerId, item.partnerName || item.partnerEmail || item.partnerId)}
                                             className={`w-full text-left glass-panel p-4 rounded-xl transition-all hover:border-primary/20 ${item.unreadCount > 0 ? 'border-l-2 border-l-green-400 bg-green-500/5' : ''}`}
                                         >
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-lg font-bold text-primary">
-                                                    💬
-                                                </div>
+                                                {item.partnerAvatar ? (
+                                                    <img src={item.partnerAvatar} alt="" className="w-10 h-10 rounded-full object-cover" />
+                                                ) : (
+                                                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
+                                                        {(item.partnerName || '?')[0]?.toUpperCase()}
+                                                    </div>
+                                                )}
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center gap-2">
                                                         <p className="text-sm font-semibold text-textMain truncate">
-                                                            {item.partnerId.substring(0, 8)}...
+                                                            {item.partnerName || item.partnerEmail || 'Usuario'}
                                                         </p>
                                                         {item.unreadCount > 0 && (
                                                             <span className="px-1.5 py-0.5 bg-green-500 text-white text-[10px] font-bold rounded-full">{item.unreadCount}</span>
