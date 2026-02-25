@@ -31,7 +31,7 @@ export class ContactsService {
     @InjectRepository(Contact)
     private contactsRepository: Repository<Contact>,
     private mailService: MailService,
-  ) { }
+  ) {}
 
   async create(createContactDto: CreateContactDto, user: Pick<User, 'id'>) {
     const contact = this.contactsRepository.create({
@@ -152,9 +152,16 @@ export class ContactsService {
 
     if (contact.email) {
       try {
-        await this.mailService.sendGlobalInvite(contact.email, ownerName, inviteLink);
+        await this.mailService.sendGlobalInvite(
+          contact.email,
+          ownerName,
+          inviteLink,
+        );
       } catch (err: unknown) {
-        this.logger.error(`Failed to send global invite to ${contact.email}`, err);
+        this.logger.error(
+          `Failed to send global invite to ${contact.email}`,
+          err,
+        );
         // Continue, we still generate a copyable link
       }
     }

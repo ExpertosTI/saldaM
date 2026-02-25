@@ -1,8 +1,5 @@
-import {
-  Injectable,
-  Logger,
-  ServiceUnavailableException,
-} from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { readFileSync } from 'fs';
 import * as nodemailer from 'nodemailer';
 
 @Injectable()
@@ -17,14 +14,18 @@ export class MailService {
   private readonly smtpConfigured: boolean;
 
   constructor() {
+    const smtpUser =
+      MailService.readSecret('SMTP_USER') || process.env.SMTP_USER;
+    const smtpPass =
+      MailService.readSecret('SMTP_PASS') || process.env.SMTP_PASS;
     const host = process.env.SMTP_HOST || 'smtp.hostinger.com';
     this.transporter = nodemailer.createTransport({
       host,
       port: parseInt(process.env.SMTP_PORT || '465', 10),
       secure: process.env.SMTP_SECURE !== 'false',
       auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
+        user: smtpUser,
+        pass: smtpPass,
       },
     });
 
@@ -35,11 +36,19 @@ export class MailService {
     this.bcc = process.env.MAIL_BCC || undefined;
     this.webUrl = process.env.APP_WEB_URL || 'https://app.saldanamusic.com';
 
-    this.smtpConfigured = !!(process.env.SMTP_USER && process.env.SMTP_PASS);
+    this.smtpConfigured = !!(smtpUser && smtpPass);
     if (!this.smtpConfigured) {
       this.logger.warn(
         '⚠️ SMTP credentials not configured. Email sending will fail.',
       );
+    }
+  }
+
+  private static readSecret(name: string) {
+    try {
+      return readFileSync(`/run/secrets/${name}`, 'utf8').trim();
+    } catch {
+      return undefined;
     }
   }
 
@@ -119,7 +128,10 @@ export class MailService {
     attachments?: nodemailer.SendMailOptions['attachments'];
   }): Promise<{ messageId?: string }> {
     if (!this.smtpConfigured) {
-      throw new ServiceUnavailableException('SMTP is not configured');
+      this.logger.warn(
+        `SMTP no configurado. Email omitido to=${params.to} subject="${params.subject}"`,
+      );
+      return {};
     }
     const mailOptions: nodemailer.SendMailOptions = {
       from: this.from,
@@ -144,12 +156,12 @@ export class MailService {
           : messageIdValue === null || messageIdValue === undefined
             ? undefined
             : (() => {
-              try {
-                return JSON.stringify(messageIdValue);
-              } catch {
-                return undefined;
-              }
-            })();
+                try {
+                  return JSON.stringify(messageIdValue);
+                } catch {
+                  return undefined;
+                }
+              })();
     this.logger.log(
       `Mail sent to=${params.to} subject="${params.subject}" messageId=${messageId ?? ''}`,
     );

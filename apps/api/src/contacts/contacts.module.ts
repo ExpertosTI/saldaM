@@ -11,4 +11,4 @@ import { MailModule } from '../mail/mail.module';
   providers: [ContactsService],
   exports: [ContactsService],
 })
-export class ContactsModule { }
+export class ContactsModule {}

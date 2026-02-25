@@ -31,7 +31,7 @@ type ContactBody = {
 
 @Controller('contacts')
 export class ContactsController {
-  constructor(private readonly contactsService: ContactsService) { }
+  constructor(private readonly contactsService: ContactsService) {}
 
   @Post()
   @UseGuards(AuthGuard('jwt'))

@@ -58,6 +58,9 @@ services:
     networks:
       - saldana_internal
       - RenaceNet
+    secrets:
+      - SMTP_USER
+      - SMTP_PASS
     depends_on:
       - db
     deploy:
@@ -115,6 +118,12 @@ networks:
   saldana_internal:
     driver: overlay
   RenaceNet:
+    external: true
+
+secrets:
+  SMTP_USER:
+    external: true
+  SMTP_PASS:
     external: true
 
 volumes:
