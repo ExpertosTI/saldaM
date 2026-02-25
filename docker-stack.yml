@@ -10,8 +10,8 @@ services:
     logging:
       driver: "json-file"
       options:
-        max-size: "10m"
-        max-file: "5"
+        max-size: "5m"
+        max-file: "3"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: JustDtBase2027@
@@ -24,21 +24,27 @@ services:
       replicas: 1
       resources:
         limits:
-          cpus: '0.5'
-          memory: 512M
+          cpus: '0.3'
+          memory: 384M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
       restart_policy:
         condition: on-failure
+        delay: 10s
+        max_attempts: 5
+        window: 60s
 
   # -------------------------------------------------------------------------
   # BACKEND API (NestJS)
   # -------------------------------------------------------------------------
   api:
-    image: ghcr.io/expertosti/saldanamusic-api:latest
+    image: saldana_api:latest
     logging:
       driver: "json-file"
       options:
-        max-size: "10m"
-        max-file: "5"
+        max-size: "5m"
+        max-file: "3"
     environment:
       - DB_Type=postgres
       # Password encoded properly
@@ -55,6 +61,8 @@ services:
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - JWT_SECRET=${JWT_SECRET}
       - MASTER_PASSWORD=${MASTER_PASSWORD}
+      # Node.js memory limit (prevents OOM)
+      - NODE_OPTIONS=--max-old-space-size=384
     networks:
       - saldana_internal
       - RenaceNet
@@ -67,10 +75,16 @@ services:
       replicas: 1
       resources:
         limits:
-          cpus: '0.5'
-          memory: 512M
+          cpus: '0.4'
+          memory: 448M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
       restart_policy:
         condition: on-failure
+        delay: 10s
+        max_attempts: 5
+        window: 60s
       labels:
         - "traefik.enable=true"
         - "traefik.http.routers.saldana-api.rule=Host(`app.saldanamusic.com`) && PathPrefix(`/api`)"
@@ -85,15 +99,16 @@ services:
   # FRONTEND WEB (Next.js)
   # -------------------------------------------------------------------------
   web:
-    image: ghcr.io/expertosti/saldanamusic-web:latest
+    image: saldana_web:latest
     logging:
       driver: "json-file"
       options:
-        max-size: "10m"
-        max-file: "5"
+        max-size: "5m"
+        max-file: "3"
     environment:
       - NEXT_PUBLIC_API_URL=https://app.saldanamusic.com/api
       - NEXT_PUBLIC_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - NODE_OPTIONS=--max-old-space-size=384
     networks:
       - saldana_internal
       - RenaceNet
@@ -101,10 +116,16 @@ services:
       replicas: 1
       resources:
         limits:
-          cpus: '0.5'
-          memory: 512M
+          cpus: '0.4'
+          memory: 448M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
       restart_policy:
         condition: on-failure
+        delay: 10s
+        max_attempts: 5
+        window: 60s
       labels:
         - "traefik.enable=true"
         - "traefik.http.routers.saldana-web.rule=Host(`app.saldanamusic.com`) || Host(`saldanamusic.com`)"
