@@ -34,8 +34,13 @@ docker build -t saldana_api:latest -f apps/api/Dockerfile .
 echo "🏗️  Building Web..."
 docker build -t saldana_web:latest -f apps/web/Dockerfile .
 
-echo "🔄 Updating Swarm Services..."
+echo "🔄 Deploying Stack (with secrets)..."
+# Use stack deploy to ensure secrets are properly mounted
+docker stack deploy -c docker-stack.yml saldana --with-registry-auth 2>/dev/null || \
+docker stack deploy -c docker-stack.yml saldana
+
+# Force service update to pick up new images
 docker service update --image saldana_api:latest saldana_api --force
 docker service update --image saldana_web:latest saldana_web --force
 
-echo "✅ Deployment Complete! The Signature Module is live."
+echo "✅ Deployment Complete! Services are live."

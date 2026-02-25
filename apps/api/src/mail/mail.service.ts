@@ -14,10 +14,22 @@ export class MailService {
   private readonly smtpConfigured: boolean;
 
   constructor() {
-    const smtpUser =
-      MailService.readSecret('SMTP_USER') || process.env.SMTP_USER;
-    const smtpPass =
-      MailService.readSecret('SMTP_PASS') || process.env.SMTP_PASS;
+    // Try multiple ways to read SMTP credentials
+    const smtpUser = MailService.readSecret('SMTP_USER')
+      || MailService.readSecret('smtp_user')
+      || process.env.SMTP_USER
+      || '';
+    const smtpPass = MailService.readSecret('SMTP_PASS')
+      || MailService.readSecret('smtp_pass')
+      || process.env.SMTP_PASS
+      || '';
+
+    // Debug logging to diagnose secret reading issues
+    this.logger.log(`SMTP_USER source: ${smtpUser ? 'found (' + smtpUser.substring(0, 3) + '***)' : 'NOT FOUND'}`);
+    this.logger.log(`SMTP_PASS source: ${smtpPass ? 'found (length=' + smtpPass.length + ')' : 'NOT FOUND'}`);
+    this.logger.log(`Secret files check: SMTP_USER=${MailService.secretFileExists('SMTP_USER')}, smtp_user=${MailService.secretFileExists('smtp_user')}, SMTP_PASS=${MailService.secretFileExists('SMTP_PASS')}, smtp_pass=${MailService.secretFileExists('smtp_pass')}`);
+    this.logger.log(`Env vars check: SMTP_USER=${process.env.SMTP_USER ? 'set' : 'unset'}, SMTP_PASS=${process.env.SMTP_PASS ? 'set' : 'unset'}`);
+
     const host = process.env.SMTP_HOST || 'smtp.hostinger.com';
     this.transporter = nodemailer.createTransport({
       host,
@@ -41,14 +53,26 @@ export class MailService {
       this.logger.warn(
         '⚠️ SMTP credentials not configured. Email sending will fail.',
       );
+    } else {
+      this.logger.log(`✅ SMTP configured: ${host}:${process.env.SMTP_PORT || '465'} as ${smtpUser}`);
     }
   }
 
-  private static readSecret(name: string) {
+  private static readSecret(name: string): string | undefined {
     try {
-      return readFileSync(`/run/secrets/${name}`, 'utf8').trim();
+      const val = readFileSync(`/run/secrets/${name}`, 'utf8').trim();
+      return val || undefined;
     } catch {
       return undefined;
+    }
+  }
+
+  private static secretFileExists(name: string): boolean {
+    try {
+      readFileSync(`/run/secrets/${name}`, 'utf8');
+      return true;
+    } catch {
+      return false;
     }
   }
 
@@ -156,12 +180,12 @@ export class MailService {
           : messageIdValue === null || messageIdValue === undefined
             ? undefined
             : (() => {
-                try {
-                  return JSON.stringify(messageIdValue);
-                } catch {
-                  return undefined;
-                }
-              })();
+              try {
+                return JSON.stringify(messageIdValue);
+              } catch {
+                return undefined;
+              }
+            })();
     this.logger.log(
       `Mail sent to=${params.to} subject="${params.subject}" messageId=${messageId ?? ''}`,
     );
