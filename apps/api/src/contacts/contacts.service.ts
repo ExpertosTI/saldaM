@@ -46,8 +46,8 @@ export class ContactsService {
   ) { }
 
   /**
-   * Simplified create: only email OR phone required.
-   * Auto-detects if the email belongs to an existing user.
+   * Create a contact. If the email belongs to an existing user,
+   * send a CONNECTION REQUEST (not auto-connect).
    */
   async create(createContactDto: CreateContactDto, owner: Pick<User, 'id'>) {
     if (!createContactDto.email && !createContactDto.phone) {
@@ -56,7 +56,6 @@ export class ContactsService {
       );
     }
 
-    // Get owner details for notifications
     const ownerUser = await this.userRepository.findOne({
       where: { id: owner.id },
     });
@@ -64,7 +63,7 @@ export class ContactsService {
       ? [ownerUser.firstName, ownerUser.lastName].filter(Boolean).join(' ').trim() || ownerUser.email
       : 'Un usuario';
 
-    // Auto-detect: check if email belongs to an existing user
+    // Check if email belongs to an existing user
     let existingUser: User | null = null;
     if (createContactDto.email) {
       existingUser = await this.userRepository.findOne({
@@ -81,49 +80,32 @@ export class ContactsService {
       createContactDto.phone ||
       'Contacto';
 
+    // If existing user → REQUEST_SENT (needs acceptance)
+    // If not on platform → PENDING (waiting for registration)
     const contact = this.contactsRepository.create({
       name: displayName,
       email: createContactDto.email || null,
       phone: createContactDto.phone || null,
       role: createContactDto.role || ContactRole.OTHER,
       notes: createContactDto.notes || null,
-      status: existingUser ? ContactStatus.CONNECTED : ContactStatus.PENDING,
+      status: existingUser ? ContactStatus.REQUEST_SENT : ContactStatus.PENDING,
       linkedUserId: existingUser?.id || null,
-      linkedAt: existingUser ? new Date() : null,
-      linkedUserAvatar: existingUser?.avatarUrl || null,
+      linkedAt: null, // Only set when accepted
+      linkedUserAvatar: null, // Only shown when accepted
       owner: { id: owner.id } as User,
     } as Partial<Contact>);
 
-    // Auto-fill professional data if user exists
-    if (existingUser) {
-      if (existingUser.ipiNumber) contact.ipiNumber = existingUser.ipiNumber;
-      if (existingUser.proAffiliation) contact.pro = existingUser.proAffiliation;
-      if (existingUser.publishingCompany) contact.publishingCompany = existingUser.publishingCompany;
-
-      // Map userType to role
-      if (existingUser.userType) {
-        const roleMap: Record<string, ContactRole> = {
-          ARTIST: ContactRole.ARTIST,
-          PRODUCER: ContactRole.PRODUCER,
-          PUBLISHER: ContactRole.PUBLISHER,
-        };
-        if (roleMap[existingUser.userType]) {
-          contact.role = roleMap[existingUser.userType];
-        }
-      }
-    }
-
     const savedContact = await this.contactsRepository.save(contact);
 
-    // Send in-app notification if user exists
+    // Send in-app notification to existing user
     if (existingUser) {
       try {
         await this.notificationsService.create({
           recipientId: existingUser.id,
           type: NotificationType.CONNECTION_REQUEST,
-          title: '🤝 Nueva conexión',
-          message: `${ownerName} te ha agregado a su red de colaboradores.`,
-          actionUrl: '/dashboard/collaborators',
+          title: '🤝 Solicitud de conexión',
+          message: `${ownerName} quiere conectarse contigo.`,
+          actionUrl: '/dashboard/notifications',
           fromUserId: owner.id,
           fromUserName: ownerName,
           fromUserAvatar: ownerUser?.avatarUrl || undefined,
@@ -133,10 +115,10 @@ export class ContactsService {
       }
     }
 
-    // Send email invite if email provided (always — whether user exists or not)
+    // Send email invite (always when email provided)
     if (createContactDto.email) {
       const inviteLink = existingUser
-        ? `${process.env.APP_WEB_URL || 'https://app.saldanamusic.com'}/dashboard`
+        ? `${process.env.APP_WEB_URL || 'https://app.saldanamusic.com'}/dashboard/notifications`
         : `${process.env.APP_WEB_URL || 'https://app.saldanamusic.com'}/register?ref=${owner.id}`;
       try {
         await this.mailService.sendGlobalInvite(
@@ -160,7 +142,143 @@ export class ContactsService {
   }
 
   /**
-   * Called when a new user registers. Links all pending contacts.
+   * Accept a connection request.
+   * Called by the RECIPIENT (the person who received the request).
+   */
+  async acceptRequest(contactId: string, acceptingUserId: string) {
+    // Find the contact where acceptingUser is the linkedUser
+    const contact = await this.contactsRepository.findOne({
+      where: { id: contactId },
+      relations: ['owner'],
+    });
+
+    if (!contact) throw new NotFoundException('Solicitud no encontrada.');
+    if (contact.linkedUserId !== acceptingUserId) {
+      throw new ForbiddenException('No tienes permiso para aceptar esta solicitud.');
+    }
+    if (contact.status !== ContactStatus.REQUEST_SENT) {
+      throw new BadRequestException('Esta solicitud ya fue procesada.');
+    }
+
+    // Accept: update to CONNECTED
+    const acceptingUser = await this.userRepository.findOne({
+      where: { id: acceptingUserId },
+    });
+
+    contact.status = ContactStatus.CONNECTED;
+    contact.linkedAt = new Date();
+    if (acceptingUser?.avatarUrl) contact.linkedUserAvatar = acceptingUser.avatarUrl;
+
+    // Fill in professional data
+    if (acceptingUser) {
+      const fullName = [acceptingUser.firstName, acceptingUser.lastName]
+        .filter(Boolean).join(' ').trim();
+      if (fullName) contact.name = fullName;
+      if (acceptingUser.ipiNumber) contact.ipiNumber = acceptingUser.ipiNumber;
+      if (acceptingUser.proAffiliation) contact.pro = acceptingUser.proAffiliation;
+      if (acceptingUser.publishingCompany) contact.publishingCompany = acceptingUser.publishingCompany;
+    }
+
+    await this.contactsRepository.save(contact);
+
+    // Also create a reverse contact for the accepting user
+    const reverseContact = this.contactsRepository.create({
+      name: contact.owner
+        ? [contact.owner.firstName, contact.owner.lastName].filter(Boolean).join(' ').trim() || contact.owner.email
+        : 'Contacto',
+      email: contact.owner?.email || undefined,
+      role: ContactRole.OTHER,
+      status: ContactStatus.CONNECTED,
+      linkedUserId: contact.owner?.id || null,
+      linkedAt: new Date(),
+      linkedUserAvatar: contact.owner?.avatarUrl || null,
+      owner: { id: acceptingUserId } as User,
+    } as unknown as Partial<Contact>);
+
+    // Fill reverse with owner professional data
+    if (contact.owner) {
+      if (contact.owner.ipiNumber) reverseContact.ipiNumber = contact.owner.ipiNumber;
+      if (contact.owner.proAffiliation) reverseContact.pro = contact.owner.proAffiliation;
+    }
+
+    await this.contactsRepository.save(reverseContact);
+
+    // Notify the original sender
+    if (contact.owner?.id) {
+      const acceptingName = acceptingUser
+        ? [acceptingUser.firstName, acceptingUser.lastName].filter(Boolean).join(' ').trim() || acceptingUser.email
+        : 'Tu contacto';
+      try {
+        await this.notificationsService.create({
+          recipientId: contact.owner.id,
+          type: NotificationType.CONNECTION_ACCEPTED,
+          title: '🎉 ¡Conexión aceptada!',
+          message: `${acceptingName} aceptó tu solicitud de conexión.`,
+          actionUrl: '/dashboard/collaborators',
+          fromUserId: acceptingUserId,
+          fromUserName: acceptingName,
+          fromUserAvatar: acceptingUser?.avatarUrl || undefined,
+        });
+      } catch (err: unknown) {
+        this.logger.warn('Could not send acceptance notification', err);
+      }
+    }
+
+    return { message: 'Conexión aceptada exitosamente.' };
+  }
+
+  /**
+   * Reject a connection request.
+   */
+  async rejectRequest(contactId: string, rejectingUserId: string) {
+    const contact = await this.contactsRepository.findOne({
+      where: { id: contactId },
+    });
+
+    if (!contact) throw new NotFoundException('Solicitud no encontrada.');
+    if (contact.linkedUserId !== rejectingUserId) {
+      throw new ForbiddenException('No tienes permiso.');
+    }
+    if (contact.status !== ContactStatus.REQUEST_SENT) {
+      throw new BadRequestException('Esta solicitud ya fue procesada.');
+    }
+
+    // Remove the contact entirely
+    await this.contactsRepository.remove(contact);
+    return { message: 'Solicitud rechazada.' };
+  }
+
+  /**
+   * Get pending requests FOR the current user (requests others sent to them)
+   */
+  async getPendingRequests(userId: string) {
+    const requests = await this.contactsRepository.find({
+      where: {
+        linkedUserId: userId,
+        status: ContactStatus.REQUEST_SENT,
+      },
+      relations: ['owner'],
+      order: { createdAt: 'DESC' },
+    });
+
+    return requests.map((r) => ({
+      id: r.id,
+      fromUser: {
+        id: r.owner?.id,
+        name: r.owner
+          ? [r.owner.firstName, r.owner.lastName].filter(Boolean).join(' ').trim() || r.owner.email
+          : 'Desconocido',
+        email: r.owner?.email || '',
+        avatar: r.owner?.avatarUrl || null,
+        userType: r.owner?.userType || null,
+      },
+      createdAt: r.createdAt,
+    }));
+  }
+
+  /**
+   * Called when a new user registers. Links PENDING contacts (those waiting for registration).
+   * Does NOT auto-connect — changes status to REQUEST_SENT.
    */
   async linkContactsOnRegistration(registeredUser: {
     id: string;
@@ -191,46 +309,34 @@ export class ContactsService {
 
       for (const contact of pendingContacts) {
         contact.linkedUserId = registeredUser.id;
-        contact.status = ContactStatus.CONNECTED;
-        contact.linkedAt = new Date();
+        contact.status = ContactStatus.REQUEST_SENT; // Needs acceptance!
+
         if (fullName) contact.name = fullName;
-        if (registeredUser.avatarUrl) contact.linkedUserAvatar = registeredUser.avatarUrl;
-        if (registeredUser.ipiNumber) contact.ipiNumber = registeredUser.ipiNumber;
-        if (registeredUser.proAffiliation) contact.pro = registeredUser.proAffiliation;
-        if (registeredUser.publishingCompany) contact.publishingCompany = registeredUser.publishingCompany;
 
-        if (registeredUser.userType) {
-          const roleMap: Record<string, ContactRole> = {
-            ARTIST: ContactRole.ARTIST,
-            PRODUCER: ContactRole.PRODUCER,
-            PUBLISHER: ContactRole.PUBLISHER,
-          };
-          const mappedRole = roleMap[registeredUser.userType];
-          if (mappedRole) contact.role = mappedRole;
-        }
+        // Send notification to the new user about pending requests
+        try {
+          const ownerName = contact.owner
+            ? [contact.owner.firstName, contact.owner.lastName].filter(Boolean).join(' ').trim() || contact.owner.email
+            : 'Un usuario';
 
-        // Notify the contact owner that their contact has joined
-        if (contact.owner?.id) {
-          try {
-            await this.notificationsService.create({
-              recipientId: contact.owner.id,
-              type: NotificationType.CONNECTION_ACCEPTED,
-              title: '🎉 ¡Conexión establecida!',
-              message: `${fullName || registeredUser.email} se ha registrado y ya está conectado contigo.`,
-              actionUrl: '/dashboard/collaborators',
-              fromUserId: registeredUser.id,
-              fromUserName: fullName || registeredUser.email,
-              fromUserAvatar: registeredUser.avatarUrl || undefined,
-            });
-          } catch (err: unknown) {
-            this.logger.warn('Could not send connection accepted notification', err);
-          }
+          await this.notificationsService.create({
+            recipientId: registeredUser.id,
+            type: NotificationType.CONNECTION_REQUEST,
+            title: '🤝 Solicitud de conexión',
+            message: `${ownerName} quiere conectarse contigo.`,
+            actionUrl: '/dashboard/notifications',
+            fromUserId: contact.owner?.id,
+            fromUserName: ownerName,
+            fromUserAvatar: contact.owner?.avatarUrl || undefined,
+          });
+        } catch (err: unknown) {
+          this.logger.warn('Could not notify registered user about pending request', err);
         }
       }
 
       await this.contactsRepository.save(pendingContacts);
       this.logger.log(
-        `Linked ${pendingContacts.length} contacts for user ${registeredUser.email}`,
+        `Linked ${pendingContacts.length} contacts for user ${registeredUser.email} (as REQUEST_SENT)`,
       );
     } catch (error: unknown) {
       this.logger.error(
@@ -269,14 +375,25 @@ export class ContactsService {
         );
       }
 
-      // Sort: connected first, then pending
+      // Sort: connected first, then request_sent, then pending
       contacts.sort((a, b) => {
-        if (a.status === ContactStatus.CONNECTED && b.status !== ContactStatus.CONNECTED) return -1;
-        if (a.status !== ContactStatus.CONNECTED && b.status === ContactStatus.CONNECTED) return 1;
-        return 0;
+        const order: Record<string, number> = { CONNECTED: 0, REQUEST_SENT: 1, PENDING: 2, BLOCKED: 3 };
+        return (order[a.status] ?? 9) - (order[b.status] ?? 9);
       });
 
-      return contacts;
+      // For non-connected contacts, hide professional data
+      return contacts.map((c) => {
+        if (c.status !== ContactStatus.CONNECTED) {
+          return {
+            ...c,
+            ipiNumber: null,
+            pro: null,
+            publishingCompany: null,
+            linkedUserAvatar: null,
+          };
+        }
+        return c;
+      });
     } catch (error: unknown) {
       this.logger.error('Error in ContactsService.findAll', error instanceof Error ? error.stack : String(error));
       throw error;
@@ -332,9 +449,6 @@ export class ContactsService {
     return { message: 'Contact deleted successfully' };
   }
 
-  /**
-   * Re-send invite email and WhatsApp link
-   */
   async sendInvite(id: string, userId: string) {
     const contact = await this.findOne(id, userId);
 
@@ -344,10 +458,9 @@ export class ContactsService {
       : 'Un colega';
 
     const inviteLink = contact.linkedUserId
-      ? `${process.env.APP_WEB_URL || 'https://app.saldanamusic.com'}/dashboard`
+      ? `${process.env.APP_WEB_URL || 'https://app.saldanamusic.com'}/dashboard/notifications`
       : `${process.env.APP_WEB_URL || 'https://app.saldanamusic.com'}/register?ref=${userId}`;
 
-    // Send email if available
     let emailSent = false;
     if (contact.email) {
       try {
@@ -366,28 +479,8 @@ export class ContactsService {
       }
     }
 
-    // Send in-app notification if user is connected
-    if (contact.linkedUserId) {
-      try {
-        await this.notificationsService.create({
-          recipientId: contact.linkedUserId,
-          type: NotificationType.INVITE_SENT,
-          title: '📩 Recordatorio de invitación',
-          message: `${ownerName} te ha enviado un recordatorio para conectarse contigo.`,
-          actionUrl: '/dashboard/collaborators',
-          fromUserId: userId,
-          fromUserName: ownerName,
-          fromUserAvatar: ownerUser?.avatarUrl || undefined,
-        });
-      } catch (err: unknown) {
-        this.logger.warn('Could not send re-invite notification', err);
-      }
-    }
-
     return {
-      message: emailSent
-        ? 'Invitación enviada por email exitosamente.'
-        : 'Link de invitación generado.',
+      message: emailSent ? 'Invitación enviada por email.' : 'Link de invitación generado.',
       link: inviteLink,
       emailSent,
     };
@@ -402,13 +495,14 @@ export class ContactsService {
       const stats = {
         total: contacts.length,
         byRole: { songwriter: 0, producer: 0, publisher: 0, artist: 0, other: 0 },
-        byStatus: { pending: 0, connected: 0 },
+        byStatus: { pending: 0, connected: 0, requestSent: 0 },
         favorites: 0,
       };
 
       for (const contact of contacts) {
         if (contact.isFavorite) stats.favorites++;
         if (contact.status === ContactStatus.CONNECTED) stats.byStatus.connected++;
+        else if (contact.status === ContactStatus.REQUEST_SENT) stats.byStatus.requestSent++;
         else stats.byStatus.pending++;
 
         switch (contact.role) {

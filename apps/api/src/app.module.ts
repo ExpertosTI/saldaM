@@ -18,11 +18,13 @@ import { CatalogModule } from './catalog/catalog.module';
 import { AuditLogModule } from './audit-log/audit-log.module';
 import { ContactsModule } from './contacts/contacts.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { MessagesModule } from './messages/messages.module';
 import { Catalog } from './catalog/entities/catalog.entity';
 import { Track } from './catalog/entities/track.entity';
 import { AuditLog } from './audit-log/entities/audit-log.entity';
 import { Contact } from './contacts/entities/contact.entity';
 import { Notification } from './notifications/entities/notification.entity';
+import { Message } from './messages/entities/message.entity';
 
 @Module({
   imports: [
@@ -53,6 +55,7 @@ import { Notification } from './notifications/entities/notification.entity';
         AuditLog,
         Contact,
         Notification,
+        Message,
       ],
       synchronize: process.env.NODE_ENV !== 'production', // NEVER sync in production - use migrations
     }),
@@ -62,6 +65,7 @@ import { Notification } from './notifications/entities/notification.entity';
     AuditLogModule,
     ContactsModule,
     NotificationsModule,
+    MessagesModule,
     UserModule,
     SplitSheetModule,
     AuthModule,

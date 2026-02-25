@@ -66,3 +66,16 @@ CREATE TABLE IF NOT EXISTS "notification" (
     CONSTRAINT "PK_notification_id" PRIMARY KEY ("id"),
     CONSTRAINT "FK_notification_recipient" FOREIGN KEY ("recipientId") REFERENCES "user"("id") ON DELETE CASCADE
 );
+
+-- Create message table for DMs
+CREATE TABLE IF NOT EXISTS "message" (
+    "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
+    "senderId" uuid NOT NULL,
+    "receiverId" uuid NOT NULL,
+    "content" text NOT NULL,
+    "isRead" boolean DEFAULT false,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT now(),
+    CONSTRAINT "PK_message_id" PRIMARY KEY ("id"),
+    CONSTRAINT "FK_message_sender" FOREIGN KEY ("senderId") REFERENCES "user"("id") ON DELETE CASCADE,
+    CONSTRAINT "FK_message_receiver" FOREIGN KEY ("receiverId") REFERENCES "user"("id") ON DELETE CASCADE
+);

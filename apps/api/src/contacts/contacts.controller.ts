@@ -31,7 +31,7 @@ type ContactBody = {
 
 @Controller('contacts')
 export class ContactsController {
-  constructor(private readonly contactsService: ContactsService) {}
+  constructor(private readonly contactsService: ContactsService) { }
 
   @Post()
   @UseGuards(AuthGuard('jwt'))
@@ -59,6 +59,24 @@ export class ContactsController {
   @UseGuards(AuthGuard('jwt'))
   getStats(@Req() req: RequestWithUser) {
     return this.contactsService.getStats(req.user.id);
+  }
+
+  @Get('pending-requests')
+  @UseGuards(AuthGuard('jwt'))
+  getPendingRequests(@Req() req: RequestWithUser) {
+    return this.contactsService.getPendingRequests(req.user.id);
+  }
+
+  @Post(':id/accept')
+  @UseGuards(AuthGuard('jwt'))
+  acceptRequest(@Param('id') id: string, @Req() req: RequestWithUser) {
+    return this.contactsService.acceptRequest(id, req.user.id);
+  }
+
+  @Post(':id/reject')
+  @UseGuards(AuthGuard('jwt'))
+  rejectRequest(@Param('id') id: string, @Req() req: RequestWithUser) {
+    return this.contactsService.rejectRequest(id, req.user.id);
   }
 
   @Get(':id')

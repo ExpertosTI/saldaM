@@ -17,8 +17,9 @@ export enum ContactRole {
 }
 
 export enum ContactStatus {
-  PENDING = 'PENDING',
-  CONNECTED = 'CONNECTED',
+  PENDING = 'PENDING',           // Added by email/phone, person not on platform yet
+  REQUEST_SENT = 'REQUEST_SENT', // Person exists on platform, awaiting their acceptance
+  CONNECTED = 'CONNECTED',       // Both parties accepted
   BLOCKED = 'BLOCKED',
 }
 
@@ -28,7 +29,7 @@ export class Contact {
   id: string;
 
   @Column({ type: 'varchar', nullable: true })
-  name: string | null; // Optional — auto-filled when user registers
+  name: string | null;
 
   @Column({ type: 'varchar', nullable: true })
   email: string;
@@ -40,7 +41,7 @@ export class Contact {
   ipiNumber: string;
 
   @Column({ type: 'varchar', nullable: true })
-  pro: string; // Performing Rights Organization
+  pro: string;
 
   @Column({ type: 'varchar', nullable: true })
   publishingCompany: string;
@@ -61,16 +62,16 @@ export class Contact {
   // --- Social linking fields ---
 
   @Column({ type: 'uuid', nullable: true })
-  linkedUserId: string | null; // Filled when the contact registers on the platform
+  linkedUserId: string | null;
 
   @Column({ type: 'varchar', default: 'PENDING' })
   status: ContactStatus;
 
   @Column({ type: 'timestamp', nullable: true })
-  linkedAt: Date | null; // When the contact was auto-linked
+  linkedAt: Date | null;
 
   @Column({ type: 'varchar', nullable: true })
-  linkedUserAvatar: string | null; // Cached avatar from linked user
+  linkedUserAvatar: string | null;
 
   // --- Relations ---
 
