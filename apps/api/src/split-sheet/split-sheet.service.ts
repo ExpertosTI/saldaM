@@ -337,7 +337,7 @@ export class SplitSheetService {
       user,
     );
 
-    // Auto-add collaborators to contacts + send notifications
+    // Auto-add collaborators to contacts + send notifications (non-blocking)
     const ownerFullName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email;
     if (
       createSplitSheetDto.collaborators &&
@@ -346,12 +346,17 @@ export class SplitSheetService {
       for (const collab of createSplitSheetDto.collaborators) {
         // Skip adding self as contact
         if (collab.email !== user.email) {
-          await this.ensureContactExists(
-            user,
-            collab.email,
-            collab.legalName,
-            collab.role,
-          );
+          // Wrap everything in try/catch — split sheet is already saved, don't fail on side effects
+          try {
+            await this.ensureContactExists(
+              user,
+              collab.email,
+              collab.legalName,
+              collab.role,
+            );
+          } catch (err) {
+            this.logger.warn(`[SplitSheet] Non-critical: Could not ensure contact for ${collab.email}`, err);
+          }
 
           // Send Email Invite
           try {
