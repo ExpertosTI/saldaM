@@ -21,6 +21,10 @@ echo "➡️  Ensuring audit_log schema ..."
 cat fix_audit_log_schema.sql | docker exec -i "$DBCID" psql -U postgres -d saldanamusic
 echo "➡️  Ensuring contacts schema ..."
 cat fix_contacts_schema.sql | docker exec -i "$DBCID" psql -U postgres -d saldanamusic
+echo "➡️  Applying social contacts migration ..."
+cat fix_social_contacts.sql | docker exec -i "$DBCID" psql -U postgres -d saldanamusic
+echo "➡️  Applying updatedAt fix ..."
+cat fix_contact_updatedat.sql | docker exec -i "$DBCID" psql -U postgres -d saldanamusic
 echo "✅ Database schema updated."
 
 # 3. Build & Update Services

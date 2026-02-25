@@ -1,9 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User, UserRole, KycStatus } from './entities/user.entity';
 import { MailService } from '../mail/mail.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
+import { ContactsService } from '../contacts/contacts.service';
 
 type CreateUserDto = {
   email: string;
@@ -30,7 +31,9 @@ export class UserService {
     private userRepository: Repository<User>,
     private mailService: MailService,
     private auditLogService: AuditLogService,
-  ) {}
+    @Inject(forwardRef(() => ContactsService))
+    private contactsService: ContactsService,
+  ) { }
 
   async create(createUserDto: CreateUserDto) {
     // 1. Check if user exists
@@ -70,6 +73,16 @@ export class UserService {
       `User ${savedUser.email} registered.`,
       savedUser,
     );
+
+    // 5. Auto-link any pending contacts that match this email
+    try {
+      await this.contactsService.linkContactsOnRegistration(savedUser);
+    } catch (e: unknown) {
+      this.logger.warn(
+        'Failed to auto-link contacts on registration',
+        e instanceof Error ? e.message : String(e),
+      );
+    }
 
     return savedUser;
   }
