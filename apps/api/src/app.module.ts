@@ -17,10 +17,12 @@ import { AuthModule } from './auth/auth.module';
 import { CatalogModule } from './catalog/catalog.module';
 import { AuditLogModule } from './audit-log/audit-log.module';
 import { ContactsModule } from './contacts/contacts.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { Catalog } from './catalog/entities/catalog.entity';
 import { Track } from './catalog/entities/track.entity';
 import { AuditLog } from './audit-log/entities/audit-log.entity';
 import { Contact } from './contacts/entities/contact.entity';
+import { Notification } from './notifications/entities/notification.entity';
 
 @Module({
   imports: [
@@ -50,6 +52,7 @@ import { Contact } from './contacts/entities/contact.entity';
         Track,
         AuditLog,
         Contact,
+        Notification,
       ],
       synchronize: process.env.NODE_ENV !== 'production', // NEVER sync in production - use migrations
     }),
@@ -58,6 +61,7 @@ import { Contact } from './contacts/entities/contact.entity';
     CatalogModule,
     AuditLogModule,
     ContactsModule,
+    NotificationsModule,
     UserModule,
     SplitSheetModule,
     AuthModule,
@@ -72,7 +76,7 @@ import { Contact } from './contacts/entities/contact.entity';
 export class AppModule implements OnModuleInit {
   private readonly logger = new Logger(AppModule.name);
 
-  constructor(private dataSource: DataSource) {}
+  constructor(private dataSource: DataSource) { }
 
   async onModuleInit() {
     const userRepository = this.dataSource.getRepository(User);

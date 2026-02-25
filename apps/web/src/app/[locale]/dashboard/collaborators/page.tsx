@@ -184,12 +184,17 @@ export default function CollaboratorsPage() {
             });
 
             if (res.ok) {
+                const result = await res.json();
                 setShowAddModal(false);
                 setAddForm({ emailOrPhone: '', name: '', role: 'OTHER' });
                 await Promise.all([fetchContacts(), fetchStats()]);
-                success(isEmail
-                    ? '¡Contacto agregado! Se envió una invitación por email. 📧'
-                    : '¡Contacto agregado exitosamente! 📱');
+                if (result.isExistingUser) {
+                    success('🎉 ¡Usuario encontrado! Ya está conectado en tu red.');
+                } else if (isEmail) {
+                    success('📧 ¡Contacto agregado! Se envió una invitación por email.');
+                } else {
+                    success('📱 ¡Contacto agregado! Comparte el link para invitarlo.');
+                }
             } else {
                 const errorData = await res.json();
                 error(errorData.message || 'Error al agregar colaborador.');
@@ -322,6 +327,9 @@ export default function CollaboratorsPage() {
                 setShareLink(data.link);
                 setShareContactName(contact.name || contact.email || contact.phone || '');
                 setShowShareModal(true);
+                if (data.emailSent) {
+                    success('📧 Email de invitación enviado exitosamente.');
+                }
             } else {
                 error(data.message || 'Error al enviar invitación.');
             }

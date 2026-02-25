@@ -49,3 +49,20 @@ BEGIN
         ALTER TABLE "user" ADD COLUMN "lastSeenAt" timestamp;
     END IF;
 END $$;
+
+-- Create notification table
+CREATE TABLE IF NOT EXISTS "notification" (
+    "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
+    "recipientId" uuid NOT NULL,
+    "type" varchar NOT NULL DEFAULT 'SYSTEM',
+    "title" varchar NOT NULL,
+    "message" text NOT NULL,
+    "actionUrl" varchar,
+    "fromUserId" uuid,
+    "fromUserName" varchar,
+    "fromUserAvatar" varchar,
+    "isRead" boolean DEFAULT false,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT now(),
+    CONSTRAINT "PK_notification_id" PRIMARY KEY ("id"),
+    CONSTRAINT "FK_notification_recipient" FOREIGN KEY ("recipientId") REFERENCES "user"("id") ON DELETE CASCADE
+);

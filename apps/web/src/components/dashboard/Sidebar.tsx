@@ -25,6 +25,7 @@ export default function Sidebar() {
     const [user, setUser] = useState<UserData | null>(null);
     const [loading, setLoading] = useState(true);
     const [isOpen, setIsOpen] = useState(false);
+    const [notifCount, setNotifCount] = useState(0);
 
     const handleLogout = useCallback(() => {
         removeToken();
@@ -65,6 +66,28 @@ export default function Sidebar() {
 
         fetchUser();
     }, [handleLogout]);
+
+    // Fetch notification count
+    useEffect(() => {
+        const fetchNotifCount = async () => {
+            const token = getToken();
+            if (!token) return;
+            try {
+                const res = await fetch(`${API_BASE_URL}/notifications/unread-count`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                if (res.ok) {
+                    const count = await res.json();
+                    setNotifCount(typeof count === 'number' ? count : 0);
+                }
+            } catch (e) {
+                console.error('Failed to fetch notification count', e);
+            }
+        };
+        fetchNotifCount();
+        const interval = setInterval(fetchNotifCount, 30000); // Poll every 30s
+        return () => clearInterval(interval);
+    }, []);
 
     // Close sidebar when route changes on mobile
     useEffect(() => {
@@ -237,6 +260,28 @@ export default function Sidebar() {
 
                 {/* Navigation */}
                 <nav className="flex-1 p-3 overflow-y-auto no-scrollbar">
+                    {/* Notification bell */}
+                    <Link
+                        href={`/${locale}/dashboard/notifications`}
+                        onClick={() => setIsOpen(false)}
+                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-sm font-medium mb-2 bg-primary/5 border border-primary/10 text-gray-300 hover:bg-primary/10 hover:text-white"
+                    >
+                        <span className="relative">
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                            </svg>
+                            {notifCount > 0 && (
+                                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center text-[9px] font-bold text-white">
+                                    {notifCount > 9 ? '9+' : notifCount}
+                                </span>
+                            )}
+                        </span>
+                        Notificaciones
+                        {notifCount > 0 && (
+                            <span className="ml-auto px-1.5 py-0.5 bg-red-500/20 text-red-400 text-[10px] font-bold rounded-full">{notifCount}</span>
+                        )}
+                    </Link>
+
                     <p className="text-[0.6rem] text-gray-600 uppercase tracking-wider font-semibold mb-3 px-2">{t('memberPortal')}</p>
                     <ul className="space-y-0.5">
                         {navItems.map((item) => (
