@@ -133,21 +133,16 @@ export default function CreateSplitSheet() {
     }, []);
 
     const addCollaborator = () => {
-        const newPercentage = Math.floor(100 / (collaborators.length + 1));
-        const updatedCollabs = collaborators.map(c => ({ ...c, percentage: newPercentage }));
-        setCollaborators([...updatedCollabs, {
-            name: "", email: "", role: "Songwriter", percentage: newPercentage, isOwner: false
+        // Don't redistribute — keep existing values, new collaborator starts at 0%
+        setCollaborators([...collaborators, {
+            name: "", email: "", role: "Songwriter", percentage: 0, isOwner: false
         }]);
     };
 
     const removeCollaborator = (index: number) => {
         if (collaborators[index]?.isOwner) return;
-        const newCollabs = collaborators.filter((_, i) => i !== index);
-        const newPercentage = Math.floor(100 / newCollabs.length);
-        const remainder = 100 - (newPercentage * newCollabs.length);
-        setCollaborators(newCollabs.map((c, i) => ({
-            ...c, percentage: i === 0 ? newPercentage + remainder : newPercentage
-        })));
+        // Keep existing percentages — don't redistribute
+        setCollaborators(collaborators.filter((_, i) => i !== index));
     };
 
     const updateCollaborator = <K extends keyof Collaborator>(index: number, field: K, value: Collaborator[K]) => {
