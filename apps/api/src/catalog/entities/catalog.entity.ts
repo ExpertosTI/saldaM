@@ -17,10 +17,19 @@ export class Catalog {
   @Column()
   title: string;
 
+  @Column({ type: 'text', nullable: true })
+  description: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  genre: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  labelName: string;
+
   @Column({ nullable: true })
   type: string; // Album, EP, Single
 
-  @Column({ nullable: true })
+  @Column({ type: 'date', nullable: true })
   releaseDate: Date;
 
   @Column({ nullable: true })

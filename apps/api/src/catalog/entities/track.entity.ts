@@ -15,10 +15,10 @@ export class Track {
   @Column()
   title: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   isrc: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   duration: string; // e.g., '3:45'
 
   @ManyToOne(() => Catalog, (catalog) => catalog.tracks)

@@ -24,19 +24,19 @@ export class Contact {
   @Column()
   name: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   email: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   phone: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   ipiNumber: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   pro: string; // Performing Rights Organization
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   publishingCompany: string;
 
   @Column({
@@ -46,7 +46,7 @@ export class Contact {
   })
   role: ContactRole;
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   notes: string;
 
   @Column({ default: false })
