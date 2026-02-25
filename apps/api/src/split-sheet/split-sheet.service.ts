@@ -8,6 +8,8 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '../notifications/entities/notification.entity';
 import type { FindOptionsWhere } from 'typeorm';
 import { SplitSheet, SplitSheetStatus } from './entities/split-sheet.entity';
 import { SignatureService } from '../signature/signature.service';
@@ -48,12 +50,15 @@ export class SplitSheetService {
   constructor(
     @InjectRepository(SplitSheet)
     private splitSheetRepository: Repository<SplitSheet>,
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
     private signatureService: SignatureService,
     private auditLogService: AuditLogService,
     private mailService: MailService,
     private contactsService: ContactsService,
     private otpService: OtpService,
-  ) {}
+    private notificationsService: NotificationsService,
+  ) { }
 
   async startSignatures(id: string, user: AuthUser) {
     const splitSheet = await this.findOne(id);
@@ -84,7 +89,7 @@ export class SplitSheetService {
       user,
     );
 
-    // Send signature request emails to all collaborators
+    // Send signature request emails + in-app notifications to all collaborators
     const ownerName = user.firstName
       ? `${user.firstName} ${user.lastName}`
       : user.email;
@@ -92,28 +97,34 @@ export class SplitSheetService {
       if (!collab.hasSigned && collab.email !== user.email) {
         try {
           const signLink = `https://app.saldanamusic.com/split-sheets/${id}`;
-          // We need to fetch IPI from user or if it's stored in collaborator entity?
-          // Collaborator entity has no IPI column yet!
-          // WAIT: Collaborator entity SHOULD have these details if we want to display them.
-          // But for now, let's assume we might need to fetch them or if they are users, get from User.
-
-          // Actually, let's check if we have it on the collaborator object we have here.
-          // If not, we might need a join.
-          // For now, let's look at the collaborator entity definition.
-
           await this.mailService.sendSignatureRequest(
             collab.email,
             ownerName,
             splitSheet.title,
             signLink,
             collab.legalName ?? undefined,
-            collab.ipi ?? undefined, // Function signature updated to accept this 6th arg
+            collab.ipi ?? undefined,
           );
         } catch (e) {
-          this.logger.error(
-            `Failed to send signature request to ${collab.email}`,
-            e,
-          );
+          this.logger.error(`Failed to send signature request to ${collab.email}`, e);
+        }
+
+        // In-app notification
+        try {
+          const recipientUser = await this.userRepository.findOne({ where: { email: collab.email } });
+          if (recipientUser) {
+            await this.notificationsService.create({
+              recipientId: recipientUser.id,
+              type: NotificationType.SPLIT_SHEET_INVITE,
+              title: '✍️ Firma requerida',
+              message: `${ownerName} necesita tu firma en el split sheet "${splitSheet.title}".`,
+              actionUrl: `/dashboard/split-sheets`,
+              fromUserId: user.id,
+              fromUserName: ownerName,
+            });
+          }
+        } catch (e) {
+          this.logger.warn(`Could not send split sheet signature notification to ${collab.email}`, e);
         }
       }
     }
@@ -326,7 +337,8 @@ export class SplitSheetService {
       user,
     );
 
-    // Auto-add collaborators to contacts
+    // Auto-add collaborators to contacts + send notifications
+    const ownerFullName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email;
     if (
       createSplitSheetDto.collaborators &&
       Array.isArray(createSplitSheetDto.collaborators)
@@ -346,17 +358,32 @@ export class SplitSheetService {
             const inviteLink = `${process.env.APP_WEB_URL || 'https://app.saldanamusic.com'}/dashboard/split-sheets`;
             await this.mailService.sendCollaboratorInvite(
               collab.email,
-              `${user.firstName} ${user.lastName || ''}`.trim(),
+              ownerFullName,
               saved.title,
               inviteLink,
               collab.legalName,
             );
             this.logger.log(`[SplitSheet] Sent invite to ${collab.email}`);
           } catch (err) {
-            this.logger.error(
-              `[SplitSheet] Failed to send invite to ${collab.email}`,
-              err,
-            );
+            this.logger.error(`[SplitSheet] Failed to send invite to ${collab.email}`, err);
+          }
+
+          // In-app notification
+          try {
+            const recipientUser = await this.userRepository.findOne({ where: { email: collab.email } });
+            if (recipientUser) {
+              await this.notificationsService.create({
+                recipientId: recipientUser.id,
+                type: NotificationType.SPLIT_SHEET_INVITE,
+                title: '📄 Nuevo Split Sheet',
+                message: `${ownerFullName} te agregó al split sheet "${saved.title}".`,
+                actionUrl: `/dashboard/split-sheets`,
+                fromUserId: user.id,
+                fromUserName: ownerFullName,
+              });
+            }
+          } catch (e) {
+            this.logger.warn(`Could not send split notification to ${collab.email}`, e);
           }
         }
       }
